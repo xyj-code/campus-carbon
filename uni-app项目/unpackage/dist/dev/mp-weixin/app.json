@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/index/index",
+    "pages/aiSuggest/aiSuggest",
+    "pages/stepCount/stepCount",
+    "pages/sportRecord/sportRecord"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "校园低碳系统",
+    "navigationBarBackgroundColor": "#f8f8f8",
+    "backgroundColor": "#f8f8f8"
+  },
+  "usingComponents": {}
+}
