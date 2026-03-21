@@ -13,7 +13,7 @@ public class StudentServiceImpl implements StudentService {
     private StudentMapper studentMapper;
 
     @Override
-    public Student login(String stuNo, String password) {
-        return studentMapper.selectByStuNoAndPassword(stuNo, password);
+    public Student login(String username, String password) {
+        return studentMapper.selectByUsernameAndPassword(username, password);
     }
 }

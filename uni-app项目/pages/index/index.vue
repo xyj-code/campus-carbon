@@ -18,7 +18,7 @@
         </view>
       </view>
       <view class="header-center">
-        <text class="main-title">校园低碳系统</text>
+        <text class="main-title">低碳生活</text>
         <text class="main-sub">🌍 每一步，都是对地球的承诺</text>
       </view>
     </view>
@@ -32,19 +32,19 @@
       <view class="stats-row">
         <view class="stat-item">
           <text class="stat-icon">👟</text>
-          <text class="stat-value orange">{{ todayData.steps }}</text>
+          <text class="stat-value orange">{{ loading ? '加载中...' : todayData.steps }}</text>
           <text class="stat-label">步数</text>
         </view>
         <view class="stat-sep"></view>
         <view class="stat-item">
           <text class="stat-icon">⏱️</text>
-          <text class="stat-value blue">{{ todayData.duration }}</text>
+          <text class="stat-value blue">{{ loading ? '加载中...' : todayData.duration }}</text>
           <text class="stat-label">时长(分)</text>
         </view>
         <view class="stat-sep"></view>
         <view class="stat-item">
           <text class="stat-icon">🌱</text>
-          <text class="stat-value green">{{ todayData.carbon }}</text>
+          <text class="stat-value green">{{ loading ? '加载中...' : todayData.carbon }}</text>
           <text class="stat-label">减碳(g)</text>
         </view>
       </view>
@@ -115,19 +115,26 @@ export default {
       greeting: '',
       pressIdx: -1,
       points: 0,
-      todayData: { steps: 0, duration: 0, carbon: 0 }
+      todayData: { steps: 0, duration: 0, carbon: 0 },
+      loading: true
     };
   },
   onLoad() {
-    const stuNo = uni.getStorageSync('stuNo');
+    const stuNo = uni.getStorageSync('username');
     if (!stuNo) {
       uni.reLaunch({ url: '/pages/login/login' });
       return;
     }
     this.stuNo = stuNo;
-    this.studentName = uni.getStorageSync('studentName') || '同学';
+    this.studentName = uni.getStorageSync('userName') || '用户';
     this.initDate();
-    this.loadTodayData();
+    // 不在此处调用 loadTodayData，由 onShow 统一负责
+  },
+  onShow() {
+    // 每次页面显示（含从步数页返回）时刷新今日数据
+    if (this.stuNo) {
+      this.loadTodayData();
+    }
   },
   methods: {
     initDate() {
@@ -144,15 +151,21 @@ export default {
       this.todayDate = `${y}-${m}-${d}`;
     },
     async loadTodayData() {
+      this.loading = true;
       try {
         const res = await getStepCount(this.stuNo, this.todayDate);
-        if (res && res.steps) {
-          this.todayData.steps = res.steps;
+        if (res) {
+          this.todayData.steps = res.steps || 0;
           this.todayData.duration = res.duration || 0;
-          this.todayData.carbon = Math.round(res.steps * 0.08);
-          this.points = Math.floor(res.steps / 50) + (res.duration || 0) * 2;
+          this.todayData.carbon = Math.round((res.steps || 0) * 0.08);
+          this.points = Math.floor((res.steps || 0) / 50) + (res.duration || 0) * 2;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('获取今日数据失败:', e);
+        // 保持默认值
+      } finally {
+        this.loading = false;
+      }
     },
     navigateTo(url) {
       uni.navigateTo({ url });

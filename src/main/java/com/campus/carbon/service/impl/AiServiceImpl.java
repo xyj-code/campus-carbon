@@ -37,7 +37,7 @@ public class AiServiceImpl implements AiService {
             ArrayNode messages = mapper.createArrayNode();
             ObjectNode system = mapper.createObjectNode();
             system.put("role", "system");
-            system.put("content", "你是一个校园低碳生活顾问，根据用户的碳足迹情况，提供具体的减排建议。请分条列出建议，每条建议简洁实用。");
+            system.put("content", "你是一个低碳生活顾问，根据用户的碳足迹情况，提供具体的减排建议。请分条列出建议，每条建议简洁实用。");
             messages.add(system);
 
             ObjectNode user = mapper.createObjectNode();

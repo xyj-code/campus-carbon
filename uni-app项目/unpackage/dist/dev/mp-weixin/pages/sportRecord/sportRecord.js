@@ -221,6 +221,32 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
@@ -231,11 +257,12 @@ var _default = {
       amount: '',
       recordList: [],
       submitting: false,
-      stuNo: ''
+      stuNo: '',
+      isLoaded: false
     };
   },
   onLoad: function onLoad() {
-    var stuNo = uni.getStorageSync('stuNo');
+    var stuNo = uni.getStorageSync('username');
     if (!stuNo) {
       uni.reLaunch({
         url: '/pages/login/login'
@@ -324,17 +351,20 @@ var _default = {
               case 3:
                 res = _context2.sent;
                 _this2.recordList = res || [];
-                _context2.next = 9;
+                _this2.isLoaded = true;
+                _context2.next = 11;
                 break;
-              case 7:
-                _context2.prev = 7;
+              case 8:
+                _context2.prev = 8;
                 _context2.t0 = _context2["catch"](0);
-              case 9:
+                // 静默失败
+                _this2.isLoaded = true;
+              case 11:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, null, [[0, 7]]);
+        }, _callee2, null, [[0, 8]]);
       }))();
     },
     formatTime: function formatTime(timeStr) {

@@ -212,7 +212,7 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
 var _default = {
   data: function data() {
     return {
-      stuNo: '',
+      username: '',
       password: '',
       loading: false
     };
@@ -226,12 +226,12 @@ var _default = {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (_this.stuNo.trim()) {
+                if (_this.username.trim()) {
                   _context.next = 3;
                   break;
                 }
                 uni.showToast({
-                  title: '请输入学号',
+                  title: '请输入账号',
                   icon: 'none'
                 });
                 return _context.abrupt("return");
@@ -249,12 +249,12 @@ var _default = {
                 _this.loading = true;
                 _context.prev = 7;
                 _context.next = 10;
-                return (0, _request.login)(_this.stuNo.trim(), _this.password.trim());
+                return (0, _request.login)(_this.username.trim(), _this.password.trim());
               case 10:
                 res = _context.sent;
                 if (res.code === 200) {
-                  uni.setStorageSync('stuNo', res.stuNo);
-                  uni.setStorageSync('studentName', res.name);
+                  uni.setStorageSync('username', res.username);
+                  uni.setStorageSync('userName', res.name);
                   uni.reLaunch({
                     url: '/pages/index/index'
                   });

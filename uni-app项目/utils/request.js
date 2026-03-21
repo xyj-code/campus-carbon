@@ -20,11 +20,11 @@ export const request = (url, options = {}) => {
   });
 };
 
-// 学生登录
-export const login = (stuNo, password) => {
-  return request('/student/login', {
+// 用户登录
+export const login = (username, password) => {
+  return request('/user/login', {
     method: 'POST',
-    data: { stuNo, password }
+    data: { username, password }
   });
 };
 

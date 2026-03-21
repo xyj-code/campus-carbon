@@ -12406,13 +12406,13 @@ var request = function request(url) {
   });
 };
 
-// 学生登录
+// 用户登录
 exports.request = request;
-var login = function login(stuNo, password) {
-  return request('/student/login', {
+var login = function login(username, password) {
+  return request('/user/login', {
     method: 'POST',
     data: {
-      stuNo: stuNo,
+      username: username,
       password: password
     }
   });
