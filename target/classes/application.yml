@@ -19,4 +19,4 @@ mybatis:
 carbon:
   ai:
     api-key: sk-68a7a42f39454217bbddf1514c5fd7c9
-    endpoint: https://ark.cn-beijing.volces.com/api/v3/chat/completions
+    endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
