@@ -14,7 +14,7 @@
         <view class="points-btn" @click="showPointsTip">
           <text class="points-star">⭐</text>
           <text class="points-num">{{ points }}</text>
-          <text class="points-unit">积分</text>
+          <text class="points-unit">今日积分</text>
         </view>
       </view>
       <view class="header-center">
@@ -95,9 +95,23 @@
       <text class="card-arrow">›</text>
     </view>
 
+    <view class="card rank-card"
+      @click="navigateTo('/pages/rank/rank')"
+      :style="pressIdx === 3 ? 'transform:scale(0.97)' : ''"
+      @touchstart="pressIdx = 3" @touchend="pressIdx = -1">
+      <view class="card-icon-wrap rank-bg">
+        <text class="card-icon">🏆</text>
+      </view>
+      <view class="card-body">
+        <text class="card-name">减碳排名</text>
+        <text class="card-desc">查看排行榜，与好友一起低碳打卡</text>
+      </view>
+      <text class="card-arrow">›</text>
+    </view>
+
     <!-- 底部标语 -->
     <view class="footer">
-      <text class="footer-text">🌿 低碳生活，从校园开始 · 绿色未来，从你我共建 🌿</text>
+      <text class="footer-text">🌿 低碳生活，从我做起 · 绿色未来，从你我共建 🌿</text>
     </view>
 
   </view>
@@ -157,8 +171,11 @@ export default {
         if (res) {
           this.todayData.steps = res.steps || 0;
           this.todayData.duration = res.duration || 0;
-          this.todayData.carbon = Math.round((res.steps || 0) * 0.08);
-          this.points = Math.floor((res.steps || 0) / 50) + (res.duration || 0) * 2;
+          // 计算减碳量：100步 = 0.005kg CO₂
+          const carbonReduction = (res.steps || 0) * 0.005 / 100;
+          this.todayData.carbon = Math.round(carbonReduction * 1000); // 转换为克
+          // 计算积分：每0.1kg减碳得10分，即每1kg减碳得100分
+          this.points = Math.round(carbonReduction * 100);
         }
       } catch (e) {
         console.error('获取今日数据失败:', e);
@@ -364,6 +381,7 @@ export default {
 .ai-bg   { background: linear-gradient(135deg, #a5d6a7, #43a047); }
 .step-bg { background: linear-gradient(135deg, #ffcc80, #ff7043); }
 .sport-bg{ background: linear-gradient(135deg, #90caf9, #1e88e5); }
+.rank-bg { background: linear-gradient(135deg, #ce93d8, #8e24aa); }
 
 .card-icon { font-size: 48rpx; }
 

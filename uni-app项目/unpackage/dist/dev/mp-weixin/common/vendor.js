@@ -12383,7 +12383,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getCarbonSuggestion = void 0;
+exports.saveStepCount = exports.saveSportRecord = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getCarbonSuggestion = void 0;
 // 接口请求工具类
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
@@ -12458,7 +12458,13 @@ var saveSportRecord = function saveSportRecord(data) {
     data: data
   });
 };
+
+// 减碳排名接口
 exports.saveSportRecord = saveSportRecord;
+var getRankData = function getRankData(studentId, timeRange) {
+  return request("/rank/data?studentId=".concat(studentId, "&timeRange=").concat(timeRange));
+};
+exports.getRankData = getRankData;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ })

@@ -4,7 +4,8 @@
     "pages/index/index",
     "pages/aiSuggest/aiSuggest",
     "pages/stepCount/stepCount",
-    "pages/sportRecord/sportRecord"
+    "pages/sportRecord/sportRecord",
+    "pages/rank/rank"
   ],
   "subPackages": [],
   "window": {

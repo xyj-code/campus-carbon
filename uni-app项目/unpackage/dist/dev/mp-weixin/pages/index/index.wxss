@@ -171,6 +171,8 @@
 }
 .sport-bg.data-v-57280228{ background: linear-gradient(135deg, #90caf9, #1e88e5);
 }
+.rank-bg.data-v-57280228 { background: linear-gradient(135deg, #ce93d8, #8e24aa);
+}
 .card-icon.data-v-57280228 { font-size: 48rpx;
 }
 .card-body.data-v-57280228 {

@@ -63,3 +63,8 @@ export const saveSportRecord = (data) => {
     data
   });
 };
+
+// 减碳排名接口
+export const getRankData = (studentId, timeRange) => {
+  return request(`/rank/data?studentId=${studentId}&timeRange=${timeRange}`);
+};

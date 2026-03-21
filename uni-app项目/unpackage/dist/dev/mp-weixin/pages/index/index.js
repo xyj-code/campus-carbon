@@ -121,6 +121,12 @@ var render = function () {
     _vm.e5 = function ($event) {
       _vm.pressIdx = -1
     }
+    _vm.e6 = function ($event) {
+      _vm.pressIdx = 3
+    }
+    _vm.e7 = function ($event) {
+      _vm.pressIdx = -1
+    }
   }
 }
 var recyclableRender = false
@@ -165,6 +171,20 @@ exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 43));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 45));
 var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -319,7 +339,7 @@ var _default = {
     loadTodayData: function loadTodayData() {
       var _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var res;
+        var res, carbonReduction;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -333,8 +353,11 @@ var _default = {
                 if (res) {
                   _this.todayData.steps = res.steps || 0;
                   _this.todayData.duration = res.duration || 0;
-                  _this.todayData.carbon = Math.round((res.steps || 0) * 0.08);
-                  _this.points = Math.floor((res.steps || 0) / 50) + (res.duration || 0) * 2;
+                  // 计算减碳量：100步 = 0.005kg CO₂
+                  carbonReduction = (res.steps || 0) * 0.005 / 100;
+                  _this.todayData.carbon = Math.round(carbonReduction * 1000); // 转换为克
+                  // 计算积分：每0.1kg减碳得10分，即每1kg减碳得100分
+                  _this.points = Math.round(carbonReduction * 100);
                 }
                 _context.next = 11;
                 break;
