@@ -321,11 +321,13 @@ var _default = {
     // 不在此处调用 loadTodayData，由 onShow 统一负责
   },
   onShow: function onShow() {
-    // 每次页面显示（含从步数页返回）时刷新今日数据
+    // 每次页面显示（含从步数页返回）时刷新今日数据和日期
     if (this.stuNo) {
-      this.loadTodayData();
+      this.initDate(); // 刷新日期
+      this.loadTodayData(); // 刷新数据
     }
   },
+
   methods: {
     initDate: function initDate() {
       var now = new Date();
