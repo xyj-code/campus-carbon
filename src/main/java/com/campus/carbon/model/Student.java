@@ -8,6 +8,7 @@ public class Student {
     private String name;
     private String openid;
     private String password;
+    private Integer points;
     private Date createTime;
 
     public Long getId() { return id; }
@@ -24,6 +25,9 @@ public class Student {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public Integer getPoints() { return points; }
+    public void setPoints(Integer points) { this.points = points; }
 
     public Date getCreateTime() { return createTime; }
     public void setCreateTime(Date createTime) { this.createTime = createTime; }

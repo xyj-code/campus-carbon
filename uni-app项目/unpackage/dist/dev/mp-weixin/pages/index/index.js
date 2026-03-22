@@ -290,7 +290,17 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
 //
 //
 //
+//
+//
+var BottomNav = function BottomNav() {
+  __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 105));
+  }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
+};
 var _default = {
+  components: {
+    BottomNav: BottomNav
+  },
   data: function data() {
     return {
       studentName: '',
@@ -391,6 +401,9 @@ var _default = {
         icon: 'none',
         duration: 2000
       });
+    },
+    handleTabChange: function handleTabChange(index) {
+      console.log('Tab changed to:', index);
     }
   }
 };

@@ -68,3 +68,28 @@ export const saveSportRecord = (data) => {
 export const getRankData = (studentId, timeRange) => {
   return request(`/rank/data?studentId=${studentId}&timeRange=${timeRange}`);
 };
+
+// 积分 & 个人资料
+export const getProfile = (username) => {
+  return request(`/points/profile?username=${username}`);
+};
+
+export const getPointsRecords = (username, type = 'all', page = 1, size = 10) => {
+  return request(`/points/records?username=${username}&type=${type}&page=${page}&size=${size}`);
+};
+
+// 积分商城
+export const getProductList = (page = 1, size = 12) => {
+  return request(`/product/list?page=${page}&size=${size}`);
+};
+
+export const exchangeProduct = (username, productId) => {
+  return request('/product/exchange', {
+    method: 'POST',
+    data: { username, productId }
+  });
+};
+
+export const getExchangeRecords = (username) => {
+  return request(`/product/exchange/records?username=${username}`);
+};

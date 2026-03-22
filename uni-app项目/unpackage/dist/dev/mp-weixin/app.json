@@ -2,6 +2,9 @@
   "pages": [
     "pages/login/login",
     "pages/index/index",
+    "pages/mall/mall",
+    "pages/profile/profile",
+    "pages/pointsDetail/pointsDetail",
     "pages/aiSuggest/aiSuggest",
     "pages/stepCount/stepCount",
     "pages/sportRecord/sportRecord",
@@ -9,10 +12,11 @@
   ],
   "subPackages": [],
   "window": {
-    "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "校园低碳系统",
-    "navigationBarBackgroundColor": "#f8f8f8",
-    "backgroundColor": "#f8f8f8"
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "低碳生活",
+    "navigationBarBackgroundColor": "#2e7d32",
+    "backgroundColor": "#f0f7f0",
+    "backgroundTextStyle": "light"
   },
   "usingComponents": {}
 }

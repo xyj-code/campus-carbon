@@ -114,13 +114,19 @@
       <text class="footer-text">🌿 低碳生活，从我做起 · 绿色未来，从你我共建 🌿</text>
     </view>
 
+    <!-- 底部导航栏 -->
+    <bottom-nav :currentIndex="0" @tabChange="handleTabChange" />
   </view>
 </template>
 
 <script>
 import { getStepCount } from '../../utils/request.js';
+import BottomNav from '../../components/bottom-nav.vue';
 
 export default {
+  components: {
+    BottomNav
+  },
   data() {
     return {
       studentName: '',
@@ -190,6 +196,9 @@ export default {
     },
     showPointsTip() {
       uni.showToast({ title: `当前积分：${this.points} 分`, icon: 'none', duration: 2000 });
+    },
+    handleTabChange(index) {
+      console.log('Tab changed to:', index);
     }
   }
 };
@@ -199,7 +208,7 @@ export default {
 .container {
   min-height: 100vh;
   background: linear-gradient(180deg, #e8f5e9 0%, #f1f8e9 40%, #f5f5f5 100%);
-  padding-bottom: 60rpx;
+  padding-bottom: 60px;
 }
 
 /* ---- Header ---- */
