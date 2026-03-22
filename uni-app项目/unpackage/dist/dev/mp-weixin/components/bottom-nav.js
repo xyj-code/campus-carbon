@@ -140,17 +140,6 @@ exports.default = void 0;
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
   name: 'BottomNav',
   props: {
@@ -162,29 +151,32 @@ var _default = {
   data: function data() {
     return {
       navItems: [{
+        icon: '⌂',
         text: '首页',
         url: '/pages/index/index'
       }, {
+        icon: '◎',
         text: '积分商城',
         url: '/pages/mall/mall'
       }, {
+        icon: '☺',
         text: '我的',
         url: '/pages/profile/profile'
       }]
     };
   },
+  mounted: function mounted() {
+    // 隐藏微信原生 tabBar，只显示自定义导航
+    uni.hideTabBar({
+      animation: false
+    });
+  },
   methods: {
     switchTab: function switchTab(index) {
-      var _this = this;
       if (index === this.currentIndex) return;
-      // redirectTo：替换当前页，不堆栈，切换无卡顿
-      uni.redirectTo({
-        url: this.navItems[index].url,
-        fail: function fail() {
-          uni.navigateTo({
-            url: _this.navItems[index].url
-          });
-        }
+      // tabBar 页面已被微信缓存，switchTab 无需重建页面，无卡顿
+      uni.switchTab({
+        url: this.navItems[index].url
       });
     }
   }

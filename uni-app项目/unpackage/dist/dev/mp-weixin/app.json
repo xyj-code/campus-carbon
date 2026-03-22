@@ -18,5 +18,25 @@
     "backgroundColor": "#f0f7f0",
     "backgroundTextStyle": "light"
   },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#2e7d32",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/mall/mall",
+        "text": "积分商城"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
+  },
   "usingComponents": {}
 }

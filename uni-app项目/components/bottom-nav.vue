@@ -7,23 +7,12 @@
       :class="{ active: currentIndex === index }"
       @click="switchTab(index)"
     >
-      <!-- 线性绿色 SVG 图标 -->
       <view class="nav-icon-wrap">
-        <!-- 首页 -->
-        <view v-if="index === 0" class="icon-svg" :class="{ active: currentIndex === 0 }">
-          <text class="icon-char">⌂</text>
-        </view>
-        <!-- 积分商城 -->
-        <view v-if="index === 1" class="icon-svg" :class="{ active: currentIndex === 1 }">
-          <text class="icon-char">◎</text>
-        </view>
-        <!-- 我的 -->
-        <view v-if="index === 2" class="icon-svg" :class="{ active: currentIndex === 2 }">
-          <text class="icon-char">☺</text>
+        <view class="icon-svg" :class="{ active: currentIndex === index }">
+          <text class="icon-char">{{ item.icon }}</text>
         </view>
       </view>
       <text class="nav-text">{{ item.text }}</text>
-      <!-- 激活指示条 -->
       <view v-if="currentIndex === index" class="active-bar"></view>
     </view>
   </view>
@@ -41,22 +30,21 @@ export default {
   data() {
     return {
       navItems: [
-        { text: '首页',   url: '/pages/index/index' },
-        { text: '积分商城', url: '/pages/mall/mall' },
-        { text: '我的',   url: '/pages/profile/profile' }
+        { icon: '⌂', text: '首页',    url: '/pages/index/index' },
+        { icon: '◎', text: '积分商城', url: '/pages/mall/mall' },
+        { icon: '☺', text: '我的',    url: '/pages/profile/profile' }
       ]
     };
+  },
+  mounted() {
+    // 隐藏微信原生 tabBar，只显示自定义导航
+    uni.hideTabBar({ animation: false });
   },
   methods: {
     switchTab(index) {
       if (index === this.currentIndex) return;
-      // redirectTo：替换当前页，不堆栈，切换无卡顿
-      uni.redirectTo({
-        url: this.navItems[index].url,
-        fail: () => {
-          uni.navigateTo({ url: this.navItems[index].url });
-        }
-      });
+      // tabBar 页面已被微信缓存，switchTab 无需重建页面，无卡顿
+      uni.switchTab({ url: this.navItems[index].url });
     }
   }
 };
@@ -85,9 +73,7 @@ export default {
   justify-content: center;
   position: relative;
   padding-bottom: 4rpx;
-  transition: opacity 0.15s;
 }
-
 .nav-item:active { opacity: 0.6; }
 
 .nav-icon-wrap {
@@ -96,7 +82,6 @@ export default {
   justify-content: center;
   margin-bottom: 4rpx;
 }
-
 .icon-svg {
   width: 48rpx;
   height: 48rpx;
@@ -104,31 +89,25 @@ export default {
   align-items: center;
   justify-content: center;
 }
-
 .icon-char {
   font-size: 44rpx;
   color: #bdbdbd;
   line-height: 1;
-  transition: color 0.2s;
+  transition: color 0.15s;
 }
-
-.icon-svg.active .icon-char {
-  color: #2e7d32;
-}
+.icon-svg.active .icon-char { color: #2e7d32; }
 
 .nav-text {
   font-size: 20rpx;
   color: #bdbdbd;
-  transition: color 0.2s;
   font-weight: 400;
+  transition: color 0.15s;
 }
-
 .nav-item.active .nav-text {
   color: #2e7d32;
   font-weight: 600;
 }
 
-/* 激活底部绿色指示条 */
 .active-bar {
   position: absolute;
   top: 0;
