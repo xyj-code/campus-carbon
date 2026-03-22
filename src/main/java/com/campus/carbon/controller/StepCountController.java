@@ -19,7 +19,17 @@ public class StepCountController {
     @GetMapping("/count")
     public StepCount getStepCount(@RequestParam String studentId,
                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
-        return stepCountService.getStepCountByStudentIdAndDate(studentId, date);
+        StepCount stepCount = stepCountService.getStepCountByStudentIdAndDate(studentId, date);
+        if (stepCount == null) {
+            // 如果没有数据，返回默认值
+            stepCount = new StepCount();
+            stepCount.setStudentId(studentId);
+            stepCount.setDate(date);
+            stepCount.setSteps(0);
+            stepCount.setCalories(0.0);
+            stepCount.setDuration(0);
+        }
+        return stepCount;
     }
 
     @GetMapping("/list")

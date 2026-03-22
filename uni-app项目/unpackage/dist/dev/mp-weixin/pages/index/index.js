@@ -121,6 +121,12 @@ var render = function () {
     _vm.e5 = function ($event) {
       _vm.pressIdx = -1
     }
+    _vm.e6 = function ($event) {
+      _vm.pressIdx = 3
+    }
+    _vm.e7 = function ($event) {
+      _vm.pressIdx = -1
+    }
   }
 }
 var recyclableRender = false
@@ -270,7 +276,31 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var BottomNav = function BottomNav() {
+  __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 105));
+  }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
+};
 var _default = {
+  components: {
+    BottomNav: BottomNav
+  },
   data: function data() {
     return {
       studentName: '',
@@ -283,11 +313,12 @@ var _default = {
         steps: 0,
         duration: 0,
         carbon: 0
-      }
+      },
+      loading: true
     };
   },
   onLoad: function onLoad() {
-    var stuNo = uni.getStorageSync('stuNo');
+    var stuNo = uni.getStorageSync('username');
     if (!stuNo) {
       uni.reLaunch({
         url: '/pages/login/login'
@@ -295,10 +326,18 @@ var _default = {
       return;
     }
     this.stuNo = stuNo;
-    this.studentName = uni.getStorageSync('studentName') || '同学';
+    this.studentName = uni.getStorageSync('userName') || '用户';
     this.initDate();
-    this.loadTodayData();
+    // 不在此处调用 loadTodayData，由 onShow 统一负责
   },
+  onShow: function onShow() {
+    // 每次页面显示（含从步数页返回）时刷新今日数据和日期
+    if (this.stuNo) {
+      this.initDate(); // 刷新日期
+      this.loadTodayData(); // 刷新数据
+    }
+  },
+
   methods: {
     initDate: function initDate() {
       var now = new Date();
@@ -312,33 +351,43 @@ var _default = {
     loadTodayData: function loadTodayData() {
       var _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var res;
+        var res, carbonReduction;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.prev = 0;
-                _context.next = 3;
+                _this.loading = true;
+                _context.prev = 1;
+                _context.next = 4;
                 return (0, _request.getStepCount)(_this.stuNo, _this.todayDate);
-              case 3:
+              case 4:
                 res = _context.sent;
-                if (res && res.steps) {
-                  _this.todayData.steps = res.steps;
+                if (res) {
+                  _this.todayData.steps = res.steps || 0;
                   _this.todayData.duration = res.duration || 0;
-                  _this.todayData.carbon = Math.round(res.steps * 0.08);
-                  _this.points = Math.floor(res.steps / 50) + (res.duration || 0) * 2;
+                  // 计算减碳量：100步 = 0.005kg CO₂
+                  carbonReduction = (res.steps || 0) * 0.005 / 100;
+                  _this.todayData.carbon = Math.round(carbonReduction * 1000); // 转换为克
+                  // 计算积分：每0.1kg减碳得10分，即每1kg减碳得100分
+                  _this.points = Math.round(carbonReduction * 100);
                 }
-                _context.next = 9;
+                _context.next = 11;
                 break;
-              case 7:
-                _context.prev = 7;
-                _context.t0 = _context["catch"](0);
-              case 9:
+              case 8:
+                _context.prev = 8;
+                _context.t0 = _context["catch"](1);
+                console.error('获取今日数据失败:', _context.t0);
+                // 保持默认值
+              case 11:
+                _context.prev = 11;
+                _this.loading = false;
+                return _context.finish(11);
+              case 14:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 7]]);
+        }, _callee, null, [[1, 8, 11, 14]]);
       }))();
     },
     navigateTo: function navigateTo(url) {
@@ -352,6 +401,9 @@ var _default = {
         icon: 'none',
         duration: 2000
       });
+    },
+    handleTabChange: function handleTabChange(index) {
+      console.log('Tab changed to:', index);
     }
   }
 };

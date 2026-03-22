@@ -4,39 +4,106 @@
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "登录",
-        "navigationBarBackgroundColor": "#4caf50",
-        "navigationBarTextStyle": "white"
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "fade-in",
+        "animationDuration": 200
       }
     },
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "校园低碳系统"
+        "navigationBarTitleText": "低碳生活",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "none"
+      }
+    },
+    {
+      "path": "pages/mall/mall",
+      "style": {
+        "navigationBarTitleText": "积分商城",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "none"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "none"
+      }
+    },
+    {
+      "path": "pages/pointsDetail/pointsDetail",
+      "style": {
+        "navigationBarTitleText": "积分明细",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
       }
     },
     {
       "path": "pages/aiSuggest/aiSuggest",
       "style": {
-        "navigationBarTitleText": "AI减排建议"
+        "navigationBarTitleText": "AI减排建议",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
       }
     },
     {
       "path": "pages/stepCount/stepCount",
       "style": {
-        "navigationBarTitleText": "步数统计"
+        "navigationBarTitleText": "步数统计",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
       }
     },
     {
       "path": "pages/sportRecord/sportRecord",
       "style": {
-        "navigationBarTitleText": "运动记录"
+        "navigationBarTitleText": "运动记录",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
+      "path": "pages/rank/rank",
+      "style": {
+        "navigationBarTitleText": "减碳排名",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
       }
     }
   ],
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#2e7d32",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index",   "text": "首页" },
+      { "pagePath": "pages/mall/mall",     "text": "积分商城" },
+      { "pagePath": "pages/profile/profile","text": "我的" }
+    ]
+  },
   "globalStyle": {
-    "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "校园低碳系统",
-    "navigationBarBackgroundColor": "#f8f8f8",
-    "backgroundColor": "#f8f8f8"
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "低碳生活",
+    "navigationBarBackgroundColor": "#2e7d32",
+    "backgroundColor": "#f0f7f0",
+    "backgroundTextStyle": "light"
   }
 }

@@ -1,4 +1,9 @@
 {
-  "navigationBarTitleText": "校园低碳系统",
-  "usingComponents": {}
+  "navigationBarTitleText": "低碳生活",
+  "navigationBarBackgroundColor": "#2e7d32",
+  "navigationBarTextStyle": "white",
+  "animationType": "none",
+  "usingComponents": {
+    "bottom-nav": "/components/bottom-nav"
+  }
 }

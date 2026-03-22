@@ -836,7 +836,7 @@ function populateParameters(result) {
 
   var parameters = {
     appId: "uni-app",
-    appName: "校园低碳系统",
+    appName: "低碳生活",
     appVersion: "1.0.0",
     appVersionCode: "100",
     appLanguage: getAppLanguage(hostLanguage),
@@ -937,7 +937,7 @@ var getAppBaseInfo = {
     var hostLanguage = (language || '').replace('_', '-');
     result = sortObject(Object.assign(result, {
       appId: "uni-app",
-      appName: "校园低碳系统",
+      appName: "低碳生活",
       appVersion: "1.0.0",
       appVersionCode: "100",
       appLanguage: getAppLanguage(hostLanguage),
@@ -1640,7 +1640,7 @@ function initData(vueOptions, context) {
     try {
       data = data.call(context); // 支持 Vue.prototype 上挂的数据
     } catch (e) {
-      if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"校园低碳系统","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG) {
+      if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"低碳生活","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG) {
         console.warn('根据 Vue 的 data 函数初始化小程序 data 失败，请尽量确保 data 函数中不访问 vm 对象，否则可能影响首次数据渲染速度。', data);
       }
     }
@@ -9228,7 +9228,7 @@ function rfdcCircles(opts) {
 
 function flushCallbacks$1(vm) {
     if (vm.__next_tick_callbacks && vm.__next_tick_callbacks.length) {
-        if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"校园低碳系统","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG) {
+        if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"低碳生活","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG) {
             var mpInstance = vm.$scope;
             console.log('[' + (+new Date) + '][' + (mpInstance.is || mpInstance.route) + '][' + vm._uid +
                 ']:flushCallbacks[' + vm.__next_tick_callbacks.length + ']');
@@ -9249,14 +9249,14 @@ function nextTick$1(vm, cb) {
     //1.nextTick 之前 已 setData 且 setData 还未回调完成
     //2.nextTick 之前存在 render watcher
     if (!vm.__next_tick_pending && !hasRenderWatcher(vm)) {
-        if(Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"校园低碳系统","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG){
+        if(Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"低碳生活","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG){
             var mpInstance = vm.$scope;
             console.log('[' + (+new Date) + '][' + (mpInstance.is || mpInstance.route) + '][' + vm._uid +
                 ']:nextVueTick');
         }
         return nextTick(cb, vm)
     }else{
-        if(Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"校园低碳系统","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG){
+        if(Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"低碳生活","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG){
             var mpInstance$1 = vm.$scope;
             console.log('[' + (+new Date) + '][' + (mpInstance$1.is || mpInstance$1.route) + '][' + vm._uid +
                 ']:nextMPTick');
@@ -9354,7 +9354,7 @@ var patch = function(oldVnode, vnode) {
     });
     var diffData = this.$shouldDiffData === false ? data : diff(data, mpData);
     if (Object.keys(diffData).length) {
-      if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"校园低碳系统","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG) {
+      if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"低碳生活","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).VUE_APP_DEBUG) {
         console.log('[' + (+new Date) + '][' + (mpInstance.is || mpInstance.route) + '][' + this._uid +
           ']差量更新',
           JSON.stringify(diffData));
@@ -12383,7 +12383,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getCarbonSuggestion = void 0;
+exports.saveStepCount = exports.saveSportRecord = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = void 0;
 // 接口请求工具类
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
@@ -12406,13 +12406,13 @@ var request = function request(url) {
   });
 };
 
-// 学生登录
+// 用户登录
 exports.request = request;
-var login = function login(stuNo, password) {
-  return request('/student/login', {
+var login = function login(username, password) {
+  return request('/user/login', {
     method: 'POST',
     data: {
-      stuNo: stuNo,
+      username: username,
       password: password
     }
   });
@@ -12458,7 +12458,48 @@ var saveSportRecord = function saveSportRecord(data) {
     data: data
   });
 };
+
+// 减碳排名接口
 exports.saveSportRecord = saveSportRecord;
+var getRankData = function getRankData(studentId, timeRange) {
+  return request("/rank/data?studentId=".concat(studentId, "&timeRange=").concat(timeRange));
+};
+
+// 积分 & 个人资料
+exports.getRankData = getRankData;
+var getProfile = function getProfile(username) {
+  return request("/points/profile?username=".concat(username));
+};
+exports.getProfile = getProfile;
+var getPointsRecords = function getPointsRecords(username) {
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'all';
+  var page = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+  var size = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 10;
+  return request("/points/records?username=".concat(username, "&type=").concat(type, "&page=").concat(page, "&size=").concat(size));
+};
+
+// 积分商城
+exports.getPointsRecords = getPointsRecords;
+var getProductList = function getProductList() {
+  var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 12;
+  return request("/product/list?page=".concat(page, "&size=").concat(size));
+};
+exports.getProductList = getProductList;
+var exchangeProduct = function exchangeProduct(username, productId) {
+  return request('/product/exchange', {
+    method: 'POST',
+    data: {
+      username: username,
+      productId: productId
+    }
+  });
+};
+exports.exchangeProduct = exchangeProduct;
+var getExchangeRecords = function getExchangeRecords(username) {
+  return request("/product/exchange/records?username=".concat(username));
+};
+exports.getExchangeRecords = getExchangeRecords;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ })

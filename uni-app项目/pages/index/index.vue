@@ -14,11 +14,11 @@
         <view class="points-btn" @click="showPointsTip">
           <text class="points-star">⭐</text>
           <text class="points-num">{{ points }}</text>
-          <text class="points-unit">积分</text>
+          <text class="points-unit">今日积分</text>
         </view>
       </view>
       <view class="header-center">
-        <text class="main-title">校园低碳系统</text>
+        <text class="main-title">低碳生活</text>
         <text class="main-sub">🌍 每一步，都是对地球的承诺</text>
       </view>
     </view>
@@ -32,19 +32,19 @@
       <view class="stats-row">
         <view class="stat-item">
           <text class="stat-icon">👟</text>
-          <text class="stat-value orange">{{ todayData.steps }}</text>
+          <text class="stat-value orange">{{ loading ? '加载中...' : todayData.steps }}</text>
           <text class="stat-label">步数</text>
         </view>
         <view class="stat-sep"></view>
         <view class="stat-item">
           <text class="stat-icon">⏱️</text>
-          <text class="stat-value blue">{{ todayData.duration }}</text>
+          <text class="stat-value blue">{{ loading ? '加载中...' : todayData.duration }}</text>
           <text class="stat-label">时长(分)</text>
         </view>
         <view class="stat-sep"></view>
         <view class="stat-item">
           <text class="stat-icon">🌱</text>
-          <text class="stat-value green">{{ todayData.carbon }}</text>
+          <text class="stat-value green">{{ loading ? '加载中...' : todayData.carbon }}</text>
           <text class="stat-label">减碳(g)</text>
         </view>
       </view>
@@ -95,18 +95,38 @@
       <text class="card-arrow">›</text>
     </view>
 
-    <!-- 底部标语 -->
-    <view class="footer">
-      <text class="footer-text">🌿 低碳生活，从校园开始 · 绿色未来，从你我共建 🌿</text>
+    <view class="card rank-card"
+      @click="navigateTo('/pages/rank/rank')"
+      :style="pressIdx === 3 ? 'transform:scale(0.97)' : ''"
+      @touchstart="pressIdx = 3" @touchend="pressIdx = -1">
+      <view class="card-icon-wrap rank-bg">
+        <text class="card-icon">🏆</text>
+      </view>
+      <view class="card-body">
+        <text class="card-name">减碳排名</text>
+        <text class="card-desc">查看排行榜，与好友一起低碳打卡</text>
+      </view>
+      <text class="card-arrow">›</text>
     </view>
 
+    <!-- 底部标语 -->
+    <view class="footer">
+      <text class="footer-text">🌿 低碳生活，从我做起 · 绿色未来，从你我共建 🌿</text>
+    </view>
+
+    <!-- 底部导航栏 -->
+    <bottom-nav :currentIndex="0" @tabChange="handleTabChange" />
   </view>
 </template>
 
 <script>
 import { getStepCount } from '../../utils/request.js';
+import BottomNav from '../../components/bottom-nav.vue';
 
 export default {
+  components: {
+    BottomNav
+  },
   data() {
     return {
       studentName: '',
@@ -115,19 +135,27 @@ export default {
       greeting: '',
       pressIdx: -1,
       points: 0,
-      todayData: { steps: 0, duration: 0, carbon: 0 }
+      todayData: { steps: 0, duration: 0, carbon: 0 },
+      loading: true
     };
   },
   onLoad() {
-    const stuNo = uni.getStorageSync('stuNo');
+    const stuNo = uni.getStorageSync('username');
     if (!stuNo) {
       uni.reLaunch({ url: '/pages/login/login' });
       return;
     }
     this.stuNo = stuNo;
-    this.studentName = uni.getStorageSync('studentName') || '同学';
+    this.studentName = uni.getStorageSync('userName') || '用户';
     this.initDate();
-    this.loadTodayData();
+    // 不在此处调用 loadTodayData，由 onShow 统一负责
+  },
+  onShow() {
+    // 每次页面显示（含从步数页返回）时刷新今日数据和日期
+    if (this.stuNo) {
+      this.initDate(); // 刷新日期
+      this.loadTodayData(); // 刷新数据
+    }
   },
   methods: {
     initDate() {
@@ -144,21 +172,33 @@ export default {
       this.todayDate = `${y}-${m}-${d}`;
     },
     async loadTodayData() {
+      this.loading = true;
       try {
         const res = await getStepCount(this.stuNo, this.todayDate);
-        if (res && res.steps) {
-          this.todayData.steps = res.steps;
+        if (res) {
+          this.todayData.steps = res.steps || 0;
           this.todayData.duration = res.duration || 0;
-          this.todayData.carbon = Math.round(res.steps * 0.08);
-          this.points = Math.floor(res.steps / 50) + (res.duration || 0) * 2;
+          // 计算减碳量：100步 = 0.005kg CO₂
+          const carbonReduction = (res.steps || 0) * 0.005 / 100;
+          this.todayData.carbon = Math.round(carbonReduction * 1000); // 转换为克
+          // 计算积分：每0.1kg减碳得10分，即每1kg减碳得100分
+          this.points = Math.round(carbonReduction * 100);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('获取今日数据失败:', e);
+        // 保持默认值
+      } finally {
+        this.loading = false;
+      }
     },
     navigateTo(url) {
       uni.navigateTo({ url });
     },
     showPointsTip() {
       uni.showToast({ title: `当前积分：${this.points} 分`, icon: 'none', duration: 2000 });
+    },
+    handleTabChange(index) {
+      console.log('Tab changed to:', index);
     }
   }
 };
@@ -168,7 +208,7 @@ export default {
 .container {
   min-height: 100vh;
   background: linear-gradient(180deg, #e8f5e9 0%, #f1f8e9 40%, #f5f5f5 100%);
-  padding-bottom: 60rpx;
+  padding-bottom: 60px;
 }
 
 /* ---- Header ---- */
@@ -351,6 +391,7 @@ export default {
 .ai-bg   { background: linear-gradient(135deg, #a5d6a7, #43a047); }
 .step-bg { background: linear-gradient(135deg, #ffcc80, #ff7043); }
 .sport-bg{ background: linear-gradient(135deg, #90caf9, #1e88e5); }
+.rank-bg { background: linear-gradient(135deg, #ce93d8, #8e24aa); }
 
 .card-icon { font-size: 48rpx; }
 

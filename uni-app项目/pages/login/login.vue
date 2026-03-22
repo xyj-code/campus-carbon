@@ -11,7 +11,7 @@
       <view class="logo-ring">
         <text class="logo-icon">🌱</text>
       </view>
-      <text class="app-name">校园低碳系统</text>
+      <text class="app-name">低碳生活</text>
       <text class="app-slogan">绿色出行 · 低碳生活</text>
     </view>
 
@@ -24,10 +24,10 @@
           <text class="field-icon">👤</text>
         </view>
         <input
-          v-model="stuNo"
+          v-model="username"
           class="field-input"
           type="text"
-          placeholder="请输入学号"
+          placeholder="请输入账号"
           placeholder-class="ph"
         />
       </view>
@@ -56,7 +56,7 @@
 
     <!-- 底部标语 -->
     <view class="bottom-tip">
-      <text class="bottom-text">共建绿色校园，从我做起</text>
+      <text class="bottom-text">低碳生活，从我做起</text>
     </view>
 
   </view>
@@ -68,15 +68,15 @@ import { login } from '../../utils/request.js';
 export default {
   data() {
     return {
-      stuNo: '',
+      username: '',
       password: '',
       loading: false
     };
   },
   methods: {
     async handleLogin() {
-      if (!this.stuNo.trim()) {
-        uni.showToast({ title: '请输入学号', icon: 'none' });
+      if (!this.username.trim()) {
+        uni.showToast({ title: '请输入账号', icon: 'none' });
         return;
       }
       if (!this.password.trim()) {
@@ -85,10 +85,10 @@ export default {
       }
       this.loading = true;
       try {
-        const res = await login(this.stuNo.trim(), this.password.trim());
+        const res = await login(this.username.trim(), this.password.trim());
         if (res.code === 200) {
-          uni.setStorageSync('stuNo', res.stuNo);
-          uni.setStorageSync('studentName', res.name);
+          uni.setStorageSync('username', res.username);
+          uni.setStorageSync('userName', res.name);
           uni.reLaunch({ url: '/pages/index/index' });
         } else {
           uni.showToast({ title: res.message || '登录失败', icon: 'none' });
