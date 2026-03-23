@@ -1,0 +1,218 @@
+
+.container.data-v-57280228 {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e8f5e9 0%, #f1f8e9 40%, #f5f5f5 100%);
+  padding-bottom: 60rpx;
+}
+
+/* ---- Header ---- */
+.header.data-v-57280228 {
+  background: linear-gradient(135deg, #2e7d32 0%, #43a047 60%, #66bb6a 100%);
+  padding: 100rpx 40rpx 50rpx;
+  border-radius: 0 0 48rpx 48rpx;
+}
+.header-top.data-v-57280228 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36rpx;
+}
+.user-info.data-v-57280228 {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.leaf.data-v-57280228 {
+  font-size: 52rpx;
+}
+.user-text.data-v-57280228 {
+  display: flex;
+  flex-direction: column;
+}
+.greeting.data-v-57280228 {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #fff;
+}
+.date-label.data-v-57280228 {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.75);
+  margin-top: 4rpx;
+}
+.points-btn.data-v-57280228 {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  background: rgba(255,255,255,0.2);
+  border-radius: 40rpx;
+  padding: 10rpx 24rpx;
+  border: 1rpx solid rgba(255,255,255,0.35);
+}
+.points-star.data-v-57280228 { font-size: 28rpx;
+}
+.points-num.data-v-57280228 {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #fff;
+}
+.points-unit.data-v-57280228 {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.85);
+}
+.header-center.data-v-57280228 {
+  text-align: center;
+}
+.main-title.data-v-57280228 {
+  display: block;
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 4rpx;
+  margin-bottom: 12rpx;
+  text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.2);
+}
+.main-sub.data-v-57280228 {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ---- 今日概览 ---- */
+.overview-card.data-v-57280228 {
+  margin: -24rpx 32rpx 32rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 36rpx 32rpx 30rpx;
+  box-shadow: 0 8rpx 40rpx rgba(46,125,50,0.12);
+}
+.overview-title-row.data-v-57280228 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+.overview-title.data-v-57280228 {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+.overview-date.data-v-57280228 {
+  font-size: 22rpx;
+  color: #aaa;
+}
+.stats-row.data-v-57280228 {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.stat-item.data-v-57280228 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+.stat-icon.data-v-57280228 { font-size: 40rpx;
+}
+.stat-value.data-v-57280228 {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+.stat-value.orange.data-v-57280228 { color: #ff7043;
+}
+.stat-value.blue.data-v-57280228   { color: #1e88e5;
+}
+.stat-value.green.data-v-57280228  { color: #43a047;
+}
+.stat-label.data-v-57280228 {
+  font-size: 22rpx;
+  color: #999;
+}
+.stat-sep.data-v-57280228 {
+  width: 1rpx;
+  height: 80rpx;
+  background: #f0f0f0;
+}
+
+/* ---- 功能卡片 ---- */
+.section-label.data-v-57280228 {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #888;
+  padding: 0 40rpx;
+  margin-bottom: 16rpx;
+  letter-spacing: 2rpx;
+}
+.card.data-v-57280228 {
+  display: flex;
+  align-items: center;
+  margin: 0 32rpx 24rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.07);
+  transition: -webkit-transform 0.15s;
+  transition: transform 0.15s;
+  transition: transform 0.15s, -webkit-transform 0.15s;
+}
+.card-icon-wrap.data-v-57280228 {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 28rpx;
+  flex-shrink: 0;
+}
+.ai-bg.data-v-57280228   { background: linear-gradient(135deg, #a5d6a7, #43a047);
+}
+.step-bg.data-v-57280228 { background: linear-gradient(135deg, #ffcc80, #ff7043);
+}
+.sport-bg.data-v-57280228{ background: linear-gradient(135deg, #90caf9, #1e88e5);
+}
+.rank-bg.data-v-57280228 { background: linear-gradient(135deg, #ce93d8, #8e24aa);
+}
+.card-icon.data-v-57280228 { font-size: 48rpx;
+}
+.card-body.data-v-57280228 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.card-name.data-v-57280228 {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #222;
+}
+.card-desc.data-v-57280228 {
+  font-size: 22rpx;
+  color: #999;
+  line-height: 1.5;
+}
+.card-arrow.data-v-57280228 {
+  font-size: 40rpx;
+  color: #ccc;
+  margin-left: 8rpx;
+}
+
+/* 左侧竖线装饰 */
+.ai-card.data-v-57280228    { border-left: 6rpx solid #43a047;
+}
+.step-card.data-v-57280228  { border-left: 6rpx solid #ff7043;
+}
+.sport-card.data-v-57280228 { border-left: 6rpx solid #1e88e5;
+}
+
+/* ---- 底部 ---- */
+.footer.data-v-57280228 {
+  text-align: center;
+  padding: 20rpx 40rpx 0;
+}
+.footer-text.data-v-57280228 {
+  font-size: 22rpx;
+  color: #aaa;
+  line-height: 1.8;
+}
+
