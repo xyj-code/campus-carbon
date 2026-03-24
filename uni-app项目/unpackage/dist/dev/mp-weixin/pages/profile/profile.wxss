@@ -101,6 +101,8 @@
   align-items: center;
   justify-content: center;
 }
+.func-icon-wrap.tree.data-v-60cb334c { background: #e8f5e9;
+}
 .func-icon-wrap.star.data-v-60cb334c { background: #fff8e1;
 }
 .func-icon-wrap.leaf.data-v-60cb334c { background: #e8f5e9;

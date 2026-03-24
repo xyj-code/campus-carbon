@@ -215,7 +215,7 @@ var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/r
 var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 105));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 113));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -333,6 +333,11 @@ var _default = {
           }
         }, _callee2, null, [[0, 13]]);
       }))();
+    },
+    goCarbonReserve: function goCarbonReserve() {
+      uni.navigateTo({
+        url: '/pages/carbon保护区/carbon保护区'
+      });
     },
     goPointsDetail: function goPointsDetail() {
       uni.navigateTo({
