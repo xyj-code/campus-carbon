@@ -10,8 +10,8 @@
     "pages/sportRecord/sportRecord",
     "pages/rank/rank",
     "pages/carbon保护区/carbon保护区",
-    "pages/certificate/certificate",
-    "pages/projectDetail/projectDetail"
+    "pages/projectDetail/projectDetail",
+    "pages/certificate/certificate"
   ],
   "subPackages": [],
   "window": {

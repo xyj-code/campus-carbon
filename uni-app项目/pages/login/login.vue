@@ -1,64 +1,83 @@
 <template>
-  <view class="container">
+  <view class="page">
+    <!-- Aurora background blobs -->
+    <view class="blob b1"></view>
+    <view class="blob b2"></view>
+    <view class="blob b3"></view>
 
-    <!-- 背景装饰圆 -->
-    <view class="deco-circle c1"></view>
-    <view class="deco-circle c2"></view>
-    <view class="deco-circle c3"></view>
-
-    <!-- Logo 区域 -->
-    <view class="logo-area">
-      <view class="logo-ring">
-        <text class="logo-icon">🌱</text>
-      </view>
-      <text class="app-name">低碳生活</text>
-      <text class="app-slogan">绿色出行 · 低碳生活</text>
-    </view>
-
-    <!-- 登录卡片 -->
-    <view class="glass-card">
-      <text class="card-title">欢迎回来</text>
-
-      <view class="field">
-        <view class="field-icon-wrap">
-          <text class="field-icon">👤</text>
+    <view class="content">
+      <!-- Logo -->
+      <view class="logo-section">
+        <view class="logo-wrap">
+          <view class="logo-inner">
+            <text class="logo-icon">🌱</text>
+          </view>
+          <view class="logo-ring r1"></view>
+          <view class="logo-ring r2"></view>
         </view>
-        <input
-          v-model="username"
-          class="field-input"
-          type="text"
-          placeholder="请输入账号"
-          placeholder-class="ph"
-        />
+        <text class="app-name">校园低碳生活</text>
+        <text class="app-tag">每一步，都是对地球的承诺</text>
       </view>
 
-      <view class="field">
-        <view class="field-icon-wrap">
-          <text class="field-icon">🔒</text>
+      <!-- Login card -->
+      <view class="login-card">
+        <text class="card-title">欢迎回来</text>
+        <text class="card-sub">登录你的低碳账户</text>
+
+        <view class="input-row" :class="{ focused: focusUser }">
+          <text class="in-icon">👤</text>
+          <input
+            class="in-field"
+            placeholder="请输入账号"
+            placeholder-class="in-ph"
+            v-model="username"
+            type="text"
+            @focus="focusUser = true"
+            @blur="focusUser = false"
+          />
         </view>
-        <input
-          v-model="password"
-          class="field-input"
-          type="password"
-          placeholder="请输入密码"
-          placeholder-class="ph"
-        />
+
+        <view class="input-row" :class="{ focused: focusPass }">
+          <text class="in-icon">🔒</text>
+          <input
+            class="in-field"
+            placeholder="请输入密码"
+            placeholder-class="in-ph"
+            v-model="password"
+            password
+            @focus="focusPass = true"
+            @blur="focusPass = false"
+          />
+        </view>
+
+        <view class="login-btn" :class="{ loading: loading }" @click="handleLogin">
+          <text class="btn-text" v-if="!loading">登 录</text>
+          <view class="dots" v-else>
+            <view class="dot d1"></view>
+            <view class="dot d2"></view>
+            <view class="dot d3"></view>
+          </view>
+        </view>
+
+        <text class="hint">🌿 默认密码：123456</text>
       </view>
 
-      <button class="btn-sign" @click="handleLogin" :disabled="loading">
-        <text class="btn-text">{{ loading ? '登录中...' : 'Sign in' }}</text>
-      </button>
-
-      <view class="hint-row">
-        <text class="hint-text">🌿 默认密码：123456</text>
+      <!-- Bottom tip icons -->
+      <view class="tip-row">
+        <view class="tip-item">
+          <text class="tip-ico">🌍</text>
+          <text class="tip-lbl">低碳出行</text>
+        </view>
+        <view class="tip-item">
+          <text class="tip-ico">♻️</text>
+          <text class="tip-lbl">绿色生活</text>
+        </view>
+        <view class="tip-item">
+          <text class="tip-ico">🌿</text>
+          <text class="tip-lbl">守护自然</text>
+        </view>
       </view>
     </view>
-
-    <!-- 底部标语 -->
-    <view class="bottom-tip">
-      <text class="bottom-text">低碳生活，从我做起</text>
-    </view>
-
   </view>
 </template>
 
@@ -70,7 +89,9 @@ export default {
     return {
       username: '',
       password: '',
-      loading: false
+      loading: false,
+      focusUser: false,
+      focusPass: false
     };
   },
   methods: {
@@ -104,164 +125,237 @@ export default {
 </script>
 
 <style scoped>
-.container {
+.page {
   min-height: 100vh;
-  background: linear-gradient(160deg, #1b5e20 0%, #2e7d32 30%, #1565c0 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60rpx 48rpx;
+  background: #FFFFFF;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 背景装饰圆 */
-.deco-circle {
+/* Aurora blobs */
+.blob {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.12;
-  background: #fff;
+  pointer-events: none;
 }
-.c1 { width: 500rpx; height: 500rpx; top: -160rpx; right: -140rpx; }
-.c2 { width: 320rpx; height: 320rpx; bottom: 80rpx; left: -100rpx; }
-.c3 { width: 200rpx; height: 200rpx; top: 260rpx; left: 40rpx; opacity: 0.07; }
+.b1 {
+  width: 640rpx; height: 640rpx;
+  background: radial-gradient(circle, rgba(0, 245, 160, 0.22) 0%, transparent 70%);
+  top: -220rpx; right: -200rpx;
+}
+.b2 {
+  width: 480rpx; height: 480rpx;
+  background: radial-gradient(circle, rgba(0, 217, 245, 0.15) 0%, transparent 70%);
+  bottom: -120rpx; left: -160rpx;
+}
+.b3 {
+  width: 320rpx; height: 320rpx;
+  background: radial-gradient(circle, rgba(123, 104, 238, 0.12) 0%, transparent 70%);
+  top: 45%; left: 5%;
+}
 
-/* Logo */
-.logo-area {
+.content {
+  width: 100%;
+  padding: 0 44rpx;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 60rpx;
+  position: relative;
   z-index: 1;
 }
 
-.logo-ring {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.18);
-  border: 3rpx solid rgba(255,255,255,0.4);
+/* ---- Logo ---- */
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 64rpx;
+  margin-top: 80rpx;
+}
+
+.logo-wrap {
+  position: relative;
+  width: 130rpx;
+  height: 130rpx;
+  margin-bottom: 28rpx;
+}
+
+.logo-inner {
+  position: absolute;
+  top: 15rpx; left: 15rpx;
+  width: 100rpx; height: 100rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(135deg, #00F5A0, #00C896);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24rpx;
-  box-shadow: 0 0 40rpx rgba(102,187,106,0.4);
+  box-shadow: 0 10rpx 36rpx rgba(0, 200, 150, 0.45);
 }
 
-.logo-icon { font-size: 72rpx; }
+.logo-icon { font-size: 58rpx; }
+
+.logo-ring {
+  position: absolute;
+  border-radius: 36rpx;
+  border: 2rpx solid rgba(0, 200, 150, 0.35);
+  animation: ring-pulse 2.2s ease-in-out infinite;
+}
+.r1 { top: 0; left: 0; width: 130rpx; height: 130rpx; }
+.r2 { top: -12rpx; left: -12rpx; width: 154rpx; height: 154rpx; border-color: rgba(0, 200, 150, 0.15); animation-delay: 0.55s; }
+
+@keyframes ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
 
 .app-name {
-  font-size: 44rpx;
-  font-weight: bold;
-  color: #fff;
-  letter-spacing: 4rpx;
-  margin-bottom: 12rpx;
-  text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.3);
-}
-
-.app-slogan {
-  font-size: 24rpx;
-  color: rgba(255,255,255,0.7);
+  font-size: 46rpx;
+  font-weight: 700;
+  color: #1A2332;
+  display: block;
+  text-align: center;
   letter-spacing: 2rpx;
 }
 
-/* 玻璃卡片 */
-.glass-card {
+.app-tag {
+  font-size: 26rpx;
+  color: #8A9BB0;
+  margin-top: 10rpx;
+  display: block;
+  text-align: center;
+}
+
+/* ---- Login card ---- */
+.login-card {
   width: 100%;
-  background: rgba(255,255,255,0.14);
-  border-radius: 32rpx;
-  border: 1rpx solid rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  border: 1.5rpx solid rgba(255, 255, 255, 0.92);
+  border-radius: 40rpx;
   padding: 52rpx 44rpx 44rpx;
-  box-shadow: 0 16rpx 64rpx rgba(0,0,0,0.25);
-  z-index: 1;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.08);
+  margin-bottom: 44rpx;
 }
 
 .card-title {
+  font-size: 46rpx;
+  font-weight: 700;
+  color: #1A2332;
   display: block;
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #fff;
-  text-align: center;
-  margin-bottom: 48rpx;
-  letter-spacing: 2rpx;
+  margin-bottom: 8rpx;
 }
 
-/* 输入框 */
-.field {
+.card-sub {
+  font-size: 26rpx;
+  color: #8A9BB0;
+  display: block;
+  margin-bottom: 52rpx;
+}
+
+.input-row {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  background: rgba(255,255,255,0.12);
-  border-radius: 16rpx;
-  border: 1rpx solid rgba(255,255,255,0.25);
-  margin-bottom: 28rpx;
-  padding: 0 24rpx;
-  height: 96rpx;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1.5rpx solid rgba(226, 232, 240, 0.9);
+  border-radius: 22rpx;
+  padding: 0 28rpx;
+  height: 100rpx;
+  margin-bottom: 22rpx;
+  transition: all 0.25s ease;
 }
 
-.field-icon-wrap {
-  margin-right: 20rpx;
-  display: flex;
-  align-items: center;
+.input-row.focused {
+  border-color: #00C896;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 4rpx rgba(0, 200, 150, 0.14);
 }
 
-.field-icon { font-size: 36rpx; }
+.in-icon {
+  font-size: 34rpx;
+  margin-right: 18rpx;
+}
 
-.field-input {
+.in-field {
   flex: 1;
-  height: 96rpx;
-  font-size: 28rpx;
-  color: #fff;
-  background: transparent;
+  font-size: 30rpx;
+  color: #1A2332;
+  height: 100%;
 }
 
-.ph { color: rgba(255,255,255,0.45); }
+.in-ph { color: #A0AEC0; }
 
-/* 登录按钮 */
-.btn-sign {
+/* ---- Button ---- */
+.login-btn {
   width: 100%;
-  height: 96rpx;
-  margin-top: 20rpx;
-  background: linear-gradient(90deg, #66bb6a, #43a047);
-  border-radius: 48rpx;
-  border: none;
-  box-shadow: 0 8rpx 32rpx rgba(67,160,71,0.45);
+  height: 104rpx;
+  background: linear-gradient(135deg, #00F5A0, #00C896);
+  border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 36rpx;
+  box-shadow: 0 10rpx 36rpx rgba(0, 200, 150, 0.42);
+  transition: opacity 0.2s ease;
 }
 
-.btn-sign[disabled] {
-  background: rgba(102,187,106,0.4);
-  box-shadow: none;
-}
+.login-btn.loading { opacity: 0.8; }
 
 .btn-text {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #fff;
-  letter-spacing: 4rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 5rpx;
 }
 
-.hint-row {
-  text-align: center;
-  margin-top: 28rpx;
+.dots { display: flex; gap: 14rpx; }
+.dot {
+  width: 14rpx; height: 14rpx;
+  border-radius: 50%;
+  background: #FFFFFF;
+  animation: dot-bounce 0.84s ease-in-out infinite;
+}
+.d1 { animation-delay: 0s; }
+.d2 { animation-delay: 0.17s; }
+.d3 { animation-delay: 0.34s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
 }
 
-.hint-text {
-  font-size: 22rpx;
-  color: rgba(255,255,255,0.5);
-}
-
-/* 底部 */
-.bottom-tip {
-  margin-top: 48rpx;
-  z-index: 1;
-}
-
-.bottom-text {
+.hint {
   font-size: 24rpx;
-  color: rgba(255,255,255,0.5);
-  letter-spacing: 2rpx;
+  color: #A0AEC0;
+  text-align: center;
+  display: block;
+  margin-top: 24rpx;
+}
+
+/* ---- Bottom tips ---- */
+.tip-row {
+  display: flex;
+  flex-direction: row;
+  gap: 48rpx;
+  margin-bottom: 60rpx;
+}
+
+.tip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.tip-ico { font-size: 38rpx; }
+
+.tip-lbl {
+  font-size: 22rpx;
+  color: #8A9BB0;
 }
 </style>

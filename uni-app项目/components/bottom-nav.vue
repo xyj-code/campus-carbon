@@ -1,19 +1,16 @@
 <template>
-  <view class="bottom-nav">
+  <view class="nav-bar">
     <view
       v-for="(item, index) in navItems"
       :key="index"
       class="nav-item"
-      :class="{ active: currentIndex === index }"
       @click="switchTab(index)"
     >
-      <view class="nav-icon-wrap">
-        <view class="icon-svg" :class="{ active: currentIndex === index }">
-          <text class="icon-char">{{ item.icon }}</text>
-        </view>
+      <view class="nav-icon-box" :class="{ 'icon-active': currentIndex === index }">
+        <text class="nav-icon" :class="{ 'icon-lit': currentIndex === index }">{{ item.icon }}</text>
+        <view class="icon-glow-dot" v-if="currentIndex === index"></view>
       </view>
-      <text class="nav-text">{{ item.text }}</text>
-      <view v-if="currentIndex === index" class="active-bar"></view>
+      <text class="nav-label" :class="{ 'label-lit': currentIndex === index }">{{ item.text }}</text>
     </view>
   </view>
 </template>
@@ -22,10 +19,7 @@
 export default {
   name: 'BottomNav',
   props: {
-    currentIndex: {
-      type: Number,
-      default: 0
-    }
+    currentIndex: { type: Number, default: 0 }
   },
   data() {
     return {
@@ -37,13 +31,11 @@ export default {
     };
   },
   mounted() {
-    // 隐藏微信原生 tabBar，只显示自定义导航
     uni.hideTabBar({ animation: false });
   },
   methods: {
     switchTab(index) {
       if (index === this.currentIndex) return;
-      // tabBar 页面已被微信缓存，switchTab 无需重建页面，无卡顿
       uni.switchTab({ url: this.navItems[index].url });
     }
   }
@@ -51,18 +43,23 @@ export default {
 </script>
 
 <style scoped>
-.bottom-nav {
+.nav-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: 110rpx;
-  background: #fff;
+  padding-bottom: env(safe-area-inset-bottom);
   display: flex;
-  align-items: stretch;
-  box-shadow: 0 -2rpx 16rpx rgba(46, 125, 50, 0.08);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  border-top: 1.5rpx solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 -4rpx 32rpx rgba(0, 0, 0, 0.06);
   z-index: 999;
-  border-top: 1rpx solid #e8f5e9;
 }
 
 .nav-item {
@@ -71,50 +68,60 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4rpx;
+  padding: 10rpx 0;
+}
+
+.nav-icon-box {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
-  padding-bottom: 4rpx;
+  background: transparent;
+  transition: all 0.25s ease;
 }
-.nav-item:active { opacity: 0.6; }
 
-.nav-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 4rpx;
+.nav-icon-box.icon-active {
+  background: linear-gradient(135deg, rgba(0, 245, 160, 0.18), rgba(0, 200, 150, 0.12));
+  box-shadow: 0 0 16rpx rgba(0, 200, 150, 0.22);
 }
-.icon-svg {
-  width: 48rpx;
-  height: 48rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.icon-char {
-  font-size: 44rpx;
-  color: #bdbdbd;
+
+.nav-icon {
+  font-size: 38rpx;
+  color: #B0BEC5;
   line-height: 1;
-  transition: color 0.15s;
-}
-.icon-svg.active .icon-char { color: #2e7d32; }
-
-.nav-text {
-  font-size: 20rpx;
-  color: #bdbdbd;
-  font-weight: 400;
-  transition: color 0.15s;
-}
-.nav-item.active .nav-text {
-  color: #2e7d32;
-  font-weight: 600;
+  transition: color 0.25s ease;
 }
 
-.active-bar {
+.nav-icon.icon-lit {
+  color: #00C896;
+  text-shadow: 0 0 10rpx rgba(0, 200, 150, 0.55);
+}
+
+.icon-glow-dot {
   position: absolute;
-  top: 0;
-  left: 25%;
-  right: 25%;
-  height: 4rpx;
-  background: linear-gradient(90deg, #4caf50, #2e7d32);
-  border-radius: 0 0 4rpx 4rpx;
+  bottom: -2rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background: #00C896;
+  box-shadow: 0 0 8rpx rgba(0, 200, 150, 0.9);
+}
+
+.nav-label {
+  font-size: 20rpx;
+  color: #B0BEC5;
+  font-weight: 400;
+  transition: color 0.25s ease;
+}
+
+.nav-label.label-lit {
+  color: #00C896;
+  font-weight: 600;
 }
 </style>

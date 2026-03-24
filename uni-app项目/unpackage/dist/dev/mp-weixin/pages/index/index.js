@@ -104,28 +104,7 @@ var render = function () {
   var _c = _vm._self._c || _h
   if (!_vm._isMounted) {
     _vm.e0 = function ($event) {
-      _vm.pressIdx = 0
-    }
-    _vm.e1 = function ($event) {
-      _vm.pressIdx = -1
-    }
-    _vm.e2 = function ($event) {
-      _vm.pressIdx = 1
-    }
-    _vm.e3 = function ($event) {
-      _vm.pressIdx = -1
-    }
-    _vm.e4 = function ($event) {
-      _vm.pressIdx = 2
-    }
-    _vm.e5 = function ($event) {
-      _vm.pressIdx = -1
-    }
-    _vm.e6 = function ($event) {
-      _vm.pressIdx = 3
-    }
-    _vm.e7 = function ($event) {
-      _vm.pressIdx = -1
+      _vm.badgeVisible = false
     }
   }
 }
@@ -292,9 +271,57 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 113));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 138));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -307,13 +334,20 @@ var _default = {
       stuNo: '',
       todayDate: '',
       greeting: '',
-      pressIdx: -1,
       points: 0,
       todayData: {
         steps: 0,
         duration: 0,
         carbon: 0
       },
+      carbonKg: '0.000',
+      treeLevel: 1,
+      treeName: '嫩芽',
+      userRank: '--',
+      rankLoading: false,
+      stepPct: 0,
+      stepsLeft: 10000,
+      badgeVisible: false,
       loading: true
     };
   },
@@ -326,68 +360,131 @@ var _default = {
       return;
     }
     this.stuNo = stuNo;
-    this.studentName = uni.getStorageSync('userName') || '用户';
+    this.studentName = uni.getStorageSync('userName') || '同学';
     this.initDate();
-    // 不在此处调用 loadTodayData，由 onShow 统一负责
   },
   onShow: function onShow() {
-    // 每次页面显示（含从步数页返回）时刷新今日数据和日期
     if (this.stuNo) {
-      this.initDate(); // 刷新日期
-      this.loadTodayData(); // 刷新数据
+      this.initDate();
+      this.loadTodayData();
+      this.loadRankData();
     }
   },
-
   methods: {
     initDate: function initDate() {
       var now = new Date();
       var h = now.getHours();
       if (h < 6) this.greeting = '夜深了';else if (h < 12) this.greeting = '早上好';else if (h < 14) this.greeting = '中午好';else if (h < 18) this.greeting = '下午好';else this.greeting = '晚上好';
-      var y = now.getFullYear();
-      var m = String(now.getMonth() + 1).padStart(2, '0');
-      var d = String(now.getDate()).padStart(2, '0');
-      this.todayDate = "".concat(y, "-").concat(m, "-").concat(d);
+      var days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      this.todayDate = "".concat(days[now.getDay()], "\uFF0C").concat(months[now.getMonth()], " ").concat(now.getDate());
     },
-    loadTodayData: function loadTodayData() {
+    loadRankData: function loadRankData() {
       var _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var res, carbonReduction;
+        var res;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _this.loading = true;
-                _context.prev = 1;
-                _context.next = 4;
-                return (0, _request.getStepCount)(_this.stuNo, _this.todayDate);
-              case 4:
-                res = _context.sent;
-                if (res) {
-                  _this.todayData.steps = res.steps || 0;
-                  _this.todayData.duration = res.duration || 0;
-                  // 计算减碳量：100步 = 0.005kg CO₂
-                  carbonReduction = (res.steps || 0) * 0.005 / 100;
-                  _this.todayData.carbon = Math.round(carbonReduction * 1000); // 转换为克
-                  // 计算积分：每0.1kg减碳得10分，即每1kg减碳得100分
-                  _this.points = Math.round(carbonReduction * 100);
+                if (_this.stuNo) {
+                  _context.next = 2;
+                  break;
                 }
-                _context.next = 11;
+                return _context.abrupt("return");
+              case 2:
+                _this.rankLoading = true;
+                _context.prev = 3;
+                _context.next = 6;
+                return (0, _request.getRankData)(_this.stuNo, 'today');
+              case 6:
+                res = _context.sent;
+                if (res && res.code === 200 && res.data && res.data.myRank) {
+                  _this.userRank = res.data.myRank.rank || '--';
+                }
+                _context.next = 13;
                 break;
-              case 8:
-                _context.prev = 8;
-                _context.t0 = _context["catch"](1);
-                console.error('获取今日数据失败:', _context.t0);
-                // 保持默认值
-              case 11:
-                _context.prev = 11;
-                _this.loading = false;
-                return _context.finish(11);
-              case 14:
+              case 10:
+                _context.prev = 10;
+                _context.t0 = _context["catch"](3);
+                console.error('获取排名数据失败:', _context.t0);
+              case 13:
+                _context.prev = 13;
+                _this.rankLoading = false;
+                return _context.finish(13);
+              case 16:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[1, 8, 11, 14]]);
+        }, _callee, null, [[3, 10, 13, 16]]);
+      }))();
+    },
+    loadTodayData: function loadTodayData() {
+      var _this2 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+        var now, dateStr, res, steps, duration, carbonKg, carbonG;
+        return _regenerator.default.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _this2.loading = true;
+                _context2.prev = 1;
+                now = new Date();
+                dateStr = "".concat(now.getFullYear(), "-").concat(String(now.getMonth() + 1).padStart(2, '0'), "-").concat(String(now.getDate()).padStart(2, '0'));
+                _context2.next = 6;
+                return (0, _request.getStepCount)(_this2.stuNo, dateStr);
+              case 6:
+                res = _context2.sent;
+                if (res) {
+                  steps = res.steps || 0;
+                  duration = res.duration || 0;
+                  carbonKg = steps * 0.005 / 100;
+                  carbonG = Math.round(carbonKg * 1000);
+                  _this2.todayData = {
+                    steps: steps,
+                    duration: duration,
+                    carbon: carbonG
+                  };
+                  _this2.points = Math.round(carbonKg * 100);
+                  _this2.carbonKg = carbonKg.toFixed(3);
+                  _this2.stepPct = Math.min(Math.round(steps / 10000 * 100), 100);
+                  _this2.stepsLeft = Math.max(10000 - steps, 0);
+                  // Tree level
+                  if (steps >= 15000) {
+                    _this2.treeLevel = 5;
+                    _this2.treeName = '参天大树';
+                  } else if (steps >= 10000) {
+                    _this2.treeLevel = 4;
+                    _this2.treeName = '茁壮成长';
+                  } else if (steps >= 6000) {
+                    _this2.treeLevel = 3;
+                    _this2.treeName = '小树苗';
+                  } else if (steps >= 3000) {
+                    _this2.treeLevel = 2;
+                    _this2.treeName = '破土而出';
+                  } else {
+                    _this2.treeLevel = 1;
+                    _this2.treeName = '嫩芽';
+                  }
+                  if (steps > 0) _this2.badgeVisible = true;
+                }
+                _context2.next = 13;
+                break;
+              case 10:
+                _context2.prev = 10;
+                _context2.t0 = _context2["catch"](1);
+                console.error('获取今日数据失败:', _context2.t0);
+              case 13:
+                _context2.prev = 13;
+                _this2.loading = false;
+                return _context2.finish(13);
+              case 16:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, null, [[1, 10, 13, 16]]);
       }))();
     },
     navigateTo: function navigateTo(url) {
@@ -401,9 +498,6 @@ var _default = {
         icon: 'none',
         duration: 2000
       });
-    },
-    handleTabChange: function handleTabChange(index) {
-      console.log('Tab changed to:', index);
     }
   }
 };

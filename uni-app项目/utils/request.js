@@ -1,7 +1,7 @@
 // 接口请求工具类
 const baseUrl = 'http://localhost:8080/api';
 
-export function request(url, options = {}) {
+export const request = (url, options = {}) => {
   return new Promise((resolve, reject) => {
     uni.request({
       url: baseUrl + url,
