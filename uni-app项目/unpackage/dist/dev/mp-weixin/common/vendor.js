@@ -12502,6 +12502,127 @@ var getExchangeRecords = function getExchangeRecords(username) {
 exports.getExchangeRecords = getExchangeRecords;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
+/***/ }),
+/* 47 */,
+/* 48 */,
+/* 49 */,
+/* 50 */,
+/* 51 */,
+/* 52 */,
+/* 53 */,
+/* 54 */,
+/* 55 */,
+/* 56 */,
+/* 57 */,
+/* 58 */,
+/* 59 */,
+/* 60 */,
+/* 61 */,
+/* 62 */,
+/* 63 */,
+/* 64 */,
+/* 65 */,
+/* 66 */,
+/* 67 */,
+/* 68 */,
+/* 69 */,
+/* 70 */,
+/* 71 */,
+/* 72 */,
+/* 73 */,
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */,
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */,
+/* 91 */,
+/* 92 */,
+/* 93 */,
+/* 94 */,
+/* 95 */,
+/* 96 */,
+/* 97 */,
+/* 98 */,
+/* 99 */,
+/* 100 */,
+/* 101 */,
+/* 102 */,
+/* 103 */,
+/* 104 */,
+/* 105 */,
+/* 106 */,
+/* 107 */,
+/* 108 */,
+/* 109 */,
+/* 110 */,
+/* 111 */,
+/* 112 */,
+/* 113 */,
+/* 114 */,
+/* 115 */,
+/* 116 */,
+/* 117 */,
+/* 118 */,
+/* 119 */
+/*!*******************************************************************!*\
+  !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/carbonProject.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.checkAndUnlock = checkAndUnlock;
+exports.getCertificate = getCertificate;
+exports.getProjectDetail = getProjectDetail;
+exports.getUserProjectList = getUserProjectList;
+exports.getUserTotalCarbon = getUserTotalCarbon;
+var _request = __webpack_require__(/*! ./request.js */ 46);
+// 生态认养项目相关接口
+
+// 用户累计减碳量 + 个人资料
+function getUserTotalCarbon(username) {
+  return (0, _request.request)("/api/project/carbon-total?username=".concat(username));
+}
+
+// 用户已解锁项目列表
+function getUserProjectList(username) {
+  return (0, _request.request)("/api/project/my-projects?username=".concat(username));
+}
+
+// 检查并自动解锁达标项目（POST，query param）
+function checkAndUnlock(username) {
+  return (0, _request.request)("/api/project/check-unlock?username=".concat(username), {
+    method: 'POST'
+  });
+}
+
+// 项目详情
+function getProjectDetail(id) {
+  return (0, _request.request)("/api/project/detail/".concat(id));
+}
+
+// 获取电子认养证书
+function getCertificate(username, userProjectId) {
+  return (0, _request.request)("/api/project/certificate?username=".concat(username, "&userProjectId=").concat(userProjectId));
+}
+
 /***/ })
 ]]);
 //# sourceMappingURL=../../.sourcemap/mp-weixin/common/vendor.js.map

@@ -29,6 +29,13 @@
 
     <!-- 功能列表 -->
     <view class="func-list">
+      <view class="func-item" @click="goCarbonReserve">
+        <view class="func-left">
+          <view class="func-icon-wrap tree"><text class="func-icon">🌳</text></view>
+          <text class="func-text">我的低碳保护区</text>
+        </view>
+        <text class="func-arrow">›</text>
+      </view>
       <view class="func-item" @click="goPointsDetail">
         <view class="func-left">
           <view class="func-icon-wrap star"><text class="func-icon">⭐</text></view>
@@ -248,8 +255,15 @@ export default {
         this.weekBars = [];
       }
     },
+    goCarbonReserve() {
+      uni.navigateTo({
+        url: '/pages/carbon保护区/carbon保护区'
+      });
+    },
     goPointsDetail() {
-      uni.navigateTo({ url: '/pages/pointsDetail/pointsDetail' });
+      uni.navigateTo({
+        url: '/pages/pointsDetail/pointsDetail'
+      });
     },
     async saveName() {
       uni.showToast({ title: '昵称已保存', icon: 'success' });
@@ -381,6 +395,7 @@ export default {
   align-items: center;
   justify-content: center;
 }
+.func-icon-wrap.tree { background: #e8f5e9; }
 .func-icon-wrap.star { background: #fff8e1; }
 .func-icon-wrap.leaf { background: #e8f5e9; }
 .func-icon-wrap.gear { background: #e3f2fd; }

@@ -8,7 +8,10 @@
     "pages/aiSuggest/aiSuggest",
     "pages/stepCount/stepCount",
     "pages/sportRecord/sportRecord",
-    "pages/rank/rank"
+    "pages/rank/rank",
+    "pages/carbon保护区/carbon保护区",
+    "pages/projectDetail/projectDetail",
+    "pages/certificate/certificate"
   ],
   "subPackages": [],
   "window": {

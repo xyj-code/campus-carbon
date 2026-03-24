@@ -102,6 +102,20 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
+  if (!_vm._isMounted) {
+    _vm.e0 = function ($event) {
+      _vm.focusUser = true
+    }
+    _vm.e1 = function ($event) {
+      _vm.focusUser = false
+    }
+    _vm.e2 = function ($event) {
+      _vm.focusPass = true
+    }
+    _vm.e3 = function ($event) {
+      _vm.focusPass = false
+    }
+  }
 }
 var recyclableRender = false
 var staticRenderFns = []
@@ -209,12 +223,33 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 46);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
       username: '',
       password: '',
-      loading: false
+      loading: false,
+      focusUser: false,
+      focusPass: false
     };
   },
   methods: {

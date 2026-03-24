@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "项目详情",
+  "navigationBarBackgroundColor": "#2e7d32",
+  "navigationBarTextStyle": "white",
+  "animationType": "slide-in-right",
+  "animationDuration": 220,
+  "usingComponents": {}
+}

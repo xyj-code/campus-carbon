@@ -86,6 +86,36 @@
         "animationType": "slide-in-right",
         "animationDuration": 220
       }
+    },
+    {
+      "path": "pages/carbon保护区/carbon保护区",
+      "style": {
+        "navigationBarTitleText": "低碳保护区",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
+      "path": "pages/projectDetail/projectDetail",
+      "style": {
+        "navigationBarTitleText": "项目详情",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
+      "path": "pages/certificate/certificate",
+      "style": {
+        "navigationBarTitleText": "项目证书",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
     }
   ],
   "tabBar": {
