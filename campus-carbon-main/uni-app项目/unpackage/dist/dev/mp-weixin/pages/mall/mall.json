@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "积分商城",
+  "navigationBarBackgroundColor": "#2e7d32",
+  "navigationBarTextStyle": "white",
+  "animationType": "none",
+  "usingComponents": {
+    "bottom-nav": "/components/bottom-nav"
+  }
+}
