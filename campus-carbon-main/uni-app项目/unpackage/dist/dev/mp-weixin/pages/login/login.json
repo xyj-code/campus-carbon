@@ -1,8 +1,0 @@
-{
-  "navigationBarTitleText": "登录",
-  "navigationBarBackgroundColor": "#2e7d32",
-  "navigationBarTextStyle": "white",
-  "animationType": "fade-in",
-  "animationDuration": 200,
-  "usingComponents": {}
-}
