@@ -419,7 +419,20 @@ var _default = {
       }))();
     },
     calculateNextGoal: function calculateNextGoal() {
-      var goals = this.allProjects.map(function (p) {
+      var _this3 = this;
+      // 调试：打印 userProjects 和 allProjects
+      console.log('userProjects:', this.userProjects);
+      console.log('allProjects:', this.allProjects);
+
+      // 过滤出未解锁的项目，并按所需碳量排序
+      var goals = this.allProjects.filter(function (p) {
+        // 使用与 isUnlockedById 相同的逻辑
+        var isUnlocked = _this3.userProjects.some(function (item) {
+          return item.project_id === p.id || item.projectId === p.id;
+        });
+        console.log("Project ".concat(p.id, " (").concat(p.name, ") is unlocked:"), isUnlocked);
+        return !isUnlocked;
+      }).map(function (p) {
         return {
           name: p.name,
           carbon: p.requiredCarbon
@@ -427,21 +440,22 @@ var _default = {
       }).sort(function (a, b) {
         return a.carbon - b.carbon;
       });
-      for (var i = 0; i < goals.length; i++) {
-        var goal = goals[i];
-        if (this.totalCarbon < goal.carbon) {
-          this.nextGoal.name = goal.name;
-          this.nextGoal.remaining = (goal.carbon - this.totalCarbon).toFixed(2);
-          var prevCarbon = i > 0 ? goals[i - 1].carbon : 0;
-          var range = goal.carbon - prevCarbon;
-          var progress = this.totalCarbon - prevCarbon;
-          this.progressPercent = Math.min(100, Math.round(progress / range * 100));
-          return;
-        }
+      console.log('filtered goals:', goals);
+      if (goals.length > 0) {
+        var goal = goals[0];
+        console.log('Next goal:', goal);
+        this.nextGoal.name = goal.name;
+        this.nextGoal.remaining = Math.max(0, (goal.carbon - this.totalCarbon).toFixed(2));
+        var prevCarbon = 0;
+        var range = goal.carbon;
+        var progress = Math.min(this.totalCarbon, goal.carbon);
+        this.progressPercent = Math.min(100, Math.round(progress / range * 100));
+      } else {
+        console.log('All projects unlocked');
+        this.nextGoal.name = '所有项目已解锁';
+        this.nextGoal.remaining = 0;
+        this.progressPercent = 100;
       }
-      this.nextGoal.name = '所有项目已解锁';
-      this.nextGoal.remaining = 0;
-      this.progressPercent = 100;
     },
     isUnlocked: function isUnlocked(type) {
       return this.userProjects.some(function (p) {
@@ -449,12 +463,13 @@ var _default = {
       });
     },
     isUnlockedById: function isUnlockedById(projectId) {
+      console.log("\u68C0\u67E5\u9879\u76EE ".concat(projectId, " \u662F\u5426\u89E3\u9501\uFF0CuserProjects:"), this.userProjects);
       return this.userProjects.some(function (p) {
-        return p.projectId === projectId;
+        return p.project_id === projectId || p.projectId === projectId;
       });
     },
     onMarkerTap: function onMarkerTap(e) {
-      var _this3 = this;
+      var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var projectId;
         return _regenerator.default.wrap(function _callee2$(_context2) {
@@ -463,7 +478,7 @@ var _default = {
               case 0:
                 projectId = e.markerId;
                 _context2.next = 3;
-                return _this3.showProjectDetail(projectId);
+                return _this4.showProjectDetail(projectId);
               case 3:
               case "end":
                 return _context2.stop();
@@ -473,7 +488,7 @@ var _default = {
       }))();
     },
     showProjectDetail: function showProjectDetail(projectId) {
-      var _this4 = this;
+      var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
         var res;
         return _regenerator.default.wrap(function _callee3$(_context3) {
@@ -488,8 +503,8 @@ var _default = {
                 return (0, _carbonProject.getProjectDetail)(projectId);
               case 4:
                 res = _context3.sent;
-                _this4.projectDetail = res.data || {};
-                _this4.showDetail = true;
+                _this5.projectDetail = res.data || {};
+                _this5.showDetail = true;
                 _context3.next = 13;
                 break;
               case 9:

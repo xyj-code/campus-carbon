@@ -12598,29 +12598,29 @@ var _request = __webpack_require__(/*! ./request.js */ 46);
 
 // 用户累计减碳量 + 个人资料
 function getUserTotalCarbon(username) {
-  return (0, _request.request)("/api/project/carbon-total?username=".concat(username));
+  return (0, _request.request)("/project/carbon-total?username=".concat(username));
 }
 
 // 用户已解锁项目列表
 function getUserProjectList(username) {
-  return (0, _request.request)("/api/project/my-projects?username=".concat(username));
+  return (0, _request.request)("/project/my-projects?username=".concat(username));
 }
 
 // 检查并自动解锁达标项目（POST，query param）
 function checkAndUnlock(username) {
-  return (0, _request.request)("/api/project/check-unlock?username=".concat(username), {
+  return (0, _request.request)("/project/check-unlock?username=".concat(username), {
     method: 'POST'
   });
 }
 
 // 项目详情
 function getProjectDetail(id) {
-  return (0, _request.request)("/api/project/detail/".concat(id));
+  return (0, _request.request)("/project/detail/".concat(id));
 }
 
 // 获取电子认养证书
 function getCertificate(username, userProjectId) {
-  return (0, _request.request)("/api/project/certificate?username=".concat(username, "&userProjectId=").concat(userProjectId));
+  return (0, _request.request)("/project/certificate?username=".concat(username, "&userProjectId=").concat(userProjectId));
 }
 
 /***/ })

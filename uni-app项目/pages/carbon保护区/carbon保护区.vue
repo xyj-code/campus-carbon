@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="container">
     <!-- 顶部导航栏 -->
    
@@ -199,32 +199,50 @@ export default {
       }
     },
     calculateNextGoal() {
-      const goals = this.allProjects.map(p => ({
-        name: p.name,
-        carbon: p.requiredCarbon
-      })).sort((a, b) => a.carbon - b.carbon);
+  // 调试：打印 userProjects 和 allProjects
+  console.log('userProjects:', this.userProjects);
+  console.log('allProjects:', this.allProjects);
+  
+  // 过滤出未解锁的项目，并按所需碳量排序
+  const goals = this.allProjects
+    .filter(p => {
+      // 使用与 isUnlockedById 相同的逻辑
+      const isUnlocked = this.userProjects.some(item => 
+        item.project_id === p.id || item.projectId === p.id
+      );
+      console.log(`Project ${p.id} (${p.name}) is unlocked:`, isUnlocked);
+      return !isUnlocked;
+    })
+    .map(p => ({
+      name: p.name,
+      carbon: p.requiredCarbon
+    }))
+    .sort((a, b) => a.carbon - b.carbon);
 
-      for (let i = 0; i < goals.length; i++) {
-        const goal = goals[i];
-        if (this.totalCarbon < goal.carbon) {
-          this.nextGoal.name = goal.name;
-          this.nextGoal.remaining = (goal.carbon - this.totalCarbon).toFixed(2);
-          const prevCarbon = i > 0 ? goals[i - 1].carbon : 0;
-          const range = goal.carbon - prevCarbon;
-          const progress = this.totalCarbon - prevCarbon;
-          this.progressPercent = Math.min(100, Math.round((progress / range) * 100));
-          return;
-        }
-      }
-      this.nextGoal.name = '所有项目已解锁';
-      this.nextGoal.remaining = 0;
-      this.progressPercent = 100;
-    },
+  console.log('filtered goals:', goals);
+
+  if (goals.length > 0) {
+    const goal = goals[0];
+    console.log('Next goal:', goal);
+    this.nextGoal.name = goal.name;
+    this.nextGoal.remaining = Math.max(0, (goal.carbon - this.totalCarbon).toFixed(2));
+    const prevCarbon = 0;
+    const range = goal.carbon;
+    const progress = Math.min(this.totalCarbon, goal.carbon);
+    this.progressPercent = Math.min(100, Math.round((progress / range) * 100));
+  } else {
+    console.log('All projects unlocked');
+    this.nextGoal.name = '所有项目已解锁';
+    this.nextGoal.remaining = 0;
+    this.progressPercent = 100;
+  }
+},
     isUnlocked(type) {
       return this.userProjects.some(p => p.projectType === type);
     },
-    isUnlockedById(projectId) {
-      return this.userProjects.some(p => p.projectId === projectId);
+   isUnlockedById(projectId) {
+      console.log(`检查项目 ${projectId} 是否解锁，userProjects:`, this.userProjects);
+  return this.userProjects.some(p => p.project_id === projectId || p.projectId === projectId);
     },
     async onMarkerTap(e) {
       const projectId = e.markerId;
