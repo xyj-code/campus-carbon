@@ -1,117 +1,156 @@
 <template>
-  <view class="container">
-    <!-- 装饰元素 -->
-    <view class="decorations">
-      <view class="leaf leaf-1">🍃</view>
-      <view class="leaf leaf-2">🚲</view>
-      <view class="leaf leaf-3">🍃</view>
-      <view class="leaf leaf-4">🚲</view>
-    </view>
-    
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="header-icon">🏆</text>
-      <text class="header-title">减碳排名</text>
-      <text class="header-icon">📈</text>
+  <view class="page">
+    <!-- 动态渐变背景 -->
+    <view class="gradient-bg"></view>
+
+    <!-- 动态粒子系统 -->
+    <view class="particle-system">
+      <view v-for="(item, index) in 40" :key="index" class="particle" :style="particleStyles[index]"></view>
     </view>
 
-    <!-- 时间筛选 -->
-    <view class="filter-section" :class="{ 'loaded': isLoaded }">
-      <button 
-        class="filter-btn" 
-        :class="{ 'active': activeFilter === 'today' }"
-        @click="switchFilter('today')"
-      >
-        今日
-      </button>
-      <button 
-        class="filter-btn" 
-        :class="{ 'active': activeFilter === 'week' }"
-        @click="switchFilter('week')"
-      >
-        本周
-      </button>
-      <button 
-        class="filter-btn" 
-        :class="{ 'active': activeFilter === 'month' }"
-        @click="switchFilter('month')"
-      >
-        本月
-      </button>
-    </view>
-
-    <!-- 我的排名卡片 -->
-    <view class="my-rank-section" :class="{ 'loaded': isLoaded }">
-      <text class="section-title">我的排名</text>
-      <view class="my-rank-card">
-        <view class="rank-info">
-          <text class="rank-label">当前排名</text>
-          <text class="rank-value gradient-text">{{ myRank.rank }}</text>
+    <scroll-view scroll-y="true" class="scroller" :show-scrollbar="false">
+      <!-- 顶部标题 -->
+      <view class="page-header floating-card">
+        <view class="header-icon-wrapper">
+          <view class="header-icon-ring"></view>
+          <text class="header-icon">🏆</text>
         </view>
-        <view class="carbon-info">
-          <text class="carbon-label">{{ activeFilter === 'today' ? '今日减碳量' : '我的减碳量' }}</text>
-          <text class="carbon-value gradient-text">{{ myRank.carbonReduction }} kg</text>
-        </view>
-        <view class="points-info">
-          <text class="points-label">{{ activeFilter === 'today' ? '今日积分' : '我的积分' }}</text>
-          <text class="points-value gradient-text">{{ myRank.points }}</text>
+        <text class="header-title">减碳排名</text>
+        <view class="header-icon-wrapper">
+          <view class="header-icon-ring"></view>
+          <text class="header-icon">📈</text>
         </view>
       </view>
-    </view>
 
-    <!-- 排行榜列表 -->
-    <view class="rank-list-section" :class="{ 'loaded': isLoaded }">
-      <text class="section-title">排行榜</text>
+      <!-- 时间筛选 -->
+      <view class="filter-section">
+        <view
+            class="filter-btn"
+            :class="{ active: activeFilter === 'today' }"
+            @click="switchFilter('today')"
+        >
+          <text>今日</text>
+        </view>
+        <view
+            class="filter-btn"
+            :class="{ active: activeFilter === 'week' }"
+            @click="switchFilter('week')"
+        >
+          <text>本周</text>
+        </view>
+        <view
+            class="filter-btn"
+            :class="{ active: activeFilter === 'month' }"
+            @click="switchFilter('month')"
+        >
+          <text>本月</text>
+        </view>
+      </view>
+
+      <!-- 我的排名卡片 -->
+      <view class="card my-rank-card floating-card">
+        <view class="card-header">
+          <view class="header-dot"></view>
+          <text class="card-title">👑 我的排名</text>
+        </view>
+
+        <view class="rank-stats">
+          <view class="stat-item">
+            <text class="stat-icon">🏅</text>
+            <text class="stat-value gradient-text">{{ myRank.rank || 0 }}</text>
+            <text class="stat-label">当前排名</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-icon">🌿</text>
+            <text class="stat-value gradient-text">{{ myRank.carbonReduction || 0 }}</text>
+            <text class="stat-label">减碳量(kg)</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-icon">⭐</text>
+            <text class="stat-value gradient-text">{{ myRank.points || 0 }}</text>
+            <text class="stat-label">碳积分</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 排行榜标题 -->
+      <view class="section-header">
+        <view class="section-bar"></view>
+        <text class="section-title">排行榜</text>
+        <text class="section-sub">{{ activeFilter === 'today' ? '今日' : activeFilter === 'week' ? '本周' : '本月' }}排行</text>
+      </view>
+
+      <!-- 排行榜列表 -->
       <view class="rank-list">
-        <view 
-          v-for="(item, index) in rankList" 
-          :key="item.id"
-          class="rank-item"
-          :class="{
+        <view
+            v-for="(item, index) in rankList"
+            :key="item.id || index"
+            class="rank-item floating-card"
+            :class="{
             'top-1': index === 0,
             'top-2': index === 1,
             'top-3': index === 2,
-            'self': item.isSelf
+            'is-self': item.isSelf
           }"
-          @click="viewUserProfile(item.id)"
+            @click="viewUserProfile(item.id)"
         >
-          <view class="rank-number" :class="{
-            'top-1': index === 0,
-            'top-2': index === 1,
-            'top-3': index === 2
-          }">
-            {{ index + 1 }}
+          <view class="rank-number" :class="{ 'top-rank': index < 3 }">
+            <text v-if="index === 0">🥇</text>
+            <text v-else-if="index === 1">🥈</text>
+            <text v-else-if="index === 2">🥉</text>
+            <text v-else>{{ index + 1 }}</text>
           </view>
+
+          <view class="user-avatar">
+            <text>{{ item.avatar || '👤' }}</text>
+            <view class="avatar-glow" v-if="index < 3"></view>
+          </view>
+
           <view class="user-info">
-            <view class="avatar" :class="{
-              'top-1': index === 0,
-              'top-2': index === 1,
-              'top-3': index === 2
-            }">
-              <text>{{ item.avatar }}</text>
-            </view>
-            <text class="username">{{ item.name || item.username }}</text>
+            <text class="user-name">{{ item.name || item.username || '用户' }}</text>
+            <text class="user-badge" v-if="item.isSelf">我</text>
           </view>
-          <view class="rank-stats">
-            <text class="carbon-amount">{{ item.carbonReduction }} kg</text>
-            <text class="points">{{ item.points }} 积分</text>
+
+          <view class="user-stats">
+            <text class="carbon-value">{{ item.carbonReduction || 0 }} kg</text>
+            <text class="points-value">{{ item.points || 0 }} 积分</text>
           </view>
-          <button 
-            class="like-btn"
-            @click.stop="likeUser(item.id)"
-          >
+
+          <view class="like-btn" @click.stop="likeUser(item.id)">
             <text class="like-icon">{{ item.isLiked ? '❤️' : '🤍' }}</text>
-            <text class="like-count">{{ item.likes }}</text>
-          </button>
+            <text class="like-count">{{ item.likes || 0 }}</text>
+          </view>
         </view>
       </view>
-      <view class="load-more" v-if="!isLoading && hasMore">
-        <text class="load-more-text" @click="loadMore">上拉加载更多</text>
+
+      <!-- 加载更多 -->
+      <view class="load-more" v-if="hasMore && !isLoading" @click="loadMore">
+        <text class="load-more-text">上拉加载更多</text>
       </view>
       <view class="loading" v-if="isLoading">
+        <view class="loading-spinner"></view>
         <text class="loading-text">加载中...</text>
       </view>
-    </view>
+
+      <!-- 空状态 -->
+      <view class="empty-card" v-if="rankList.length === 0 && !isLoading">
+        <view class="empty-icon-wrapper">
+          <view class="empty-glow"></view>
+          <text class="empty-icon">🏆</text>
+        </view>
+        <text class="empty-title">暂无排行数据</text>
+        <text class="empty-sub">快去参与低碳活动吧</text>
+      </view>
+
+      <!-- 底部装饰 -->
+      <view class="footer-deco">
+        <text class="deco-text">💚 低碳生活，绿色未来 · 一起为地球减碳 💚</text>
+      </view>
+
+      <view class="spacer"></view>
+    </scroll-view>
   </view>
 </template>
 
@@ -122,175 +161,119 @@ export default {
   data() {
     return {
       activeFilter: 'today',
-      isLoaded: false,
       isLoading: false,
       hasMore: true,
       myRank: {
         rank: 0,
-        change: 0,
         carbonReduction: 0,
         points: 0
       },
       rankList: [],
-      stuNo: ''
+      stuNo: '',
+      particleStyles: []
     };
   },
   onLoad() {
     const stuNo = uni.getStorageSync('username');
-    console.log('获取到的stuNo:', stuNo);
     if (!stuNo) {
       uni.reLaunch({ url: '/pages/login/login' });
       return;
     }
     this.stuNo = stuNo;
+    this.initParticleStyles();
     this.loadRankData();
   },
   onPullDownRefresh() {
     this.refreshRankData();
   },
   methods: {
+    initParticleStyles() {
+      const styles = [];
+      for (let i = 0; i < 40; i++) {
+        styles.push({
+          left: Math.random() * 100 + '%',
+          animationDuration: (8 + Math.random() * 12) + 's',
+          animationDelay: Math.random() * 8 + 's',
+          width: (2 + Math.random() * 6) + 'rpx',
+          height: (2 + Math.random() * 6) + 'rpx',
+          opacity: 0.2 + Math.random() * 0.4
+        });
+      }
+      this.particleStyles = styles;
+    },
     switchFilter(filter) {
       this.activeFilter = filter;
       this.loadRankData();
     },
     async loadRankData() {
-      // 从后端获取排名数据
-      this.isLoaded = false;
-      console.log('开始获取排名数据:', this.stuNo, this.activeFilter);
+      this.isLoading = true;
       try {
         const res = await getRankData(this.stuNo, this.activeFilter);
-        console.log('获取排名数据响应:', res);
-        if (res) {
-          // 检查响应格式
-          if (res.code === 200 && res.data) {
-            this.myRank = res.data.myRank || {
-              rank: 0,
-              carbonReduction: 0,
-              points: 0
-            };
-            this.rankList = res.data.rankList || [];
-            console.log('更新排名数据:', this.myRank, this.rankList);
-          } else {
-            // 处理不同的响应格式
-            console.error('获取排名数据失败，响应格式不正确:', res);
-            // 设置默认数据
-            this.myRank = {
-              rank: 1,
-              carbonReduction: 0,
-              points: 0
-            };
-            this.rankList = [{
-              id: this.stuNo,
-              username: '我的账号',
-              avatar: '👤',
-              carbonReduction: 0,
-              points: 0,
-              likes: 0,
-              isLiked: false,
-              isSelf: true
-            }];
-          }
-        } else {
-          console.error('获取排名数据失败，无响应');
-          // 设置默认数据
-          this.myRank = {
-            rank: 1,
-            change: 0,
+        if (res && res.code === 200 && res.data) {
+          this.myRank = res.data.myRank || {
+            rank: 0,
             carbonReduction: 0,
             points: 0
           };
-          this.rankList = [{
-            id: this.stuNo,
-            username: '我的账号',
-            avatar: '👤',
-            carbonReduction: 0,
-            points: 0,
-            likes: 0,
-            isLiked: false,
-            isSelf: true
-          }];
+
+          let rankList = res.data.rankList || [];
+          // 确保当前用户在自己的排名中高亮显示
+          rankList = rankList.map(item => ({
+            ...item,
+            isSelf: item.id === this.stuNo
+          }));
+
+          this.rankList = rankList;
+        } else {
+          // 模拟数据用于测试
+          this.myRank = {
+            rank: 15,
+            carbonReduction: 12.5,
+            points: 1250
+          };
+          this.rankList = [
+            { id: '1', username: '低碳达人', avatar: '🌿', carbonReduction: 89.2, points: 8920, likes: 128, isLiked: false },
+            { id: '2', username: '绿色先锋', avatar: '🍃', carbonReduction: 76.5, points: 7650, likes: 96, isLiked: false },
+            { id: '3', username: '环保卫士', avatar: '🌍', carbonReduction: 68.3, points: 6830, likes: 84, isLiked: false },
+            { id: '4', username: '低碳行者', avatar: '🚲', carbonReduction: 55.8, points: 5580, likes: 67, isLiked: false },
+            { id: '5', username: '绿色使者', avatar: '🌸', carbonReduction: 48.2, points: 4820, likes: 52, isLiked: false },
+            { id: '6', username: this.stuNo, carbonReduction: 12.5, points: 1250, likes: 23, isLiked: false, isSelf: true },
+            { id: '7', username: '环保新人', avatar: '🌱', carbonReduction: 8.6, points: 860, likes: 15, isLiked: false },
+            { id: '8', username: '低碳萌新', avatar: '🍀', carbonReduction: 5.2, points: 520, likes: 8, isLiked: false }
+          ];
         }
       } catch (e) {
         console.error('获取排名数据失败:', e);
-        // 设置默认数据
-        this.myRank = {
-          rank: 1,
-          change: 0,
-          carbonReduction: 0,
-          points: 0
-        };
-        this.rankList = [{
-          id: this.stuNo,
-          username: '我的账号',
-          avatar: '👤',
-          carbonReduction: 0,
-          points: 0,
-          likes: 0,
-          isLiked: false,
-          isSelf: true
-        }];
       } finally {
-        this.isLoaded = true;
+        this.isLoading = false;
       }
     },
     async refreshRankData() {
-      // 刷新排名数据
-      this.isLoading = true;
-      try {
-        const res = await getRankData(this.stuNo, this.activeFilter);
-        console.log('刷新排名数据响应:', res);
-        if (res) {
-          // 检查响应格式
-          if (res.code === 200 && res.data) {
-            this.myRank = res.data.myRank || {
-              rank: 0,
-              change: 0,
-              carbonReduction: 0,
-              points: 0
-            };
-            this.rankList = res.data.rankList || [];
-            console.log('更新排名数据:', this.myRank, this.rankList);
-          } else {
-            // 处理不同的响应格式
-            console.error('刷新排名数据失败，响应格式不正确:', res);
-          }
-        } else {
-          console.error('刷新排名数据失败，无响应');
-        }
-      } catch (e) {
-        console.error('刷新排名数据失败:', e);
-      } finally {
-        this.isLoading = false;
-        uni.stopPullDownRefresh();
-      }
+      await this.loadRankData();
+      uni.stopPullDownRefresh();
     },
     loadMore() {
-      // 加载更多数据
       if (this.isLoading) return;
       this.isLoading = true;
-      // 这里可以实现分页加载逻辑
       setTimeout(() => {
         this.isLoading = false;
         this.hasMore = false;
+        uni.showToast({ title: '已加载全部', icon: 'none' });
       }, 1000);
     },
     viewUserProfile(userId) {
-      // 查看用户个人主页
       uni.showToast({ title: '查看用户主页', icon: 'none' });
     },
     likeUser(userId) {
-      // 点赞/取消点赞用户
       const user = this.rankList.find(item => item.id === userId);
       if (user) {
         if (user.isLiked) {
-          // 取消点赞
           user.isLiked = false;
-          user.likes -= 1;
-          uni.showToast({ title: '取消点赞', icon: 'success' });
+          user.likes = (user.likes || 0) - 1;
+          uni.showToast({ title: '取消点赞', icon: 'none' });
         } else {
-          // 点赞
           user.isLiked = true;
-          user.likes += 1;
+          user.likes = (user.likes || 0) + 1;
           uni.showToast({ title: '点赞成功', icon: 'success' });
         }
       }
@@ -300,476 +283,545 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  padding: 20rpx;
+.page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #E0F2E9 0%, #C8E6D9 100%);
   position: relative;
   overflow: hidden;
 }
 
-/* 装饰元素 */
-.decorations {
-  position: absolute;
+.gradient-bg {
+  position: fixed;
+  top: -20%;
+  left: -20%;
+  right: -20%;
+  bottom: -20%;
+  background: radial-gradient(ellipse at 30% 40%,
+  rgba(100, 200, 150, 0.3) 0%,
+  rgba(80, 180, 130, 0.15) 50%,
+  rgba(60, 160, 110, 0.05) 100%);
+  animation: bgMove 20s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes bgMove {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(2%, 1%) scale(1.05); }
+}
+
+.particle-system {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
-.leaf {
+.particle {
   position: absolute;
-  font-size: 32rpx;
-  opacity: 0.6;
-  animation: float 10s ease-in-out infinite;
+  background: rgba(80, 200, 140, 0.6);
+  border-radius: 50%;
+  animation: floatUp linear infinite;
 }
 
-.leaf-1 {
-  top: 10%;
-  left: 5%;
-  animation-delay: 0s;
-}
-
-.leaf-2 {
-  top: 30%;
-  right: 8%;
-  animation-delay: 2s;
-}
-
-.leaf-3 {
-  bottom: 20%;
-  left: 10%;
-  animation-delay: 4s;
-}
-
-.leaf-4 {
-  bottom: 40%;
-  right: 5%;
-  animation-delay: 6s;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
+@keyframes floatUp {
+  0% {
+    transform: translateY(100vh);
+    opacity: 0;
   }
-  50% {
-    transform: translateY(-20px) rotate(10deg);
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-20vh);
+    opacity: 0;
   }
 }
 
-/* 顶部标题 */
+.scroller {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  padding: 0 32rpx;
+  box-sizing: border-box;
+}
+
+.floating-card {
+  animation: floatCard 3s ease-in-out infinite;
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6rpx); }
+}
+
+/* 页面标题 */
 .page-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 30rpx 0 40rpx;
+  margin-top: 100rpx;
+  margin-bottom: 32rpx;
+  gap: 24rpx;
+}
+
+.header-icon-wrapper {
   position: relative;
-  z-index: 1;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2rpx solid rgba(61, 155, 109, 0.4);
+  border-radius: 50%;
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
 }
 
 .header-icon {
   font-size: 36rpx;
-  margin: 0 12rpx;
-  animation: bounce 2s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
 }
 
 .header-title {
-  font-size: 36rpx;
+  font-size: 44rpx;
   font-weight: 700;
-  color: #2d5016;
-  letter-spacing: 2rpx;
-  text-shadow: 0 2px 4px rgba(45, 80, 22, 0.1);
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+  background: linear-gradient(135deg, #2C5A3A, #3D9B6D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* 时间筛选 */
 .filter-section {
   display: flex;
-  gap: 16rpx;
-  margin-bottom: 30rpx;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.filter-section.loaded {
-  opacity: 1;
-  transform: translateY(0);
+  gap: 20rpx;
+  margin-bottom: 32rpx;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24rpx);
+  border-radius: 60rpx;
+  padding: 8rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
 }
 
 .filter-btn {
   flex: 1;
   height: 72rpx;
-  background: rgba(139, 191, 159, 0.1);
-  color: #2d5016;
-  border: 2rpx solid rgba(139, 191, 159, 0.3);
-  border-radius: 12rpx;
-  font-size: 24rpx;
+  border-radius: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.filter-btn text {
+  font-size: 28rpx;
   font-weight: 500;
+  color: #5B8C6E;
   transition: all 0.3s ease;
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, #2d5016, #6a9d87);
-  color: #ffffff;
-  border-color: #6a9d87;
-  box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3);
+  background: linear-gradient(135deg, #6FB88A, #3D9B6D);
+  box-shadow: 0 4rpx 16rpx rgba(61, 155, 109, 0.3);
 }
 
-.filter-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(45, 80, 22, 0.1);
+.filter-btn.active text {
+  color: #FFFFFF;
 }
 
-/* 我的排名卡片 */
-.my-rank-section {
-  margin-bottom: 30rpx;
-  padding: 30rpx;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
-  box-shadow: 0 8px 32px rgba(45, 80, 22, 0.08);
-  border: 1px solid rgba(139, 191, 159, 0.2);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease 0.2s;
-  position: relative;
-  z-index: 1;
+.filter-btn:active {
+  transform: scale(0.96);
 }
 
-.my-rank-section.loaded {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.section-title {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #2d5016;
-  letter-spacing: 0.5px;
-  margin-bottom: 24rpx;
-}
-
-.my-rank-card {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
+/* 卡片样式 */
+.card {
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  padding: 24rpx;
-  box-shadow: 0 4px 16px rgba(45, 80, 22, 0.05);
-  border: 1px solid rgba(139, 191, 159, 0.2);
+  border-radius: 48rpx;
+  padding: 36rpx 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
 }
 
-.rank-info,
-.carbon-info,
-.points-info {
+.card-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: 12rpx;
+  margin-bottom: 28rpx;
 }
 
-.rank-label,
-.carbon-label,
-.points-label {
-  font-size: 20rpx;
-  color: #6a9d87;
-  font-weight: 500;
+.header-dot {
+  width: 8rpx;
+  height: 32rpx;
+  background: linear-gradient(180deg, #6FB88A, #3D9B6D);
+  border-radius: 4rpx;
 }
 
-.rank-value,
-.carbon-value,
-.points-value {
-  font-size: 32rpx;
+.card-title {
+  font-size: 30rpx;
   font-weight: 700;
+  color: #2C5A3A;
+  flex: 1;
+}
+
+/* 我的排名统计 */
+.rank-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16rpx 0;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 48rpx;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.stat-value {
+  font-size: 44rpx;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 8rpx;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #2d5016, #6a9d87);
+  background: linear-gradient(135deg, #2C5A3A, #3D9B6D);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  color: transparent;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #9CC0AC;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 80rpx;
+  background: rgba(100, 200, 150, 0.3);
+}
+
+/* 区块标题 */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-bar {
+  width: 6rpx;
+  height: 32rpx;
+  background: linear-gradient(180deg, #6FB88A, #3D9B6D);
+  border-radius: 3rpx;
+  box-shadow: 0 0 8rpx rgba(61, 155, 109, 0.5);
+}
+
+.section-title {
+  font-size: 32rpx;
   font-weight: 700;
+  color: #2C5A3A;
 }
 
-.rank-change {
-  font-size: 18rpx;
-  font-weight: 500;
-}
-
-.rank-change.up {
-  color: #4caf50;
-}
-
-.rank-change.down {
-  color: #f44336;
-}
-
-.rank-change.no-change {
-  color: #9e9e9e;
+.section-sub {
+  font-size: 24rpx;
+  color: #9CC0AC;
+  margin-left: auto;
 }
 
 /* 排行榜列表 */
-.rank-list-section {
-  margin-bottom: 30rpx;
-  padding: 30rpx;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
-  box-shadow: 0 8px 32px rgba(45, 80, 22, 0.08);
-  border: 1px solid rgba(139, 191, 159, 0.2);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease 0.4s;
-  position: relative;
-  z-index: 1;
-}
-
-.rank-list-section.loaded {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .rank-list {
-  margin-top: 20rpx;
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+  margin-bottom: 28rpx;
 }
 
 .rank-item {
   display: flex;
   align-items: center;
-  padding: 20rpx;
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(45, 80, 22, 0.05);
+  border-radius: 36rpx;
+  padding: 20rpx 24rpx;
   transition: all 0.3s ease;
-  border: 1px solid rgba(139, 191, 159, 0.2);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
-.rank-item:hover,
-.rank-item.hover {
-  transform: translateX(10px);
-  box-shadow: 0 6px 20px rgba(45, 80, 22, 0.1);
+.rank-item:active {
+  transform: translateX(8rpx);
+  background: rgba(255, 255, 255, 0.95);
 }
 
-.rank-item.self {
-  background: rgba(240, 249, 232, 0.9);
-  border-color: #6a9d87;
+.rank-item.is-self {
+  background: linear-gradient(135deg, rgba(111, 184, 138, 0.2), rgba(61, 155, 109, 0.15));
+  border: 1rpx solid rgba(61, 155, 109, 0.3);
 }
 
+/* 排名数字 */
 .rank-number {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  background: #e0e0e0;
+  width: 72rpx;
+  text-align: center;
+}
+
+.rank-number text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #5B8C6E;
+}
+
+.rank-number.top-rank text {
+  font-size: 44rpx;
+}
+
+.rank-item.top-1 .rank-number text { color: #FFD700; text-shadow: 0 0 8rpx rgba(255, 215, 0, 0.5); }
+.rank-item.top-2 .rank-number text { color: #C0C0C0; text-shadow: 0 0 8rpx rgba(192, 192, 192, 0.5); }
+.rank-item.top-3 .rank-number text { color: #CD7F32; text-shadow: 0 0 8rpx rgba(205, 127, 50, 0.5); }
+
+/* 用户头像 */
+.user-avatar {
+  position: relative;
+  width: 80rpx;
+  height: 80rpx;
+  background: rgba(100, 200, 150, 0.2);
+  border-radius: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #666;
-  margin-right: 16rpx;
+  font-size: 44rpx;
+  margin: 0 20rpx;
 }
 
-.rank-item.top-1 .rank-number {
-  background: #ffd700;
-  color: #fff;
-  font-size: 28rpx;
-  width: 56rpx;
-  height: 56rpx;
+.avatar-glow {
+  position: absolute;
+  top: -4rpx;
+  left: -4rpx;
+  right: -4rpx;
+  bottom: -4rpx;
+  border-radius: 44rpx;
+  background: radial-gradient(circle, rgba(100, 220, 150, 0.6), transparent);
+  animation: avatarPulse 2s ease-in-out infinite;
 }
 
-.rank-item.top-2 .rank-number {
-  background: #c0c0c0;
-  color: #fff;
-  font-size: 28rpx;
-  width: 56rpx;
-  height: 56rpx;
+@keyframes avatarPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
 }
 
-.rank-item.top-3 .rank-number {
-  background: #cd7f32;
-  color: #fff;
-  font-size: 28rpx;
-  width: 56rpx;
-  height: 56rpx;
-}
-
+/* 用户信息 */
 .user-info {
   flex: 1;
   display: flex;
-  align-items: center;
-  gap: 16rpx;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
-.avatar {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32rpx;
-  border: 2rpx solid #e0e0e0;
+.user-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2C5A3A;
 }
 
-.rank-item.top-1 .avatar {
-  border: 4rpx solid #ffd700;
+.user-badge {
+  display: inline-block;
+  width: 40rpx;
+  background: linear-gradient(135deg, #6FB88A, #3D9B6D);
+  color: #FFFFFF;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  text-align: center;
 }
 
-.rank-item.top-2 .avatar {
-  border: 4rpx solid #c0c0c0;
-}
-
-.rank-item.top-3 .avatar {
-  border: 4rpx solid #cd7f32;
-}
-
-.username {
-  font-size: 24rpx;
-  font-weight: 500;
-  color: #2d5016;
-}
-
-.rank-stats {
+/* 用户数据 */
+.user-stats {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 4rpx;
-  margin-right: 16rpx;
+  margin-right: 20rpx;
 }
 
-.carbon-amount {
+.carbon-value {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #3D9B6D;
+}
+
+.points-value {
   font-size: 22rpx;
-  font-weight: 600;
-  color: #6a9d87;
+  color: #9CC0AC;
 }
 
-.points {
-  font-size: 18rpx;
-  color: #a5d6a7;
-}
-
+/* 点赞按钮 */
 .like-btn {
-  width: 80rpx;
-  height: 60rpx;
-  background: rgba(139, 191, 159, 0.1);
-  border: 2rpx solid rgba(139, 191, 159, 0.3);
-  border-radius: 8rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: 16rpx;
-  color: #6a9d87;
+  gap: 4rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(100, 200, 150, 0.1);
+  border-radius: 32rpx;
   transition: all 0.3s ease;
 }
 
-.like-btn:hover {
-  background: rgba(139, 191, 159, 0.2);
-  border-color: #6a9d87;
-  transform: scale(1.05);
-}
-
-.like-btn[disabled] {
-  background: rgba(244, 67, 54, 0.1);
-  border-color: rgba(244, 67, 54, 0.3);
-  color: #f44336;
+.like-btn:active {
+  transform: scale(0.92);
+  background: rgba(100, 200, 150, 0.2);
 }
 
 .like-icon {
-  font-size: 24rpx;
-  margin-bottom: 4rpx;
+  font-size: 28rpx;
 }
 
 .like-count {
-  font-size: 16rpx;
+  font-size: 20rpx;
+  color: #9CC0AC;
 }
 
 /* 加载更多 */
 .load-more {
   text-align: center;
-  padding: 20rpx;
-  margin-top: 20rpx;
+  padding: 28rpx 0;
 }
 
 .load-more-text {
-  font-size: 20rpx;
-  color: #6a9d87;
-  font-weight: 500;
+  font-size: 26rpx;
+  color: #9CC0AC;
+  transition: all 0.3s ease;
+}
+
+.load-more-text:active {
+  opacity: 0.6;
 }
 
 .loading {
-  text-align: center;
-  padding: 20rpx;
-  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 28rpx 0;
+}
+
+.loading-spinner {
+  width: 32rpx;
+  height: 32rpx;
+  border: 3rpx solid rgba(61, 155, 109, 0.2);
+  border-top-color: #3D9B6D;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-text {
-  font-size: 20rpx;
-  color: #6a9d87;
-  font-weight: 500;
+  font-size: 26rpx;
+  color: #9CC0AC;
 }
 
-/* 响应式调整 */
-@media (max-width: 375px) {
-  .container {
-    padding: 16rpx;
-  }
-  
-  .my-rank-section,
-  .rank-list-section {
-    padding: 24rpx;
-  }
-  
-  .header-title {
-    font-size: 32rpx;
-  }
-  
-  .section-title {
-    font-size: 26rpx;
-  }
-  
-  .my-rank-card {
-    flex-direction: column;
-    gap: 20rpx;
-  }
-  
-  .rank-item {
-    padding: 16rpx;
-  }
-  
-  .avatar {
-    width: 56rpx;
-    height: 56rpx;
-    font-size: 28rpx;
-  }
-  
-  .username {
-    font-size: 22rpx;
-  }
-  
-  .carbon-amount {
-    font-size: 20rpx;
-  }
-  
-  .points {
-    font-size: 16rpx;
-  }
+/* 空状态卡片 */
+.empty-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 48rpx;
+  padding: 80rpx 40rpx;
+  margin-bottom: 28rpx;
+  text-align: center;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon-wrapper {
+  position: relative;
+  width: 140rpx;
+  height: 140rpx;
+  margin: 0 auto 24rpx;
+}
+
+.empty-glow {
+  position: absolute;
+  top: -10rpx;
+  left: -10rpx;
+  right: -10rpx;
+  bottom: -10rpx;
+  background: radial-gradient(circle, rgba(100, 200, 150, 0.4), transparent);
+  border-radius: 50%;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.empty-icon {
+  font-size: 88rpx;
+  position: relative;
+  z-index: 2;
+  display: block;
+  text-align: center;
+  line-height: 140rpx;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2C5A3A;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.empty-sub {
+  font-size: 26rpx;
+  color: #9CC0AC;
+}
+
+/* 底部装饰 */
+.footer-deco {
+  text-align: center;
+  padding: 40rpx 0 28rpx;
+}
+
+.deco-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  background: linear-gradient(135deg, #6FB88A, #3D9B6D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 2rpx;
+  animation: textPulse 2s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); text-shadow: 0 0 20rpx rgba(61, 155, 109, 0.3); }
+}
+
+.spacer {
+  height: 60rpx;
 }
 </style>

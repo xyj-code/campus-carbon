@@ -24,8 +24,8 @@
       <view class="project-progress">
         <text class="progress-title">项目进度</text>
         <view class="progress-bar">
-          <view 
-            class="progress-fill" 
+          <view
+            class="progress-fill"
             :style="{ width: projectDetail.progress + '%' }"
           ></view>
         </view>
@@ -36,8 +36,8 @@
       <view class="project-images" v-if="projectDetail.images && projectDetail.images.length > 0">
         <text class="images-title">项目实拍</text>
         <view class="images-grid">
-          <image 
-            v-for="(img, index) in projectDetail.images" 
+          <image
+            v-for="(img, index) in projectDetail.images"
             :key="index"
             :src="img"
             class="image-item"

@@ -116,6 +116,27 @@
         "animationType": "slide-in-right",
         "animationDuration": 220
       }
+    },
+    {
+      "path": "pages/carbonLedger/carbonLedger",
+      "style": {
+        "navigationBarTitleText": "个人碳账本",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/settings/settings",
+      "style": {
+        "navigationBarTitleText": "设置",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/about/about",
+      "style": {
+        "navigationBarTitleText": "关于我们",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "tabBar": {
@@ -136,4 +157,5 @@
     "backgroundColor": "#f0f7f0",
     "backgroundTextStyle": "light"
   }
+
 }
