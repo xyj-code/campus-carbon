@@ -11857,9 +11857,7 @@ module.exports = Array.isArray || function (arr) {
 /* 31 */,
 /* 32 */,
 /* 33 */,
-/* 34 */,
-/* 35 */,
-/* 36 */
+/* 34 */
 /*!**********************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/runtime/componentNormalizer.js ***!
   \**********************************************************************************************************/
@@ -11990,13 +11988,13 @@ function normalizeComponent (
 
 
 /***/ }),
+/* 35 */,
+/* 36 */,
 /* 37 */,
 /* 38 */,
 /* 39 */,
 /* 40 */,
-/* 41 */,
-/* 42 */,
-/* 43 */
+/* 41 */
 /*!************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/@babel/runtime/regenerator/index.js ***!
   \************************************************************************************************/
@@ -12005,11 +12003,11 @@ function normalizeComponent (
 
 // TODO(Babel 8): Remove this file.
 
-var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 44)();
+var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 42)();
 module.exports = runtime;
 
 /***/ }),
-/* 44 */
+/* 42 */
 /*!*******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/regeneratorRuntime.js ***!
   \*******************************************************************/
@@ -12330,7 +12328,7 @@ function _regeneratorRuntime() {
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 45 */
+/* 43 */
 /*!*****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/asyncToGenerator.js ***!
   \*****************************************************************/
@@ -12370,7 +12368,7 @@ function _asyncToGenerator(fn) {
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 46 */
+/* 44 */
 /*!*************************************************************!*\
   !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/request.js ***!
   \*************************************************************/
@@ -12503,6 +12501,8 @@ exports.getExchangeRecords = getExchangeRecords;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
+/* 45 */,
+/* 46 */,
 /* 47 */,
 /* 48 */,
 /* 49 */,
@@ -12573,9 +12573,7 @@ exports.getExchangeRecords = getExchangeRecords;
 /* 114 */,
 /* 115 */,
 /* 116 */,
-/* 117 */,
-/* 118 */,
-/* 119 */
+/* 117 */
 /*!*******************************************************************!*\
   !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/carbonProject.js ***!
   \*******************************************************************/
@@ -12593,7 +12591,7 @@ exports.getCertificate = getCertificate;
 exports.getProjectDetail = getProjectDetail;
 exports.getUserProjectList = getUserProjectList;
 exports.getUserTotalCarbon = getUserTotalCarbon;
-var _request = __webpack_require__(/*! ./request.js */ 46);
+var _request = __webpack_require__(/*! ./request.js */ 44);
 // 生态认养项目相关接口
 
 // 用户累计减碳量 + 个人资料

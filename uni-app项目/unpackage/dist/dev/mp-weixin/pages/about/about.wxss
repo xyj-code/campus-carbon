@@ -1,0 +1,261 @@
+
+.page.data-v-92c79dbc {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #E0F2E9 0%, #C8E6D9 100%);
+  position: relative;
+  overflow: hidden;
+}
+.gradient-bg.data-v-92c79dbc {
+  position: fixed;
+  top: -20%;
+  left: -20%;
+  right: -20%;
+  bottom: -20%;
+  background: radial-gradient(ellipse at 30% 40%,
+  rgba(100, 200, 150, 0.3) 0%,
+  rgba(80, 180, 130, 0.15) 50%,
+  rgba(60, 160, 110, 0.05) 100%);
+  -webkit-animation: bgMove-data-v-92c79dbc 20s ease-in-out infinite;
+          animation: bgMove-data-v-92c79dbc 20s ease-in-out infinite;
+  z-index: 0;
+}
+@-webkit-keyframes bgMove-data-v-92c79dbc {
+0%, 100% { -webkit-transform: translate(0, 0) scale(1); transform: translate(0, 0) scale(1);
+}
+50% { -webkit-transform: translate(2%, 1%) scale(1.05); transform: translate(2%, 1%) scale(1.05);
+}
+}
+@keyframes bgMove-data-v-92c79dbc {
+0%, 100% { -webkit-transform: translate(0, 0) scale(1); transform: translate(0, 0) scale(1);
+}
+50% { -webkit-transform: translate(2%, 1%) scale(1.05); transform: translate(2%, 1%) scale(1.05);
+}
+}
+.particle-system.data-v-92c79dbc {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.particle.data-v-92c79dbc {
+  position: absolute;
+  background: rgba(80, 200, 140, 0.6);
+  border-radius: 50%;
+  -webkit-animation: floatUp-data-v-92c79dbc linear infinite;
+          animation: floatUp-data-v-92c79dbc linear infinite;
+}
+@-webkit-keyframes floatUp-data-v-92c79dbc {
+0% {
+    -webkit-transform: translateY(100vh);
+            transform: translateY(100vh);
+    opacity: 0;
+}
+10% {
+    opacity: 0.8;
+}
+90% {
+    opacity: 0.5;
+}
+100% {
+    -webkit-transform: translateY(-20vh);
+            transform: translateY(-20vh);
+    opacity: 0;
+}
+}
+@keyframes floatUp-data-v-92c79dbc {
+0% {
+    -webkit-transform: translateY(100vh);
+            transform: translateY(100vh);
+    opacity: 0;
+}
+10% {
+    opacity: 0.8;
+}
+90% {
+    opacity: 0.5;
+}
+100% {
+    -webkit-transform: translateY(-20vh);
+            transform: translateY(-20vh);
+    opacity: 0;
+}
+}
+.scroller.data-v-92c79dbc {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  padding: 0 32rpx;
+  box-sizing: border-box;
+}
+.floating-card.data-v-92c79dbc {
+  -webkit-animation: floatCard-data-v-92c79dbc 3s ease-in-out infinite;
+          animation: floatCard-data-v-92c79dbc 3s ease-in-out infinite;
+}
+@-webkit-keyframes floatCard-data-v-92c79dbc {
+0%, 100% { -webkit-transform: translateY(0); transform: translateY(0);
+}
+50% { -webkit-transform: translateY(-6rpx); transform: translateY(-6rpx);
+}
+}
+@keyframes floatCard-data-v-92c79dbc {
+0%, 100% { -webkit-transform: translateY(0); transform: translateY(0);
+}
+50% { -webkit-transform: translateY(-6rpx); transform: translateY(-6rpx);
+}
+}
+
+/* 导航栏 */
+.nav-bar.data-v-92c79dbc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 100rpx;
+  margin-bottom: 32rpx;
+  padding: 16rpx 0;
+}
+.nav-back.data-v-92c79dbc {
+  width: 72rpx;
+  height: 72rpx;
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(20rpx);
+          backdrop-filter: blur(20rpx);
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+.nav-back.data-v-92c79dbc:active {
+  -webkit-transform: scale(0.92);
+          transform: scale(0.92);
+}
+.nav-back text.data-v-92c79dbc {
+  font-size: 44rpx;
+  color: #2C5A3A;
+}
+.nav-title.data-v-92c79dbc {
+  font-size: 36rpx;
+  font-weight: 700;
+  background: linear-gradient(135deg, #2C5A3A, #3D9B6D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.nav-placeholder.data-v-92c79dbc {
+  width: 72rpx;
+}
+
+/* Logo卡片 */
+.logo-card.data-v-92c79dbc {
+  position: relative;
+  background: linear-gradient(135deg, #3D9B6D, #2C5A3A);
+  border-radius: 56rpx;
+  padding: 48rpx 36rpx;
+  margin-bottom: 28rpx;
+  text-align: center;
+  overflow: hidden;
+}
+.logo-glow.data-v-92c79dbc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.2), transparent);
+}
+.logo-icon.data-v-92c79dbc {
+  font-size: 100rpx;
+  display: block;
+  margin-bottom: 20rpx;
+  position: relative;
+  z-index: 2;
+}
+.app-name.data-v-92c79dbc {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: block;
+  margin-bottom: 12rpx;
+  position: relative;
+  z-index: 2;
+}
+.app-version.data-v-92c79dbc {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7);
+  display: block;
+  margin-bottom: 24rpx;
+  position: relative;
+  z-index: 2;
+}
+.app-desc.data-v-92c79dbc {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+/* 信息卡片 */
+.info-card.data-v-92c79dbc {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 40rpx;
+  padding: 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+.card-header.data-v-92c79dbc {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+.header-dot.data-v-92c79dbc {
+  width: 8rpx;
+  height: 32rpx;
+  background: linear-gradient(180deg, #6FB88A, #3D9B6D);
+  border-radius: 4rpx;
+}
+.card-title.data-v-92c79dbc {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #2C5A3A;
+}
+.info-row.data-v-92c79dbc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid rgba(100, 200, 150, 0.2);
+}
+.info-row.data-v-92c79dbc:last-child {
+  border-bottom: none;
+}
+.info-label.data-v-92c79dbc {
+  font-size: 28rpx;
+  color: #2C5A3A;
+}
+.info-right.data-v-92c79dbc {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.info-value.data-v-92c79dbc {
+  font-size: 26rpx;
+  color: #9CC0AC;
+}
+.info-arrow.data-v-92c79dbc {
+  font-size: 28rpx;
+  color: #C8E6C9;
+}
+.info-link.data-v-92c79dbc {
+  font-size: 26rpx;
+  color: #3D9B6D;
+}
+.spacer.data-v-92c79dbc {
+  height: 60rpx;
+}
+

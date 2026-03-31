@@ -1,175 +1,220 @@
 <template>
-  <view class="container">
-    <!-- 装饰元素 -->
-    <view class="decorations">
-      <view class="leaf leaf-1">🍃</view>
-      <view class="leaf leaf-2">🍃</view>
-      <view class="leaf leaf-3">🍃</view>
-      <view class="leaf leaf-4">🍃</view>
-    </view>
-    
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="header-icon">🌟</text>
-      <text class="header-title">步数统计</text>
-      <text class="header-icon">🍃</text>
+  <view class="page">
+    <!-- 动态渐变背景 -->
+    <view class="gradient-bg"></view>
+
+    <!-- 动态粒子系统 -->
+    <view class="particle-system">
+      <view v-for="(item, index) in 40" :key="index" class="particle" :style="particleStyles[index]"></view>
     </view>
 
-    <!-- 日期和步数输入区域 -->
-    <view class="date-section" :class="{ 'loaded': isLoaded }">
-      <text class="label">选择日期：</text>
-      <picker mode="date" :value="date" @change="onDateChange">
-        <view class="picker">
-          <text class="icon-calendar">📅</text>
-          <text>{{ date }}</text>
-          <text class="weekday">{{ getWeekday(date) }}</text>
+    <scroll-view scroll-y="true" class="scroller" :show-scrollbar="false">
+      <!-- 顶部标题 -->
+      <view class="page-header floating-card">
+        <view class="header-icon-wrapper">
+          <view class="header-icon-ring"></view>
+          <text class="header-icon">🌟</text>
         </view>
-      </picker>
-      
-      <text class="label">输入步数：</text>
-      <view class="input-container">
-        <text class="icon-step">👟</text>
-        <input 
-          v-model="inputSteps" 
-          class="input" 
-          type="number" 
-          placeholder="请输入今日步数"
-          min="0"
-        />
-        <text class="input-unit">步</text>
+        <text class="header-title">步数统计</text>
+        <view class="header-icon-wrapper">
+          <view class="header-icon-ring"></view>
+          <text class="header-icon">🍃</text>
+        </view>
       </view>
-      
-      <!-- 快捷输入按钮 -->
-      <view class="quick-buttons">
-        <button 
-          class="quick-btn" 
-          @click="quickInput(5000)"
-          :class="{ 'active': inputSteps === '5000' }"
-        >
-          5000步
-        </button>
-        <button 
-          class="quick-btn" 
-          @click="quickInput(8000)"
-          :class="{ 'active': inputSteps === '8000' }"
-        >
-          8000步
-        </button>
-        <button 
-          class="quick-btn" 
-          @click="quickInput(10000)"
-          :class="{ 'active': inputSteps === '10000' }"
-        >
-          10000步
-        </button>
-      </view>
-      
-      <button class="btn primary" @click="queryStepCount" :loading="loading">
-        <text class="btn-text">查询步数</text>
-      </button>
-      <button class="btn secondary" @click="uploadStepCount" :loading="uploading">
-        <text class="btn-text">上传步数</text>
-      </button>
-    </view>
 
-    <!-- 步数统计区域 -->
-    <view class="step-section" v-if="stepData" :class="{ 'loaded': isLoaded }">
-      <text class="section-title">步数统计</text>
-      
-      <!-- 今日步数进度条 -->
-      <view class="progress-section">
-        <view class="progress-header">
-          <text class="progress-label">今日目标进度</text>
-          <text class="progress-percent">{{ Math.min(100, Math.round((stepData.steps || 0) / 10000 * 100)) }}%</text>
+      <!-- 日期和步数输入卡片 -->
+      <view class="card floating-card">
+        <view class="card-header">
+          <view class="header-dot"></view>
+          <text class="card-title">📅 日期选择</text>
         </view>
-        <view class="progress-bar">
-          <view 
-            class="progress-fill" 
-            :style="{ width: Math.min(100, Math.round((stepData.steps || 0) / 10000 * 100)) + '%' }"
-            :class="{ 'animated': isLoaded }"
+
+        <picker mode="date" :value="date" @change="onDateChange">
+          <view class="date-picker">
+            <text class="picker-icon">📅</text>
+            <text class="picker-date">{{ date }}</text>
+            <text class="picker-weekday">{{ getWeekday(date) }}</text>
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+
+        <view class="card-header" style="margin-top: 32rpx;">
+          <view class="header-dot"></view>
+          <text class="card-title">👟 步数输入</text>
+        </view>
+
+        <view class="input-wrapper" :class="{ focused: isFocused }">
+          <text class="input-icon">👟</text>
+          <input
+              v-model="inputSteps"
+              class="input"
+              type="number"
+              placeholder="请输入今日步数"
+              placeholder-class="input-placeholder"
+              @focus="isFocused = true"
+              @blur="isFocused = false"
+          />
+          <text class="input-unit">步</text>
+          <view class="input-glow"></view>
+        </view>
+
+        <!-- 快捷输入按钮 -->
+        <view class="quick-buttons">
+          <view class="quick-btn" @click="quickInput(5000)">
+            <text class="quick-text">5000步</text>
+            <view class="quick-glow"></view>
+          </view>
+          <view class="quick-btn" @click="quickInput(8000)">
+            <text class="quick-text">8000步</text>
+            <view class="quick-glow"></view>
+          </view>
+          <view class="quick-btn" @click="quickInput(10000)">
+            <text class="quick-text">10000步</text>
+            <view class="quick-glow"></view>
+          </view>
+        </view>
+
+        <view class="btn-group">
+          <view class="btn btn-primary" @click="queryStepCount" :class="{ loading: loading }">
+            <view class="btn-shine"></view>
+            <text class="btn-text" v-if="!loading">🔍 查询步数</text>
+            <view class="loading-dots" v-else>
+              <view class="dot"></view>
+              <view class="dot"></view>
+              <view class="dot"></view>
+            </view>
+          </view>
+          <view class="btn btn-secondary" @click="uploadStepCount" :class="{ loading: uploading }">
+            <view class="btn-shine"></view>
+            <text class="btn-text" v-if="!uploading">📤 上传步数</text>
+            <view class="loading-dots" v-else>
+              <view class="dot"></view>
+              <view class="dot"></view>
+              <view class="dot"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 步数统计卡片 -->
+      <view class="card floating-card" v-if="stepData">
+        <view class="card-header">
+          <view class="header-dot"></view>
+          <text class="card-title">📊 今日步数统计</text>
+        </view>
+
+        <!-- 今日步数进度条 -->
+        <view class="progress-section">
+          <view class="progress-header">
+            <text class="progress-label">今日目标进度</text>
+            <text class="progress-percent">{{ stepPercent }}%</text>
+          </view>
+          <view class="progress-bar">
+            <view class="progress-fill" :style="{ width: stepPercent + '%' }">
+              <view class="progress-dot"></view>
+            </view>
+          </view>
+          <text class="progress-goal">目标：10000步</text>
+        </view>
+
+        <view class="step-stats">
+          <view class="stat-item">
+            <text class="stat-icon">👟</text>
+            <text class="stat-value">{{ stepData.steps || 0 }}</text>
+            <text class="stat-label">总步数</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-icon">🔥</text>
+            <text class="stat-value">{{ stepData.calories || 0 }}</text>
+            <text class="stat-label">卡路里(kcal)</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-icon">⏱️</text>
+            <text class="stat-value">{{ stepData.duration || 0 }}</text>
+            <text class="stat-label">运动时长(分)</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-icon">🌿</text>
+            <text class="stat-value">{{ Math.round((stepData.steps || 0) * 0.08) }}</text>
+            <text class="stat-label">减碳量(g)</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 近7天步数趋势图 -->
+      <view class="card floating-card">
+        <view class="card-header">
+          <view class="header-dot"></view>
+          <text class="card-title">📈 近7天步数趋势</text>
+          <text class="card-icon">🚲</text>
+        </view>
+        <view class="chart-container">
+          <canvas
+              canvas-id="stepChart"
+              :style="'width:' + canvasW + 'px;height:' + canvasH + 'px;'"
+          ></canvas>
+        </view>
+      </view>
+
+      <!-- 近期步数记录 -->
+      <view class="card floating-card">
+        <view class="card-header">
+          <view class="header-dot"></view>
+          <text class="card-title">📋 近期步数记录</text>
+          <text class="card-icon">💡</text>
+        </view>
+
+        <view v-if="historyList.length > 0" class="history-list">
+          <view
+              class="history-item"
+              v-for="(item, index) in historyList"
+              :key="index"
+              @click="showActionMenu(item)"
           >
-            <view class="progress-highlight"></view>
+            <view class="history-date">
+              <text class="history-icon">🕒</text>
+              <text class="history-day">{{ formatDate(item.date).split('-')[2] }}日</text>
+              <text class="history-weekday">{{ getWeekday(item.date) }}</text>
+            </view>
+            <text class="history-steps">{{ item.steps }} 步</text>
+            <view class="history-arrow">→</view>
           </view>
         </view>
-        <view class="progress-goal">目标：10000步</view>
-      </view>
-      
-      <view class="step-info">
-        <view class="step-item">
-          <text class="step-label">步数：</text>
-          <text class="step-value gradient-text">{{ stepData.steps || 0 }} 步</text>
-        </view>
-        <view class="step-item">
-          <text class="step-label">卡路里：</text>
-          <text class="step-value">{{ stepData.calories || 0 }} kcal</text>
-        </view>
-        <view class="step-item">
-          <text class="step-label">运动时长：</text>
-          <text class="step-value">{{ stepData.duration || 0 }} 分钟</text>
-        </view>
-        <view class="step-item">
-          <text class="step-label">减碳量：</text>
-          <text class="step-value">{{ Math.round((stepData.steps || 0) * 0.08) }} g</text>
+        <view class="empty-history" v-else>
+          <text class="empty-icon">📭</text>
+          <text class="empty-text">暂无历史记录</text>
         </view>
       </view>
-    </view>
 
-    <view class="empty-section" v-if="queried && !stepData" :class="{ 'loaded': isLoaded }">
-      <text class="empty-text">该日期暂无步数记录</text>
-    </view>
+      <!-- 底部装饰 -->
+      <view class="footer-deco">
+        <text class="deco-text">🚶 每一步，都是对地球的关爱 🌍</text>
+      </view>
 
-    <!-- 近7天步数趋势图 -->
-    <view class="chart-section" :class="{ 'loaded': isLoaded }">
-      <view class="section-header">
-        <text class="section-title">近7天步数趋势</text>
-        <text class="section-icon bike">🚲</text>
-      </view>
-      <view class="chart-container">
-        <canvas
-          canvas-id="stepChart"
-          :style="'width:' + canvasW + 'px;height:' + canvasH + 'px;display:block;'"
-          @touchstart="touchChart"
-        ></canvas>
-      </view>
-    </view>
+      <view class="spacer"></view>
+    </scroll-view>
 
-    <!-- 近期步数记录 -->
-    <view class="record-section" :class="{ 'loaded': isLoaded }">
-      <view class="section-header">
-        <text class="section-title">近期步数记录</text>
-        <text class="section-icon bulb">💡</text>
-      </view>
-      <view v-if="historyList.length > 0">
-        <view 
-          class="history-item" 
-          v-for="item in historyList" 
-          :key="item.id"
-          :class="{ 'hover': hoveredItem === item.id }"
-          @touchstart="hoveredItem = item.id"
-          @touchend="hoveredItem = null"
-          @longpress="showActionMenu(item)"
-        >
-          <view class="history-date">
-            <text class="icon-time">🕒</text>
-            <text class="date-text">{{ formatDate(item.date) }}</text>
-            <text class="weekday">{{ getWeekday(item.date) }}</text>
-          </view>
-          <text class="history-steps gradient-text">{{ item.steps }} 步</text>
-          <view class="history-arrow">→</view>
-        </view>
-      </view>
-      <view class="empty-section" v-else>
-        <text class="empty-text">暂无历史记录</text>
-      </view>
-    </view>
-    
     <!-- 操作菜单 -->
-    <view v-if="menuVisible" class="action-menu">
-      <view class="menu-content">
-        <text class="menu-title">操作</text>
-        <button class="menu-item" @click="copyStepData">复制数据</button>
-        <button class="menu-item" @click="deleteStepData">删除记录</button>
-        <button class="menu-item cancel" @click="menuVisible = false">取消</button>
+    <view v-if="menuVisible" class="action-menu" @click="menuVisible = false">
+      <view class="menu-content" @click.stop>
+        <view class="menu-header">
+          <text class="menu-title">操作</text>
+          <view class="menu-close" @click="menuVisible = false">✕</view>
+        </view>
+        <view class="menu-item" @click="copyStepData">
+          <text class="menu-icon">📋</text>
+          <text>复制数据</text>
+        </view>
+        <view class="menu-item" @click="deleteStepData">
+          <text class="menu-icon">🗑️</text>
+          <text>删除记录</text>
+        </view>
+        <view class="menu-item cancel" @click="menuVisible = false">
+          <text>取消</text>
+        </view>
       </view>
     </view>
   </view>
@@ -184,23 +229,27 @@ export default {
       date: new Date().toISOString().split('T')[0],
       stepData: null,
       historyList: [],
-      last7Days: [],
-      queried: false,
       stuNo: '',
       inputSteps: '',
       loading: false,
       uploading: false,
-      isLoaded: false,
-      hoveredItem: null,
       menuVisible: false,
       selectedItem: null,
+      isFocused: false,
       chartData: {
         categories: [],
-        series: [{ name: '步数', data: [] }]
+        data: []
       },
       canvasW: 0,
-      canvasH: 0
+      canvasH: 0,
+      particleStyles: []
     };
+  },
+  computed: {
+    stepPercent() {
+      if (!this.stepData) return 0;
+      return Math.min(100, Math.round((this.stepData.steps || 0) / 10000 * 100));
+    }
   },
   onLoad() {
     const stuNo = uni.getStorageSync('username');
@@ -209,199 +258,197 @@ export default {
       return;
     }
     this.stuNo = stuNo;
-    setTimeout(() => { this.isLoaded = true; }, 300);
+    this.initParticleStyles();
     this.loadHistory();
   },
   methods: {
+    initParticleStyles() {
+      const styles = [];
+      for (let i = 0; i < 40; i++) {
+        styles.push({
+          left: Math.random() * 100 + '%',
+          animationDuration: (8 + Math.random() * 12) + 's',
+          animationDelay: Math.random() * 8 + 's',
+          width: (2 + Math.random() * 6) + 'rpx',
+          height: (2 + Math.random() * 6) + 'rpx',
+          opacity: 0.2 + Math.random() * 0.4
+        });
+      }
+      this.particleStyles = styles;
+    },
     onDateChange(e) {
       this.date = e.detail.value;
     },
     quickInput(steps) {
       this.inputSteps = steps.toString();
     },
+    formatDate(dateStr) {
+      if (!dateStr) return '';
+      return String(dateStr).substring(0, 10);
+    },
+    getWeekday(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      return weekdays[date.getDay()];
+    },
     async queryStepCount() {
+      if (this.loading) return;
       this.loading = true;
+      uni.showLoading({ title: '查询中...' });
       try {
         const res = await getStepCount(this.stuNo, this.date);
         this.stepData = res;
-        this.queried = true;
-        this.calculateLast7Days();
-        this.initChart();
+        this.calculateAndDrawChart();
       } catch (e) {
         uni.showToast({ title: '查询失败', icon: 'none' });
       } finally {
         this.loading = false;
+        uni.hideLoading();
       }
     },
     async loadHistory() {
       try {
         const res = await getStepCountList(this.stuNo);
         this.historyList = res || [];
-        this.calculateLast7Days();
-        this.$nextTick(() => { this.initChart(); });
+        this.calculateAndDrawChart();
       } catch (e) {
-        // 静默失败
+        console.error('加载历史失败:', e);
       }
     },
-    formatDate(dateStr) {
-      if (!dateStr) return '';
-      return String(dateStr).substring(0, 10);
-    },
-    getWeekday(dateStr) {
-      const date = new Date(dateStr);
-      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-      return weekdays[date.getDay()];
-    },
-    calculateLast7Days() {
+    calculateAndDrawChart() {
       const today = new Date();
       const last7Days = [];
-      
+
       for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(today.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         const month = date.getMonth() + 1;
         const day = date.getDate();
-        
-        // 查找该日期的步数
+
         let steps = 0;
-        if (this.historyList.length > 0) {
+        if (this.historyList && this.historyList.length > 0) {
           const record = this.historyList.find(item => this.formatDate(item.date) === dateStr);
-          if (record) {
-            steps = record.steps;
-          }
+          if (record) steps = record.steps;
         }
-        
+
         last7Days.push({
-          date: dateStr,
           label: `${month}/${day}`,
-          steps: steps,
-          isToday: i === 0
+          steps: steps
         });
       }
-      
-      this.last7Days = last7Days;
-      
-      // 更新图表数据
-      this.chartData.categories = last7Days.map(day => day.label);
-      this.chartData.series[0].data = last7Days.map(day => day.steps);
+
+      this.chartData.categories = last7Days.map(d => d.label);
+      this.chartData.data = last7Days.map(d => d.steps);
+
+      this.$nextTick(() => {
+        this.initChart();
+      });
     },
     initChart() {
-      uni.createSelectorQuery().in(this).select('.chart-container').boundingClientRect(rect => {
-        if (!rect) return;
-        const W = rect.width;
-        const H = rect.height;
-        this.canvasW = W;
-        this.canvasH = H;
-        this.$nextTick(() => { this._drawChart(W, H); });
+      const query = uni.createSelectorQuery().in(this);
+      query.select('.chart-container').boundingClientRect(rect => {
+        if (rect && rect.width > 0 && rect.height > 0) {
+          this.canvasW = rect.width;
+          this.canvasH = rect.height;
+          this.$nextTick(() => {
+            this.drawChart();
+          });
+        }
       }).exec();
     },
-    _drawChart(W, H) {
-      const ctx = uni.createCanvasContext('stepChart', this);
+    drawChart() {
+      if (!this.canvasW || !this.canvasH) return;
 
-      const PAD_LEFT = 55;   // Y轴区域
+      const ctx = uni.createCanvasContext('stepChart', this);
+      const data = this.chartData.data;
+      const labels = this.chartData.categories;
+      const W = this.canvasW;
+      const H = this.canvasH;
+
+      if (data.length === 0) return;
+
+      const PAD_LEFT = 50;
       const PAD_RIGHT = 10;
-      const PAD_TOP = 24;    // 数据标签区域
-      const PAD_BOTTOM = 36; // X轴日期+星期
+      const PAD_TOP = 30;
+      const PAD_BOTTOM = 40;
 
       const chartW = W - PAD_LEFT - PAD_RIGHT;
       const chartH = H - PAD_TOP - PAD_BOTTOM;
 
-      const data = this.chartData.series[0].data;
-      const labels = this.chartData.categories;
-      const n = data.length;
+      const maxValue = Math.max(...data, 1000);
+      const yMax = Math.ceil(maxValue / 5000) * 5000;
 
-      // 动态 Y 轴最大值（取整到 5000 的倍数，最小 5000）
-      const dataMax = Math.max(...data, 1000);
-      const yMax = Math.ceil(dataMax / 5000) * 5000;
-      const gridCount = 4;
-
-      // ── 背景 ──
-      ctx.fillStyle = '#f9fef9';
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
       ctx.fillRect(0, 0, W, H);
 
-      // ── 网格线 & Y轴刻度 ──
-      ctx.setFontSize(10);
-      ctx.textAlign = 'right';
-      ctx.setLineDash([4, 4]);
-      ctx.lineWidth = 1;
-
-      for (let i = 0; i <= gridCount; i++) {
-        const val = yMax - (yMax / gridCount) * i;
-        const y = PAD_TOP + (chartH / gridCount) * i;
-        ctx.strokeStyle = '#e8f5e9';
+      ctx.setStrokeStyle('#C8E6C9');
+      ctx.setLineWidth(1);
+      for (let i = 0; i <= 4; i++) {
+        const y = PAD_TOP + (chartH / 4) * i;
         ctx.beginPath();
         ctx.moveTo(PAD_LEFT, y);
         ctx.lineTo(W - PAD_RIGHT, y);
         ctx.stroke();
-        ctx.fillStyle = '#aaa';
-        ctx.fillText(val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val, PAD_LEFT - 4, y + 4);
       }
 
-      // ── 折线（平滑贝塞尔） ──
-      ctx.setLineDash([]);
-      ctx.strokeStyle = '#2e7d32';
-      ctx.lineWidth = 2.5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.setStrokeStyle('#3D9B6D');
+      ctx.setLineWidth(3);
+      ctx.setLineCap('round');
+      ctx.setLineJoin('round');
 
-      const xOf = (i) => PAD_LEFT + (i / (n - 1)) * chartW;
+      const xOf = (i) => PAD_LEFT + (i / (data.length - 1)) * chartW;
       const yOf = (v) => PAD_TOP + chartH - (v / yMax) * chartH;
 
-      ctx.beginPath();
-      data.forEach((v, i) => {
-        const x = xOf(i), y = yOf(v);
-        if (i === 0) {
+      data.forEach((value, index) => {
+        const x = xOf(index);
+        const y = yOf(value);
+        if (index === 0) {
           ctx.moveTo(x, y);
         } else {
-          const px = xOf(i - 1), py = yOf(data[i - 1]);
-          const cpx = (px + x) / 2;
-          ctx.bezierCurveTo(cpx, py, cpx, y, x, y);
+          ctx.lineTo(x, y);
         }
       });
       ctx.stroke();
 
-      // ── 数据点 & 标签 ──
-      data.forEach((v, i) => {
-        const x = xOf(i), y = yOf(v);
+      data.forEach((value, index) => {
+        const x = xOf(index);
+        const y = yOf(value);
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = '#81c784';
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.setFillStyle('#6FB88A');
         ctx.fill();
-        ctx.strokeStyle = '#2e7d32';
-        ctx.lineWidth = 1.5;
+        ctx.setStrokeStyle('#FFFFFF');
+        ctx.setLineWidth(2);
         ctx.stroke();
 
-        if (v > 0) {
+        if (value > 0) {
+          ctx.setFillStyle('#2C5A3A');
           ctx.setFontSize(10);
-          ctx.textAlign = 'center';
-          ctx.fillStyle = '#2e7d32';
-          ctx.fillText(v >= 10000 ? (v / 1000).toFixed(1) + 'k' : v, x, Math.max(PAD_TOP - 4, y - 8));
+          ctx.setTextAlign('center');
+          ctx.fillText(value, x, y - 10);
         }
       });
 
-      // ── X轴标签（日期 + 星期） ──
-      ctx.setFontSize(10);
-      ctx.textAlign = 'center';
-      labels.forEach((label, i) => {
-        const x = xOf(i);
-        ctx.fillStyle = '#666';
-        ctx.fillText(label, x, H - PAD_BOTTOM + 14);
-        const wd = this.getWeekday(this.last7Days[i] ? this.last7Days[i].date : '');
-        ctx.fillStyle = '#aaa';
-        ctx.fillText(wd, x, H - PAD_BOTTOM + 26);
+      labels.forEach((label, index) => {
+        const x = xOf(index);
+        ctx.setFillStyle('#5B8C6E');
+        ctx.setFontSize(10);
+        ctx.setTextAlign('center');
+        ctx.fillText(label, x, H - PAD_BOTTOM + 15);
       });
 
       ctx.draw();
-    },
-    touchChart(e) {
-      // 触摸事件处理
     },
     showActionMenu(item) {
       this.selectedItem = item;
       this.menuVisible = true;
     },
     copyStepData() {
+      if (!this.selectedItem) return;
       const data = `${this.selectedItem.date}: ${this.selectedItem.steps}步`;
       uni.setClipboardData({
         data: data,
@@ -417,10 +464,8 @@ export default {
         content: '确定要删除这条记录吗？',
         success: (res) => {
           if (res.confirm) {
-            // 这里可以调用删除接口
             uni.showToast({ title: '删除成功', icon: 'success' });
             this.menuVisible = false;
-            // 刷新数据
             this.loadHistory();
           }
         }
@@ -432,14 +477,13 @@ export default {
         uni.showToast({ title: '请输入有效的步数', icon: 'none' });
         return;
       }
-      
+
       this.uploading = true;
+      uni.showLoading({ title: '上传中...' });
       try {
-        // 计算卡路里和运动时长
-        const calories = Math.round(steps * 0.05); // 每步约0.05卡路里
-        const duration = Math.round(steps / 100); // 假设每分钟走100步
-        
-        // 调用后端接口保存步数
+        const calories = Math.round(steps * 0.05);
+        const duration = Math.round(steps / 100);
+
         const res = await uni.request({
           url: 'http://localhost:8080/api/step/save',
           method: 'POST',
@@ -451,28 +495,22 @@ export default {
             duration: duration
           }
         });
-        
-        // 处理 uni.request 的返回值
+
         const response = Array.isArray(res) ? res[1] : res;
-        
+
         if (response.statusCode === 200) {
-          uni.showToast({ 
-            title: '上传成功', 
-            icon: 'success',
-            duration: 2000
-          });
-          // 刷新数据
+          uni.showToast({ title: '上传成功', icon: 'success' });
           await this.queryStepCount();
           await this.loadHistory();
+          this.inputSteps = '';
         } else {
-          uni.showToast({ title: `上传失败: ${response.statusCode}`, icon: 'none' });
-          console.error('上传失败:', response);
+          uni.showToast({ title: '上传失败', icon: 'none' });
         }
       } catch (e) {
-        uni.showToast({ title: `上传失败: ${e.message}`, icon: 'none' });
-        console.error('上传异常:', e);
+        uni.showToast({ title: '上传失败', icon: 'none' });
       } finally {
         this.uploading = false;
+        uni.hideLoading();
       }
     }
   }
@@ -480,57 +518,81 @@ export default {
 </script>
 
 <style scoped>
-/* 全局样式 */
-.container {
-  padding: 20rpx;
-  background: linear-gradient(180deg, #f0f9e8 0%, #e6f7dc 100%);
+.page {
   min-height: 100vh;
+  background: linear-gradient(180deg, #E0F2E9 0%, #C8E6D9 100%);
   position: relative;
   overflow: hidden;
 }
 
-/* 装饰元素 */
-.decorations {
-  position: absolute;
+.gradient-bg {
+  position: fixed;
+  top: -20%;
+  left: -20%;
+  right: -20%;
+  bottom: -20%;
+  background: radial-gradient(ellipse at 30% 40%,
+  rgba(100, 200, 150, 0.3) 0%,
+  rgba(80, 180, 130, 0.15) 50%,
+  rgba(60, 160, 110, 0.05) 100%);
+  animation: bgMove 20s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes bgMove {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(2%, 1%) scale(1.05); }
+}
+
+.particle-system {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
-.leaf {
+.particle {
   position: absolute;
-  font-size: 32rpx;
-  opacity: 0.6;
+  background: rgba(80, 200, 140, 0.6);
+  border-radius: 50%;
+  animation: floatUp linear infinite;
 }
 
-.leaf-1 {
-  top: 20rpx;
-  left: 20rpx;
-  transform: rotate(15deg);
+@keyframes floatUp {
+  0% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-20vh);
+    opacity: 0;
+  }
 }
 
-.leaf-2 {
-  top: 80rpx;
-  right: 40rpx;
-  transform: rotate(-10deg);
-  font-size: 28rpx;
+.scroller {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  padding: 0 32rpx;
+  box-sizing: border-box;
 }
 
-.leaf-3 {
-  bottom: 100rpx;
-  left: 30rpx;
-  transform: rotate(25deg);
-  font-size: 36rpx;
+.floating-card {
+  animation: floatCard 3s ease-in-out infinite;
 }
 
-.leaf-4 {
-  bottom: 180rpx;
-  right: 60rpx;
-  transform: rotate(-20deg);
-  font-size: 30rpx;
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6rpx); }
 }
 
 /* 页面标题 */
@@ -538,497 +600,519 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 30rpx;
-  position: relative;
-  z-index: 1;
+  margin-top: 100rpx;
+  margin-bottom: 32rpx;
+  gap: 24rpx;
 }
 
-.header-title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #2d5016;
-  margin: 0 16rpx;
-  text-shadow: 2px 2px 4px rgba(45, 80, 22, 0.1);
+.header-icon-wrapper {
+  position: relative;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2rpx solid rgba(61, 155, 109, 0.4);
+  border-radius: 50%;
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
 }
 
 .header-icon {
   font-size: 32rpx;
-  animation: bounce 2s infinite;
+  position: relative;
+  z-index: 2;
 }
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10rpx);
-  }
-  60% {
-    transform: translateY(-5rpx);
-  }
+.header-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  background: linear-gradient(135deg, #2C5A3A, #3D9B6D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* 卡片样式 */
-.date-section,
-.step-section,
-.chart-section,
-.record-section,
-.empty-section {
-  position: relative;
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 
-    0 4px 16px rgba(45, 80, 22, 0.1),
-    0 1px 3px rgba(45, 80, 22, 0.05);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  opacity: 0;
-  transform: translateY(20px);
-  border: 1px solid rgba(139, 191, 159, 0.2);
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 48rpx;
+  padding: 36rpx 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
 }
 
-/* 加载动画 */
-.date-section.loaded,
-.step-section.loaded,
-.chart-section.loaded,
-.record-section.loaded,
-.empty-section.loaded {
-  opacity: 1;
-  transform: translateY(0);
-  animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 标签样式 */
-.label {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #2d5016;
-  margin-bottom: 16rpx;
-  letter-spacing: 0.5px;
-}
-
-/* 日期选择器 */
-.picker {
-  width: 100%;
-  height: 80rpx;
-  border: 1px solid rgba(139, 191, 159, 0.3);
-  border-radius: 12px;
-  padding: 0 20rpx;
+.card-header {
   display: flex;
   align-items: center;
-  margin-bottom: 30rpx;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 1px 2px rgba(45, 80, 22, 0.05);
+  gap: 12rpx;
+  margin-bottom: 28rpx;
 }
 
-.picker .icon-calendar {
-  font-size: 28rpx;
-  margin-right: 12rpx;
-  color: #6a9d87;
+.header-dot {
+  width: 8rpx;
+  height: 32rpx;
+  background: linear-gradient(180deg, #6FB88A, #3D9B6D);
+  border-radius: 4rpx;
 }
 
-.picker text {
-  font-size: 24rpx;
-  color: #333;
-}
-
-.picker .weekday {
-  font-size: 20rpx;
-  color: #6a9d87;
-  margin-left: 10rpx;
+.card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #2C5A3A;
   flex: 1;
-  text-align: right;
 }
 
-/* 输入框容器 */
-.input-container {
-  position: relative;
-  margin-bottom: 30rpx;
-  display: flex;
-  align-items: center;
-}
-
-.input-container .icon-step {
-  position: absolute;
-  left: 20rpx;
-  font-size: 28rpx;
-  z-index: 2;
-  color: #6a9d87;
-}
-
-/* 下沉式输入框 */
-.input {
-  width: 100%;
-  height: 80rpx;
-  border: 1px solid rgba(139, 191, 159, 0.3);
-  border-radius: 12px;
-  padding: 0 20rpx 0 60rpx;
-  font-size: 24rpx;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 2px 4px rgba(45, 80, 22, 0.05);
-  transition: all 0.3s ease;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #6a9d87;
-  box-shadow: inset 0 2px 4px rgba(45, 80, 22, 0.05), 0 0 0 3px rgba(106, 157, 135, 0.1);
-}
-
-.input-unit {
-  position: absolute;
-  right: 20rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 24rpx;
-  color: #6a9d87;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* 快捷按钮 */
-.quick-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 30rpx;
-}
-
-.quick-btn {
-  flex: 1;
-  height: 60rpx;
-  background: rgba(255, 255, 255, 0.9);
-  color: #2d5016;
-  font-size: 24rpx;
-  border-radius: 10px;
-  border: 1px solid rgba(139, 191, 159, 0.3);
-  margin: 0 5rpx;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(45, 80, 22, 0.05);
-}
-
-.quick-btn:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 4px rgba(45, 80, 22, 0.05);
-  background: rgba(240, 249, 232, 0.9);
-}
-
-.quick-btn.active {
-  background: #2d5016;
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3);
-}
-
-.quick-btn.pulse {
-  animation: pulse 0.3s ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* 主按钮 */
-.btn {
-  position: relative;
-  width: 100%;
-  height: 80rpx;
-  border-radius: 12px;
-  border: none;
-  margin-bottom: 20rpx;
-  overflow: hidden;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(45, 80, 22, 0.2);
-}
-
-.btn:active {
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 6px 20px rgba(45, 80, 22, 0.3);
-}
-
-.btn.primary {
-  background: #2d5016;
-}
-
-.btn.secondary {
-  background: #4a7c38;
-}
-
-.btn-text {
-  position: relative;
-  z-index: 2;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #fff;
-  letter-spacing: 1px;
-}
-
-/* 区块标题 */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
-.section-title {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #2d5016;
-  letter-spacing: 0.5px;
-}
-
-.section-icon {
+.card-icon {
   font-size: 32rpx;
   animation: spin 4s linear infinite;
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* 进度条 */
-.progress-section {
-  margin-bottom: 30rpx;
-}
-
-.progress-header {
+/* 日期选择器 */
+.date-picker {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 60rpx;
+  padding: 20rpx 28rpx;
+  border: 1rpx solid rgba(100, 200, 150, 0.3);
 }
 
-.progress-label {
-  font-size: 24rpx;
-  color: #6a9d87;
+.picker-icon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+}
+
+.picker-date {
+  font-size: 28rpx;
   font-weight: 500;
+  color: #2C5A3A;
+  flex: 1;
 }
 
-.progress-percent {
+.picker-weekday {
   font-size: 24rpx;
-  font-weight: 600;
-  color: #2d5016;
+  color: #6FB88A;
+  margin-right: 16rpx;
 }
 
-.progress-bar {
-  width: 100%;
-  height: 12rpx;
-  background: rgba(45, 80, 22, 0.1);
-  border-radius: 6rpx;
-  overflow: hidden;
-  margin-bottom: 8rpx;
-  box-shadow: inset 0 1px 2px rgba(45, 80, 22, 0.1);
+.picker-arrow {
+  font-size: 24rpx;
+  color: #9CC0AC;
 }
 
-.progress-fill {
+/* 输入框 */
+.input-wrapper {
   position: relative;
-  height: 100%;
-  background: linear-gradient(90deg, #6a9d87, #2d5016);
-  border-radius: 6rpx;
-  transition: width 0.5s ease;
-  box-shadow: 0 0 10px rgba(106, 157, 135, 0.3);
-  width: 0;
+  margin-bottom: 28rpx;
 }
 
-.progress-fill.animated {
-  animation: progressFill 1s ease-out forwards;
+.input-icon {
+  position: absolute;
+  left: 28rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 32rpx;
+  z-index: 2;
 }
 
-@keyframes progressFill {
-  to {
-    width: var(--progress-width, 100%);
-  }
+.input {
+  width: 100%;
+  height: 96rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2rpx solid rgba(100, 200, 150, 0.3);
+  border-radius: 48rpx;
+  padding: 0 80rpx 0 80rpx;
+  font-size: 32rpx;
+  color: #2C5A3A;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
-.progress-highlight {
+.input:focus {
+  border-color: #6FB88A;
+  box-shadow: 0 0 0 4rpx rgba(111, 184, 138, 0.2);
+  outline: none;
+}
+
+.input-placeholder {
+  color: #C8E6C9;
+}
+
+.input-unit {
+  position: absolute;
+  right: 28rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 26rpx;
+  color: #6FB88A;
+}
+
+.input-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  background: linear-gradient(90deg, #6FB88A, #3D9B6D);
+  border-radius: 24rpx;
+  filter: blur(8rpx);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+/* 修复：用父级 class 控制，不使用 ~ 选择器 */
+.input-wrapper.focused .input-glow {
+  height: 60rpx;
+  opacity: 0.3;
+}
+
+/* 快捷按钮 */
+.quick-buttons {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.quick-btn {
+  flex: 1;
+  height: 72rpx;
+  background: rgba(100, 200, 150, 0.15);
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.quick-btn:active {
+  transform: scale(0.96);
+  background: rgba(100, 200, 150, 0.3);
+}
+
+.quick-text {
+  font-size: 26rpx;
+  color: #3D9B6D;
+  font-weight: 500;
+  position: relative;
+  z-index: 2;
+}
+
+.quick-glow {
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: left 0.6s ease;
+  animation: quickShine 3s ease-in-out infinite;
 }
 
-.progress-fill:hover .progress-highlight {
-  left: 100%;
+@keyframes quickShine {
+  0% { left: -100%; }
+  60%, 100% { left: 100%; }
 }
 
-.progress-goal {
-  font-size: 20rpx;
-  color: #6a9d87;
-  text-align: right;
-}
-
-/* 步数信息 */
-.step-info {
+/* 按钮组 */
+.btn-group {
   display: flex;
-  flex-direction: column;
   gap: 20rpx;
 }
 
-.step-item {
+.btn {
+  flex: 1;
+  height: 96rpx;
+  border-radius: 48rpx;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1px solid rgba(139, 191, 159, 0.2);
-}
-
-.step-label {
-  font-size: 24rpx;
-  color: #6a9d87;
-  font-weight: 500;
-}
-
-.step-value {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #2d5016;
-}
-
-/* 渐变文字 */
-.gradient-text {
-  background: linear-gradient(135deg, #2d5016, #6a9d87);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
-}
-
-/* 趋势图 */
-.chart-section {
-  padding: 30rpx;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
-}
-
-.chart-container {
-  height: 500rpx;
+  justify-content: center;
   position: relative;
-  margin-top: 20rpx;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
-.chart-canvas {
+.btn-primary {
+  background: linear-gradient(135deg, #6FB88A, #3D9B6D);
+  box-shadow: 0 8rpx 24rpx rgba(61, 155, 109, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #9CC0AC, #6FB88A);
+  box-shadow: 0 8rpx 24rpx rgba(111, 184, 138, 0.3);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
   width: 100%;
   height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: btnShine 3s ease-in-out infinite;
+}
+
+@keyframes btnShine {
+  0% { left: -100%; }
+  60%, 100% { left: 100%; }
+}
+
+.btn-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  letter-spacing: 2rpx;
+  position: relative;
+  z-index: 2;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 12rpx;
+  position: relative;
+  z-index: 2;
+}
+
+.loading-dots .dot {
+  width: 12rpx;
+  height: 12rpx;
+  background: #FFFFFF;
+  border-radius: 50%;
+  animation: dotBlink 1.2s ease-in-out infinite;
+}
+
+.loading-dots .dot:nth-child(1) { animation-delay: 0s; }
+.loading-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotBlink {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.2); }
+}
+
+/* 进度条 */
+.progress-section {
+  margin-bottom: 32rpx;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.progress-label {
+  font-size: 24rpx;
+  color: #5B8C6E;
+}
+
+.progress-percent {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #3D9B6D;
+}
+
+.progress-bar {
+  height: 16rpx;
+  background: rgba(100, 200, 150, 0.2);
+  border-radius: 8rpx;
+  overflow: visible;
+  margin-bottom: 12rpx;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6FB88A, #3D9B6D);
+  border-radius: 8rpx;
+  position: relative;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 12rpx rgba(61, 155, 109, 0.5);
+}
+
+.progress-dot {
+  position: absolute;
+  right: -10rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24rpx;
+  height: 24rpx;
+  background: #FFFFFF;
+  border: 3rpx solid #3D9B6D;
+  border-radius: 50%;
+  box-shadow: 0 0 12rpx rgba(61, 155, 109, 0.8);
+}
+
+.progress-goal {
+  font-size: 22rpx;
+  color: #9CC0AC;
+  text-align: right;
+}
+
+/* 步数统计 */
+.step-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16rpx 0;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 36rpx;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.stat-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2C5A3A;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.stat-label {
+  font-size: 20rpx;
+  color: #9CC0AC;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: rgba(100, 200, 150, 0.3);
+}
+
+/* 图表容器 */
+.chart-container {
+  height: 480rpx;
+  position: relative;
 }
 
 /* 历史记录 */
-.record-section {
-  padding: 30rpx;
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
 }
 
 .history-item {
   display: flex;
   align-items: center;
   padding: 24rpx;
-  margin-bottom: 16rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(45, 80, 22, 0.05);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 28rpx;
   transition: all 0.3s ease;
-  border: 1px solid rgba(139, 191, 159, 0.2);
 }
 
-.history-item:hover,
-.history-item.hover {
-  transform: translateX(10px);
-  background: rgba(240, 249, 232, 0.9);
-  box-shadow: 0 6px 20px rgba(45, 80, 22, 0.1);
+.history-item:active {
+  transform: translateX(8rpx);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .history-date {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  margin-left: 12rpx;
+  gap: 6rpx;
 }
 
-.history-date .icon-time {
-  font-size: 24rpx;
-  margin-bottom: 8rpx;
-  color: #6a9d87;
+.history-icon {
+  font-size: 28rpx;
 }
 
-.date-text {
-  font-size: 24rpx;
-  color: #2d5016;
-  font-weight: 500;
+.history-day {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2C5A3A;
 }
 
-.weekday {
-  font-size: 18rpx;
-  color: #6a9d87;
-  margin-top: 4rpx;
+.history-weekday {
+  font-size: 20rpx;
+  color: #9CC0AC;
 }
 
 .history-steps {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #2d5016;
+  font-weight: 700;
   margin: 0 20rpx;
 }
 
 .history-arrow {
-  font-size: 24rpx;
-  color: #6a9d87;
+  font-size: 32rpx;
+  color: #C8E6C9;
   transition: transform 0.3s ease;
 }
 
-.history-item:hover .history-arrow {
-  transform: translateX(5px);
+.history-item:active .history-arrow {
+  transform: translateX(6rpx);
+  color: #3D9B6D;
 }
 
-/* 空状态 */
-.empty-section {
+.empty-history {
   text-align: center;
-  padding: 60rpx 30rpx;
+  padding: 60rpx 0;
+}
+
+.empty-icon {
+  font-size: 64rpx;
+  display: block;
+  margin-bottom: 16rpx;
+  opacity: 0.5;
 }
 
 .empty-text {
   font-size: 26rpx;
-  color: #6a9d87;
-  font-weight: 500;
+  color: #9CC0AC;
 }
 
-/* 加载状态 */
-.btn[loading] {
-  opacity: 0.8;
+/* 底部装饰 */
+.footer-deco {
+  text-align: center;
+  padding: 40rpx 0 28rpx;
+}
+
+.deco-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  background: linear-gradient(135deg, #6FB88A, #3D9B6D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 2rpx;
+  animation: textPulse 2s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); text-shadow: 0 0 20rpx rgba(61, 155, 109, 0.3); }
+}
+
+.spacer {
+  height: 60rpx;
 }
 
 /* 操作菜单 */
@@ -1039,6 +1123,7 @@ export default {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8rpx);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1046,87 +1131,75 @@ export default {
   animation: fadeIn 0.2s ease;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .menu-content {
-  background: #fff;
-  border-radius: 16rpx 16rpx 0 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24rpx);
+  border-radius: 48rpx 48rpx 0 0;
   width: 100%;
-  padding: 30rpx;
+  padding: 32rpx;
   animation: slideUp 0.3s ease;
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid rgba(100, 200, 150, 0.3);
 }
 
 .menu-title {
-  display: block;
-  text-align: center;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #2d5016;
-  margin-bottom: 24rpx;
-  padding-bottom: 20rpx;
-  border-bottom: 1px solid rgba(139, 191, 159, 0.2);
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2C5A3A;
+}
+
+.menu-close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(100, 200, 150, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #3D9B6D;
 }
 
 .menu-item {
-  width: 100%;
-  height: 80rpx;
-  background: none;
-  border: none;
-  font-size: 26rpx;
-  color: #2d5016;
-  text-align: center;
-  border-radius: 12rpx;
-  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx;
+  border-radius: 28rpx;
+  font-size: 28rpx;
+  color: #2C5A3A;
   transition: all 0.2s ease;
 }
 
-.menu-item:hover {
-  background: rgba(240, 249, 232, 0.9);
+.menu-item:active {
+  background: rgba(100, 200, 150, 0.15);
+}
+
+.menu-icon {
+  font-size: 32rpx;
 }
 
 .menu-item.cancel {
-  color: #6a9d87;
-  margin-top: 8rpx;
-}
-
-/* 响应式调整 */
-@media (max-width: 375px) {
-  .container {
-    padding: 16rpx;
-  }
-  
-  .date-section,
-  .step-section,
-  .chart-section,
-  .record-section {
-    padding: 24rpx;
-  }
-  
-  .btn {
-    height: 72rpx;
-  }
-  
-  .btn-text {
-    font-size: 26rpx;
-  }
-  
-  .header-title {
-    font-size: 36rpx;
-  }
-  
-  .header-icon {
-    font-size: 28rpx;
-  }
-  
-  .chart-container {
-    height: 500rpx;
-  }
+  margin-top: 16rpx;
+  justify-content: center;
+  color: #9CC0AC;
+  border-top: 1rpx solid rgba(100, 200, 150, 0.3);
 }
 </style>

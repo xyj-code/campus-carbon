@@ -11,7 +11,10 @@
     "pages/rank/rank",
     "pages/carbon保护区/carbon保护区",
     "pages/projectDetail/projectDetail",
-    "pages/certificate/certificate"
+    "pages/certificate/certificate",
+    "pages/carbonLedger/carbonLedger",
+    "pages/settings/settings",
+    "pages/about/about"
   ],
   "subPackages": [],
   "window": {
