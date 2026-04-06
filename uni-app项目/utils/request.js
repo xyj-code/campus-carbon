@@ -93,3 +93,21 @@ export const exchangeProduct = (username, productId) => {
 export const getExchangeRecords = (username) => {
   return request(`/product/exchange/records?username=${username}`);
 };
+
+// 健康统计接口
+export const getHealthDataList = (userId) => {
+  return request(`/health/list?userId=${userId}`);
+};
+
+export const saveHealthData = (data) => {
+  return request('/health/save', {
+    method: 'POST',
+    data
+  });
+};
+
+export const deleteHealthData = (id) => {
+  return request(`/health/${id}`, {
+    method: 'DELETE'
+  });
+};

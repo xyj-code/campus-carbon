@@ -232,6 +232,30 @@
             <view class="radial-glow"></view>
           </view>
         </view>
+
+        <view class="feature-row">
+          <view class="feature-card feature-card-health floating-card" @click="navigateTo('/pages/healthData/healthData')">
+            <view class="feature-icon-container">
+              <view class="particle-glow particle-glow-1"></view>
+              <view class="particle-glow particle-glow-2"></view>
+              <view class="particle-glow particle-glow-3"></view>
+              <view class="particle-glow particle-glow-4"></view>
+              <view class="particle-glow particle-glow-5"></view>
+              <view class="feature-icon-wrapper">
+                <view class="feature-outer-ring"></view>
+                <view class="feature-middle-ring"></view>
+                <view class="feature-inner-ring"></view>
+                <view class="feature-icon-box">
+                  <text class="feature-icon">❤️</text>
+                </view>
+              </view>
+            </view>
+            <text class="feature-name">健康统计</text>
+            <text class="feature-desc">管理健康指标</text>
+            <view class="feature-arrow">→</view>
+            <view class="radial-glow"></view>
+          </view>
+        </view>
       </view>
 
       <!-- ===== 环保徽章 ===== -->

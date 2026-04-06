@@ -137,6 +137,16 @@
         "navigationBarTitleText": "关于我们",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/healthData/healthData",
+      "style": {
+        "navigationBarTitleText": "健康统计",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
     }
   ],
   "tabBar": {

@@ -411,9 +411,33 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 160));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 168));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {

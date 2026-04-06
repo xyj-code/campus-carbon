@@ -12381,7 +12381,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = void 0;
+exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = exports.deleteHealthData = void 0;
 // 接口请求工具类
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
@@ -12497,7 +12497,26 @@ exports.exchangeProduct = exchangeProduct;
 var getExchangeRecords = function getExchangeRecords(username) {
   return request("/product/exchange/records?username=".concat(username));
 };
+
+// 健康统计接口
 exports.getExchangeRecords = getExchangeRecords;
+var getHealthDataList = function getHealthDataList(userId) {
+  return request("/health/list?userId=".concat(userId));
+};
+exports.getHealthDataList = getHealthDataList;
+var saveHealthData = function saveHealthData(data) {
+  return request('/health/save', {
+    method: 'POST',
+    data: data
+  });
+};
+exports.saveHealthData = saveHealthData;
+var deleteHealthData = function deleteHealthData(id) {
+  return request("/health/".concat(id), {
+    method: 'DELETE'
+  });
+};
+exports.deleteHealthData = deleteHealthData;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
