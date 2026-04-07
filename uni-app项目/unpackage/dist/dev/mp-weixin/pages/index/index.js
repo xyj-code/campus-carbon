@@ -102,11 +102,22 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
+  var g0 = _vm.dailyHealthSuggestion
+    ? _vm.dailyHealthSuggestion.substring(0, 80)
+    : null
   if (!_vm._isMounted) {
     _vm.e0 = function ($event) {
       _vm.badgeVisible = false
     }
   }
+  _vm.$mp.data = Object.assign(
+    {},
+    {
+      $root: {
+        g0: g0,
+      },
+    }
+  )
 }
 var recyclableRender = false
 var staticRenderFns = []
@@ -435,6 +446,26 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
     return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 168));
@@ -463,7 +494,10 @@ var _default = {
       stepPct: 0,
       stepsLeft: 10000,
       badgeVisible: false,
-      particleStyles: []
+      particleStyles: [],
+      // 每日健康建议
+      dailyHealthSuggestion: '',
+      userId: ''
     };
   },
   onLoad: function onLoad() {
@@ -475,6 +509,7 @@ var _default = {
       return;
     }
     this.stuNo = stuNo;
+    this.userId = stuNo;
     this.studentName = uni.getStorageSync('userName') || '同学';
     this.initDate();
     this.initParticleStyles();
@@ -484,6 +519,7 @@ var _default = {
       this.initDate();
       this.loadTodayData();
       this.loadRankData();
+      this.loadDailyHealthSuggestion();
     }
   },
   methods: {
@@ -616,6 +652,58 @@ var _default = {
         title: "\u5F53\u524D\u79EF\u5206\uFF1A".concat(this.points, " \u5206"),
         icon: 'none',
         duration: 2000
+      });
+    },
+    // 加载每日健康建议
+    loadDailyHealthSuggestion: function loadDailyHealthSuggestion() {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var healthData, result;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (_this3.userId) {
+                  _context3.next = 2;
+                  break;
+                }
+                return _context3.abrupt("return");
+              case 2:
+                _context3.prev = 2;
+                _context3.next = 5;
+                return (0, _request.getHealthDataList)(_this3.userId);
+              case 5:
+                healthData = _context3.sent;
+                if (!(healthData && healthData.length > 0)) {
+                  _context3.next = 11;
+                  break;
+                }
+                _context3.next = 9;
+                return (0, _request.getHealthSuggestion)(_this3.userId);
+              case 9:
+                result = _context3.sent;
+                if (result && result.suggestion) {
+                  _this3.dailyHealthSuggestion = result.suggestion;
+                }
+              case 11:
+                _context3.next = 16;
+                break;
+              case 13:
+                _context3.prev = 13;
+                _context3.t0 = _context3["catch"](2);
+                console.error('获取每日健康建议失败:', _context3.t0);
+              case 16:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[2, 13]]);
+      }))();
+    },
+    // 跳转到AI建议页面
+    goToAiSuggest: function goToAiSuggest() {
+      uni.navigateTo({
+        url: '/pages/aiSuggest/aiSuggest'
       });
     }
   }

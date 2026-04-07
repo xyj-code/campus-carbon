@@ -703,6 +703,78 @@ to { -webkit-transform: translate(-50%, -50%) rotate(-360deg); transform: transl
 .progress-hint.done.data-v-57280228 { color: #3D9B6D; font-weight: 500;
 }
 
+/* ===== 每日AI健康建议卡片 ===== */
+.daily-health-card.data-v-57280228 {
+  background: linear-gradient(135deg, rgba(255, 240, 240, 0.9), rgba(255, 220, 220, 0.85));
+  -webkit-backdrop-filter: blur(24rpx);
+          backdrop-filter: blur(24rpx);
+  border-radius: 40rpx;
+  padding: 28rpx;
+  margin-bottom: 32rpx;
+  border: 1rpx solid rgba(220, 80, 80, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.daily-health-card.data-v-57280228:active {
+  -webkit-transform: scale(0.98);
+          transform: scale(0.98);
+}
+.dhc-header.data-v-57280228 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dhc-title-wrap.data-v-57280228 {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.dhc-icon-box.data-v-57280228 {
+  width: 56rpx;
+  height: 56rpx;
+  background: rgba(220, 80, 80, 0.15);
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dhc-icon.data-v-57280228 {
+  font-size: 32rpx;
+}
+.dhc-title.data-v-57280228 {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #8B3A3A;
+}
+.dhc-arrow.data-v-57280228 {
+  font-size: 32rpx;
+  color: #C85D5D;
+  font-weight: bold;
+}
+.dhc-divider.data-v-57280228 {
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(200, 80, 80, 0.3), transparent);
+  margin: 20rpx 0;
+}
+.dhc-content.data-v-57280228 {
+  margin-bottom: 16rpx;
+}
+.dhc-text.data-v-57280228 {
+  font-size: 26rpx;
+  color: #6B4A4A;
+  line-height: 1.6;
+}
+.dhc-footer.data-v-57280228 {
+  display: flex;
+  justify-content: flex-end;
+}
+.dhc-action.data-v-57280228 {
+  font-size: 24rpx;
+  color: #C85D5D;
+  font-weight: 600;
+}
+
 /* ===== 功能导航标题 ===== */
 .section-header.data-v-57280228 {
   display: flex;

@@ -25,3 +25,8 @@ export function getProjectDetail(id) {
 export function getCertificate(username, userProjectId) {
   return request(`/project/certificate?username=${username}&userProjectId=${userProjectId}`);
 }
+
+// 获取所有项目列表
+export function getProjectsList() {
+  return request(`/project/all`);
+}

@@ -444,7 +444,7 @@ var _default = {
     submitRecord: function submitRecord() {
       var _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var data;
+        var data, result;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -462,18 +462,22 @@ var _default = {
                 _this.submitting = true;
                 _context.prev = 4;
                 data = {
-                  userId: parseInt(_this.userId),
+                  userId: _this.userId,
                   recordDate: _this.recordDate,
-                  height: _this.height ? parseFloat(_this.height) : null,
-                  weight: _this.weight ? parseFloat(_this.weight) : null,
+                  height: _this.height ? _this.height : null,
+                  weight: _this.weight ? _this.weight : null,
                   bloodPressure: _this.bloodPressure || null,
-                  heartRate: _this.heartRate ? parseInt(_this.heartRate) : null,
-                  bloodSugar: _this.bloodSugar ? parseFloat(_this.bloodSugar) : null,
+                  heartRate: _this.heartRate ? _this.heartRate : null,
+                  bloodSugar: _this.bloodSugar ? _this.bloodSugar : null,
                   remark: _this.remark || null
                 };
-                _context.next = 8;
+                console.log('提交健康数据:', data); // 调试日志
+                _context.next = 9;
                 return (0, _request.saveHealthData)(data);
-              case 8:
+              case 9:
+                result = _context.sent;
+                console.log('保存结果:', result); // 调试日志
+
                 uni.showToast({
                   title: '保存成功',
                   icon: 'success'
@@ -487,25 +491,26 @@ var _default = {
                 _this.bloodSugar = '';
                 _this.remark = '';
                 _this.loadRecords();
-                _context.next = 21;
+                _context.next = 25;
                 break;
-              case 18:
-                _context.prev = 18;
+              case 21:
+                _context.prev = 21;
                 _context.t0 = _context["catch"](4);
+                console.error('保存失败:', _context.t0); // 调试日志
                 uni.showToast({
                   title: '保存失败',
                   icon: 'none'
                 });
-              case 21:
-                _context.prev = 21;
+              case 25:
+                _context.prev = 25;
                 _this.submitting = false;
-                return _context.finish(21);
-              case 24:
+                return _context.finish(25);
+              case 28:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[4, 18, 21, 24]]);
+        }, _callee, null, [[4, 21, 25, 28]]);
       }))();
     },
     loadRecords: function loadRecords() {

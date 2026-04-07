@@ -12381,7 +12381,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = exports.deleteHealthData = void 0;
+exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = exports.deleteHealthData = void 0;
 // 接口请求工具类
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
@@ -12395,7 +12395,12 @@ var request = function request(url) {
         'Content-Type': 'application/json'
       },
       success: function success(res) {
-        resolve(res.data);
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res.data);
+        } else {
+          var _res$data;
+          reject(new Error(((_res$data = res.data) === null || _res$data === void 0 ? void 0 : _res$data.message) || '请求失败'));
+        }
       },
       fail: function fail(err) {
         reject(err);
@@ -12427,8 +12432,14 @@ var getCarbonSuggestion = function getCarbonSuggestion(carbonFootprint) {
   });
 };
 
-// 步数统计接口
+// AI健康建议接口（基于用户健康数据）
 exports.getCarbonSuggestion = getCarbonSuggestion;
+var getHealthSuggestion = function getHealthSuggestion(userId) {
+  return request("/ai/health-suggest?userId=".concat(userId));
+};
+
+// 步数统计接口
+exports.getHealthSuggestion = getHealthSuggestion;
 var getStepCount = function getStepCount(studentId, date) {
   return request("/step/count?studentId=".concat(studentId, "&date=").concat(date));
 };
@@ -12608,6 +12619,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.checkAndUnlock = checkAndUnlock;
 exports.getCertificate = getCertificate;
 exports.getProjectDetail = getProjectDetail;
+exports.getProjectsList = getProjectsList;
 exports.getUserProjectList = getUserProjectList;
 exports.getUserTotalCarbon = getUserTotalCarbon;
 var _request = __webpack_require__(/*! ./request.js */ 44);
@@ -12638,6 +12650,11 @@ function getProjectDetail(id) {
 // 获取电子认养证书
 function getCertificate(username, userProjectId) {
   return (0, _request.request)("/project/certificate?username=".concat(username, "&userProjectId=").concat(userProjectId));
+}
+
+// 获取所有项目列表
+function getProjectsList() {
+  return (0, _request.request)("/project/all");
 }
 
 /***/ })

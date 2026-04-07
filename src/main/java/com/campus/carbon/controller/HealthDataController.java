@@ -37,6 +37,10 @@ public class HealthDataController {
      */
     @PostMapping("/save")
     public HealthData saveHealthData(@RequestBody HealthData healthData) {
+        // 确保日期正确设置
+        if (healthData.getRecordDate() == null) {
+            throw new IllegalArgumentException("记录日期不能为空");
+        }
         return healthDataService.saveOrUpdate(healthData);
     }
 

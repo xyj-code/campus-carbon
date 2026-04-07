@@ -11,7 +11,11 @@ export const request = (url, options = {}) => {
         'Content-Type': 'application/json'
       },
       success: (res) => {
-        resolve(res.data);
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res.data);
+        } else {
+          reject(new Error(res.data?.message || '请求失败'));
+        }
       },
       fail: (err) => {
         reject(err);
@@ -34,6 +38,11 @@ export const getCarbonSuggestion = (carbonFootprint) => {
     method: 'POST',
     data: { carbonFootprint }
   });
+};
+
+// AI健康建议接口（基于用户健康数据）
+export const getHealthSuggestion = (userId) => {
+  return request(`/ai/health-suggest?userId=${userId}`);
 };
 
 // 步数统计接口

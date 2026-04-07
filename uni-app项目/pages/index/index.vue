@@ -132,6 +132,26 @@
         </text>
       </view>
 
+      <!-- ===== 每日AI健康建议卡片 ===== -->
+      <view class="daily-health-card floating-card" v-if="dailyHealthSuggestion" @click="goToAiSuggest">
+        <view class="dhc-header">
+          <view class="dhc-title-wrap">
+            <view class="dhc-icon-box">
+              <text class="dhc-icon">🩺</text>
+            </view>
+            <text class="dhc-title">今日AI健康建议</text>
+          </view>
+          <text class="dhc-arrow">→</text>
+        </view>
+        <view class="dhc-divider"></view>
+        <view class="dhc-content">
+          <text class="dhc-text">{{ dailyHealthSuggestion.substring(0, 80) }}...</text>
+        </view>
+        <view class="dhc-footer">
+          <text class="dhc-action">点击查看详情 ✨</text>
+        </view>
+      </view>
+
       <!-- ===== 功能导航标题 ===== -->
       <view class="section-header">
         <view class="section-bar"></view>
@@ -142,7 +162,7 @@
       <!-- ===== 2x2 功能导航网格 ===== -->
       <view class="feature-grid">
         <view class="feature-row">
-          <view class="feature-card feature-card-ai floating-card" @click="navigateTo('/pages/aiSuggest/aiSuggest')">
+          <view class="feature-card feature-card-ai floating-card" @click="goToAiSuggest">
             <view class="feature-icon-container">
               <view class="particle-glow particle-glow-1"></view>
               <view class="particle-glow particle-glow-2"></view>
@@ -158,7 +178,7 @@
                 </view>
               </view>
             </view>
-            <text class="feature-name">AI 减排建议</text>
+            <text class="feature-name">AI 生活建议</text>
             <text class="feature-desc">智能分析碳足迹</text>
             <view class="feature-arrow">→</view>
             <view class="radial-glow"></view>
@@ -284,7 +304,7 @@
 </template>
 
 <script>
-import { getStepCount, getRankData } from '../../utils/request.js';
+import { getStepCount, getRankData, getHealthSuggestion, getHealthDataList } from '../../utils/request.js';
 import BottomNav from '../../components/bottom-nav.vue';
 
 export default {
@@ -304,7 +324,10 @@ export default {
       stepPct: 0,
       stepsLeft: 10000,
       badgeVisible: false,
-      particleStyles: []
+      particleStyles: [],
+      // 每日健康建议
+      dailyHealthSuggestion: '',
+      userId: ''
     };
   },
   onLoad() {
@@ -314,6 +337,7 @@ export default {
       return;
     }
     this.stuNo = stuNo;
+    this.userId = stuNo;
     this.studentName = uni.getStorageSync('userName') || '同学';
     this.initDate();
     this.initParticleStyles();
@@ -323,6 +347,7 @@ export default {
       this.initDate();
       this.loadTodayData();
       this.loadRankData();
+      this.loadDailyHealthSuggestion();
     }
   },
   methods: {
@@ -397,6 +422,26 @@ export default {
     },
     showPointsTip() {
       uni.showToast({ title: `当前积分：${this.points} 分`, icon: 'none', duration: 2000 });
+    },
+    // 加载每日健康建议
+    async loadDailyHealthSuggestion() {
+      if (!this.userId) return;
+      try {
+        // 先检查是否有健康数据
+        const healthData = await getHealthDataList(this.userId);
+        if (healthData && healthData.length > 0) {
+          const result = await getHealthSuggestion(this.userId);
+          if (result && result.suggestion) {
+            this.dailyHealthSuggestion = result.suggestion;
+          }
+        }
+      } catch (e) {
+        console.error('获取每日健康建议失败:', e);
+      }
+    },
+    // 跳转到AI建议页面
+    goToAiSuggest() {
+      uni.navigateTo({ url: '/pages/aiSuggest/aiSuggest' });
     }
   }
 };
@@ -958,6 +1003,88 @@ export default {
 
 .progress-hint { font-size: 24rpx; color: #5B8C6E; }
 .progress-hint.done { color: #3D9B6D; font-weight: 500; }
+
+/* ===== 每日AI健康建议卡片 ===== */
+.daily-health-card {
+  background: linear-gradient(135deg, rgba(255, 240, 240, 0.9), rgba(255, 220, 220, 0.85));
+  backdrop-filter: blur(24rpx);
+  border-radius: 40rpx;
+  padding: 28rpx;
+  margin-bottom: 32rpx;
+  border: 1rpx solid rgba(220, 80, 80, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.daily-health-card:active {
+  transform: scale(0.98);
+}
+
+.dhc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dhc-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.dhc-icon-box {
+  width: 56rpx;
+  height: 56rpx;
+  background: rgba(220, 80, 80, 0.15);
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dhc-icon {
+  font-size: 32rpx;
+}
+
+.dhc-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #8B3A3A;
+}
+
+.dhc-arrow {
+  font-size: 32rpx;
+  color: #C85D5D;
+  font-weight: bold;
+}
+
+.dhc-divider {
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(200, 80, 80, 0.3), transparent);
+  margin: 20rpx 0;
+}
+
+.dhc-content {
+  margin-bottom: 16rpx;
+}
+
+.dhc-text {
+  font-size: 26rpx;
+  color: #6B4A4A;
+  line-height: 1.6;
+}
+
+.dhc-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dhc-action {
+  font-size: 24rpx;
+  color: #C85D5D;
+  font-weight: 600;
+}
 
 /* ===== 功能导航标题 ===== */
 .section-header {

@@ -103,6 +103,22 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   var g0 = _vm.userProjects.length
+  var g1 = _vm.showDetail
+    ? _vm.projectDetail.images && _vm.projectDetail.images.trim()
+    : null
+  var l0 =
+    _vm.showDetail && g1
+      ? _vm.__map(_vm.projectDetail.images.split(","), function (image, index) {
+          var $orig = _vm.__get_orig(image)
+          var g2 = image && image.trim()
+          var g3 = g2 ? image.split("/").pop() : null
+          return {
+            $orig: $orig,
+            g2: g2,
+            g3: g3,
+          }
+        })
+      : null
   if (!_vm._isMounted) {
     _vm.e0 = function ($event) {
       if ($event.target !== $event.currentTarget) {
@@ -122,6 +138,8 @@ var render = function () {
     {
       $root: {
         g0: g0,
+        g1: g1,
+        l0: l0,
       },
     }
   )
@@ -170,6 +188,13 @@ var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/hel
 var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ 5));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 43));
 var _carbonProject = __webpack_require__(/*! ../../utils/carbonProject.js */ 117);
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -378,7 +403,7 @@ var _default = {
     loadData: function loadData() {
       var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var _yield$Promise$all, _yield$Promise$all2, unlockRes, carbonRes, profile;
+        var _yield$Promise$all, _yield$Promise$all2, unlockRes, carbonRes, projectsRes, profile;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -388,15 +413,29 @@ var _default = {
                 });
                 _context.prev = 1;
                 _context.next = 4;
-                return Promise.all([(0, _carbonProject.checkAndUnlock)(_this2.username), (0, _carbonProject.getUserTotalCarbon)(_this2.username)]);
+                return Promise.all([(0, _carbonProject.checkAndUnlock)(_this2.username), (0, _carbonProject.getUserTotalCarbon)(_this2.username), (0, _carbonProject.getProjectsList)()]);
               case 4:
                 _yield$Promise$all = _context.sent;
-                _yield$Promise$all2 = (0, _slicedToArray2.default)(_yield$Promise$all, 2);
+                _yield$Promise$all2 = (0, _slicedToArray2.default)(_yield$Promise$all, 3);
                 unlockRes = _yield$Promise$all2[0];
                 carbonRes = _yield$Promise$all2[1];
+                projectsRes = _yield$Promise$all2[2];
                 _this2.userProjects = unlockRes.data || [];
                 profile = carbonRes.data || {};
                 _this2.totalCarbon = (0, _typeof2.default)(profile) === 'object' ? profile.totalCarbon || 0 : profile || 0;
+                _this2.allProjects = projectsRes.data || [];
+                _this2.calculateNextGoal();
+                _context.next = 22;
+                break;
+              case 16:
+                _context.prev = 16;
+                _context.t0 = _context["catch"](1);
+                console.error('加载数据失败:', _context.t0);
+                uni.showToast({
+                  title: '加载失败',
+                  icon: 'none'
+                });
+                // 加载失败时使用默认数据
                 _this2.allProjects = [{
                   id: 1,
                   name: '阿拉善梭梭树认养',
@@ -411,26 +450,16 @@ var _default = {
                   requiredCarbon: 1000
                 }];
                 _this2.calculateNextGoal();
-                _context.next = 19;
-                break;
-              case 15:
-                _context.prev = 15;
-                _context.t0 = _context["catch"](1);
-                console.error('加载数据失败:', _context.t0);
-                uni.showToast({
-                  title: '加载失败',
-                  icon: 'none'
-                });
-              case 19:
-                _context.prev = 19;
-                uni.hideLoading();
-                return _context.finish(19);
               case 22:
+                _context.prev = 22;
+                uni.hideLoading();
+                return _context.finish(22);
+              case 25:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[1, 15, 19, 22]]);
+        }, _callee, null, [[1, 16, 22, 25]]);
       }))();
     },
     calculateNextGoal: function calculateNextGoal() {
@@ -499,27 +528,28 @@ var _default = {
               case 4:
                 res = _context3.sent;
                 _this4.projectDetail = res.data || {};
+                console.log('项目详情数据:', _this4.projectDetail);
                 _this4.showDetail = true;
-                _context3.next = 13;
+                _context3.next = 14;
                 break;
-              case 9:
-                _context3.prev = 9;
+              case 10:
+                _context3.prev = 10;
                 _context3.t0 = _context3["catch"](1);
                 console.error('加载项目详情失败:', _context3.t0);
                 uni.showToast({
                   title: '加载失败',
                   icon: 'none'
                 });
-              case 13:
-                _context3.prev = 13;
+              case 14:
+                _context3.prev = 14;
                 uni.hideLoading();
-                return _context3.finish(13);
-              case 16:
+                return _context3.finish(14);
+              case 17:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, null, [[1, 9, 13, 16]]);
+        }, _callee3, null, [[1, 10, 14, 17]]);
       }))();
     },
     goToCertificate: function goToCertificate(userProjectId) {

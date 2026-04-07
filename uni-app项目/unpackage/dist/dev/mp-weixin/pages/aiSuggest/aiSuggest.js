@@ -102,19 +102,35 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.carbonFootprint.length
-  var l0 = _vm.suggestion
-    ? _vm.__map(_vm.paragraphs, function (p, i) {
-        var $orig = _vm.__get_orig(p)
-        var g1 = p.trim()
-        var g2 = g1 ? p.trim() : null
-        return {
-          $orig: $orig,
-          g1: g1,
-          g2: g2,
-        }
-      })
-    : null
+  var g0 = _vm.currentMode === "carbon" ? _vm.carbonFootprint.length : null
+  var l0 =
+    _vm.currentMode === "carbon" && _vm.suggestion
+      ? _vm.__map(_vm.paragraphs, function (p, i) {
+          var $orig = _vm.__get_orig(p)
+          var g1 = p.trim()
+          var g2 = g1 ? p.trim() : null
+          return {
+            $orig: $orig,
+            g1: g1,
+            g2: g2,
+          }
+        })
+      : null
+  var l1 =
+    !(_vm.currentMode === "carbon" && _vm.suggestion) &&
+    _vm.currentMode === "health" &&
+    _vm.healthSuggestion
+      ? _vm.__map(_vm.paragraphs, function (p, i) {
+          var $orig = _vm.__get_orig(p)
+          var g3 = p.trim()
+          var g4 = g3 ? p.trim() : null
+          return {
+            $orig: $orig,
+            g3: g3,
+            g4: g4,
+          }
+        })
+      : null
   if (!_vm._isMounted) {
     _vm.e0 = function ($event) {
       _vm.isFocused = true
@@ -135,6 +151,7 @@ var render = function () {
       $root: {
         g0: g0,
         l0: l0,
+        l1: l1,
       },
     }
   )
@@ -328,27 +345,146 @@ var _request = __webpack_require__(/*! ../../utils/request */ 44);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
+      // 当前模式：'carbon' 或 'health'
+      currentMode: 'carbon',
+      // 碳足迹模式
       carbonFootprint: '',
       suggestion: '',
       isLoading: false,
       isFocused: false,
       isPress: false,
       chips: ['每天开车上班', '使用一次性餐具', '不做垃圾分类', '长时间开灯', '外卖点餐频繁', '不使用公共交通'],
-      particleStyles: []
+      // 健康模式
+      healthSuggestion: '',
+      isHealthLoading: false,
+      hasHealthData: false,
+      // 公共
+      particleStyles: [],
+      userId: ''
     };
   },
   computed: {
     paragraphs: function paragraphs() {
-      return this.suggestion.split('\n').filter(function (p) {
+      return (this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion).split('\n').filter(function (p) {
         return p.trim();
       });
     }
   },
   onLoad: function onLoad() {
     this.initParticleStyles();
+    this.userId = uni.getStorageSync('username') || '';
+  },
+  onShow: function onShow() {
+    // 每次显示页面时刷新用户ID和健康数据
+    this.userId = uni.getStorageSync('username') || '';
+    if (this.currentMode === 'health' && this.userId) {
+      this.checkHealthData();
+    }
   },
   methods: {
     initParticleStyles: function initParticleStyles() {
@@ -365,6 +501,112 @@ var _default = {
       }
       this.particleStyles = styles;
     },
+    // 切换模式
+    switchMode: function switchMode(mode) {
+      this.currentMode = mode;
+      if (mode === 'health' && this.userId) {
+        this.checkHealthData();
+      }
+    },
+    // 检查健康数据
+    checkHealthData: function checkHealthData() {
+      var _this = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
+        var data;
+        return _regenerator.default.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (_this.userId) {
+                  _context.next = 3;
+                  break;
+                }
+                uni.showToast({
+                  title: '请先登录',
+                  icon: 'none'
+                });
+                return _context.abrupt("return");
+              case 3:
+                _context.prev = 3;
+                _context.next = 6;
+                return (0, _request.getHealthDataList)(_this.userId);
+              case 6:
+                data = _context.sent;
+                _this.hasHealthData = data && data.length > 0;
+                _context.next = 13;
+                break;
+              case 10:
+                _context.prev = 10;
+                _context.t0 = _context["catch"](3);
+                _this.hasHealthData = false;
+              case 13:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[3, 10]]);
+      }))();
+    },
+    // 获取健康建议
+    getHealthSuggestion: function getHealthSuggestion() {
+      var _this2 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+        var result;
+        return _regenerator.default.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!_this2.isHealthLoading) {
+                  _context2.next = 2;
+                  break;
+                }
+                return _context2.abrupt("return");
+              case 2:
+                if (_this2.userId) {
+                  _context2.next = 5;
+                  break;
+                }
+                uni.showToast({
+                  title: '请先登录',
+                  icon: 'none'
+                });
+                return _context2.abrupt("return");
+              case 5:
+                _this2.isHealthLoading = true;
+                _this2.healthSuggestion = '';
+                _context2.prev = 7;
+                _context2.next = 10;
+                return (0, _request.getHealthSuggestion)(_this2.userId);
+              case 10:
+                result = _context2.sent;
+                _this2.healthSuggestion = result.suggestion || '';
+                _context2.next = 17;
+                break;
+              case 14:
+                _context2.prev = 14;
+                _context2.t0 = _context2["catch"](7);
+                uni.showToast({
+                  title: '获取健康建议失败，请重试',
+                  icon: 'none'
+                });
+              case 17:
+                _context2.prev = 17;
+                _this2.isHealthLoading = false;
+                return _context2.finish(17);
+              case 20:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, null, [[7, 14, 17, 20]]);
+      }))();
+    },
+    // 跳转到健康数据页面
+    goToHealthPage: function goToHealthPage() {
+      uni.navigateTo({
+        url: '/pages/healthData/healthData'
+      });
+    },
     appendChip: function appendChip(chip) {
       var sep = this.carbonFootprint && !this.carbonFootprint.endsWith('，') && !this.carbonFootprint.endsWith('，') ? '，' : '';
       this.carbonFootprint = (this.carbonFootprint + sep + chip).slice(0, 200);
@@ -374,61 +616,62 @@ var _default = {
       this.suggestion = '';
     },
     getSuggestion: function getSuggestion() {
-      var _this = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
         var result;
-        return _regenerator.default.wrap(function _callee$(_context) {
+        return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                if (!_this.isLoading) {
-                  _context.next = 2;
+                if (!_this3.isLoading) {
+                  _context3.next = 2;
                   break;
                 }
-                return _context.abrupt("return");
+                return _context3.abrupt("return");
               case 2:
-                if (_this.carbonFootprint.trim()) {
-                  _context.next = 5;
+                if (_this3.carbonFootprint.trim()) {
+                  _context3.next = 5;
                   break;
                 }
                 uni.showToast({
                   title: '请输入碳足迹情况',
                   icon: 'none'
                 });
-                return _context.abrupt("return");
+                return _context3.abrupt("return");
               case 5:
-                _this.isLoading = true;
-                _this.suggestion = '';
-                _context.prev = 7;
-                _context.next = 10;
-                return (0, _request.getCarbonSuggestion)(_this.carbonFootprint);
+                _this3.isLoading = true;
+                _this3.suggestion = '';
+                _context3.prev = 7;
+                _context3.next = 10;
+                return (0, _request.getCarbonSuggestion)(_this3.carbonFootprint);
               case 10:
-                result = _context.sent;
-                _this.suggestion = result.suggestion || '';
-                _context.next = 17;
+                result = _context3.sent;
+                _this3.suggestion = result.suggestion || '';
+                _context3.next = 17;
                 break;
               case 14:
-                _context.prev = 14;
-                _context.t0 = _context["catch"](7);
+                _context3.prev = 14;
+                _context3.t0 = _context3["catch"](7);
                 uni.showToast({
                   title: '获取建议失败，请重试',
                   icon: 'none'
                 });
               case 17:
-                _context.prev = 17;
-                _this.isLoading = false;
-                return _context.finish(17);
+                _context3.prev = 17;
+                _this3.isLoading = false;
+                return _context3.finish(17);
               case 20:
               case "end":
-                return _context.stop();
+                return _context3.stop();
             }
           }
-        }, _callee, null, [[7, 14, 17, 20]]);
+        }, _callee3, null, [[7, 14, 17, 20]]);
       }))();
     },
     copyText: function copyText() {
+      var text = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
       uni.setClipboardData({
-        data: this.suggestion,
+        data: text,
         success: function success() {
           return uni.showToast({
             title: '已复制到剪贴板',

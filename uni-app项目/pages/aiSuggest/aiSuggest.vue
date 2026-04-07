@@ -9,8 +9,20 @@
     </view>
 
     <scroll-view scroll-y="true" class="scroller" :show-scrollbar="false">
-      <!-- ===== 顶部 Banner - 毛玻璃效果 ===== -->
-      <view class="banner floating-card">
+      <!-- ===== 模式切换 Tab ===== -->
+      <view class="mode-tabs floating-card">
+        <view class="tab-item" :class="{ active: currentMode === 'carbon' }" @click="switchMode('carbon')">
+          <text class="tab-icon">🌍</text>
+          <text class="tab-text">碳足迹建议</text>
+        </view>
+        <view class="tab-item" :class="{ active: currentMode === 'health' }" @click="switchMode('health')">
+          <text class="tab-icon">❤️</text>
+          <text class="tab-text">健康建议</text>
+        </view>
+      </view>
+
+      <!-- ===== 顶部 Banner - 碳足迹模式 ===== -->
+      <view class="banner floating-card" v-if="currentMode === 'carbon'">
         <view class="banner-glow"></view>
         <view class="banner-icon-wrapper">
           <view class="icon-outer-ring"></view>
@@ -26,8 +38,25 @@
         </view>
       </view>
 
-      <!-- ===== 输入卡片 - 毛玻璃效果 ===== -->
-      <view class="card input-card floating-card">
+      <!-- ===== 顶部 Banner - 健康模式 ===== -->
+      <view class="banner health-banner floating-card" v-else>
+        <view class="banner-glow"></view>
+        <view class="banner-icon-wrapper">
+          <view class="icon-outer-ring"></view>
+          <view class="icon-middle-ring"></view>
+          <view class="icon-inner-ring"></view>
+          <view class="banner-icon-box">
+            <text class="banner-icon">🏥</text>
+          </view>
+        </view>
+        <view class="banner-text">
+          <text class="banner-title">AI 健康建议</text>
+          <text class="banner-sub">基于你的健康数据，AI 为你定制每日健康方案</text>
+        </view>
+      </view>
+
+      <!-- ===== 输入卡片 - 碳足迹模式 ===== -->
+      <view class="card input-card floating-card" v-if="currentMode === 'carbon'">
         <view class="card-header">
           <view class="header-left">
             <view class="header-dot"></view>
@@ -86,8 +115,32 @@
         </view>
       </view>
 
-      <!-- ===== AI 回复卡片 - 毛玻璃效果 ===== -->
-      <view class="card result-card floating-card" v-if="suggestion">
+      <!-- ===== 健康数据卡片 - 健康模式 ===== -->
+      <view class="card health-data-card floating-card" v-else>
+        <view class="card-header">
+          <view class="header-left">
+            <view class="header-dot health-dot"></view>
+            <text class="card-label">📊 今日健康数据</text>
+          </view>
+        </view>
+
+        <view class="health-actions">
+          <view class="btn-health" @click="getHealthSuggestion" :class="{ loading: isHealthLoading }">
+            <view class="loading-dots" v-if="isHealthLoading">
+              <view class="dot d1"></view>
+              <view class="dot d2"></view>
+              <view class="dot d3"></view>
+            </view>
+            <text class="btn-health-text" v-else>🩺 获取 AI 健康建议</text>
+          </view>
+          <view class="btn-history" @click="goToHealthPage">
+            <text class="btn-history-text">📝 编辑健康数据</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- ===== AI 回复卡片 - 碳足迹模式 ===== -->
+      <view class="card result-card floating-card" v-if="currentMode === 'carbon' && suggestion">
         <view class="result-header">
           <view class="result-title-wrap">
             <view class="result-icon-box">
@@ -125,8 +178,47 @@
         </view>
       </view>
 
-      <!-- ===== 空状态提示 ===== -->
-      <view class="empty-tip floating-card" v-if="!suggestion && !isLoading">
+      <!-- ===== AI 健康建议回复卡片 ===== -->
+      <view class="card result-card health-result floating-card" v-else-if="currentMode === 'health' && healthSuggestion">
+        <view class="result-header">
+          <view class="result-title-wrap">
+            <view class="result-icon-box health-icon-box">
+              <text class="result-icon">🏥</text>
+            </view>
+            <text class="result-title">AI 健康建议</text>
+          </view>
+          <view class="btn-copy" @click="copyText">
+            <text class="copy-text">📋 复制</text>
+          </view>
+        </view>
+
+        <view class="divider"></view>
+
+        <scroll-view scroll-y class="result-scroll" :show-scrollbar="false">
+          <view class="paragraphs">
+            <view
+                class="para"
+                v-for="(p, i) in paragraphs"
+                :key="i"
+                v-if="p.trim()"
+                :style="{ animationDelay: i * 0.1 + 's' }"
+            >
+              <view class="para-dot health-para-dot"></view>
+              <text class="para-text">{{ p.trim() }}</text>
+            </view>
+          </view>
+        </scroll-view>
+
+        <!-- 装饰粒子 -->
+        <view class="result-particles">
+          <view class="rp rp1">💪</view>
+          <view class="rp rp2">❤️</view>
+          <view class="rp rp3">🌿</view>
+        </view>
+      </view>
+
+      <!-- ===== 空状态提示 - 碳足迹模式 ===== -->
+      <view class="empty-tip floating-card" v-if="currentMode === 'carbon' && !suggestion && !isLoading">
         <view class="empty-icon-wrapper">
           <view class="empty-glow"></view>
           <text class="empty-icon">🌍</text>
@@ -135,9 +227,19 @@
         <text class="empty-sub">AI 将为你生成个性化的低碳减排建议</text>
       </view>
 
+      <!-- ===== 空状态提示 - 健康模式 ===== -->
+      <view class="empty-tip floating-card" v-else-if="currentMode === 'health' && !healthSuggestion && !isHealthLoading">
+        <view class="empty-icon-wrapper">
+          <view class="empty-glow health-glow"></view>
+          <text class="empty-icon">❤️</text>
+        </view>
+        <text class="empty-text">获取你的专属健康建议</text>
+        <text class="empty-sub">基于你的健康数据，AI 将为你生成每日健康方案</text>
+      </view>
+
       <!-- ===== 底部装饰 - 绿色放大三倍 ===== -->
       <view class="footer-deco">
-        <text class="deco-text">🌱 每一次选择，都是对地球的关爱</text>
+        <text class="deco-text">每一次选择，都是对自己的关爱</text>
       </view>
 
       <view class="spacer"></view>
@@ -146,29 +248,47 @@
 </template>
 
 <script>
-import { getCarbonSuggestion } from '../../utils/request';
+import { getCarbonSuggestion, getHealthSuggestion, getHealthDataList } from '../../utils/request';
 
 export default {
   data() {
     return {
+      // 当前模式：'carbon' 或 'health'
+      currentMode: 'carbon',
+      // 碳足迹模式
       carbonFootprint: '',
       suggestion: '',
       isLoading: false,
       isFocused: false,
       isPress: false,
       chips: ['每天开车上班', '使用一次性餐具', '不做垃圾分类', '长时间开灯', '外卖点餐频繁', '不使用公共交通'],
-      particleStyles: []
+      // 健康模式
+      healthSuggestion: '',
+      isHealthLoading: false,
+      hasHealthData: false,
+      // 公共
+      particleStyles: [],
+      userId: ''
     };
   },
   computed: {
     paragraphs() {
-      return this.suggestion.split('\n').filter(p => p.trim());
+      return (this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion).split('\n').filter(p => p.trim());
     }
   },
   onLoad() {
     this.initParticleStyles();
+    this.userId = uni.getStorageSync('username') || '';
+  },
+  onShow() {
+    // 每次显示页面时刷新用户ID和健康数据
+    this.userId = uni.getStorageSync('username') || '';
+    if (this.currentMode === 'health' && this.userId) {
+      this.checkHealthData();
+    }
   },
   methods: {
+
     initParticleStyles() {
       const styles = [];
       for (let i = 0; i < 50; i++) {
@@ -182,6 +302,48 @@ export default {
         });
       }
       this.particleStyles = styles;
+    },
+    // 切换模式
+    switchMode(mode) {
+      this.currentMode = mode;
+      if (mode === 'health' && this.userId) {
+        this.checkHealthData();
+      }
+    },
+    // 检查健康数据
+    async checkHealthData() {
+      if (!this.userId) {
+        uni.showToast({ title: '请先登录', icon: 'none' });
+        return;
+      }
+      try {
+        const data = await getHealthDataList(this.userId);
+        this.hasHealthData = data && data.length > 0;
+      } catch (e) {
+        this.hasHealthData = false;
+      }
+    },
+    // 获取健康建议
+    async getHealthSuggestion() {
+      if (this.isHealthLoading) return;
+      if (!this.userId) {
+        uni.showToast({ title: '请先登录', icon: 'none' });
+        return;
+      }
+      this.isHealthLoading = true;
+      this.healthSuggestion = '';
+      try {
+        const result = await getHealthSuggestion(this.userId);
+        this.healthSuggestion = result.suggestion || '';
+      } catch (e) {
+        uni.showToast({ title: '获取健康建议失败，请重试', icon: 'none' });
+      } finally {
+        this.isHealthLoading = false;
+      }
+    },
+    // 跳转到健康数据页面
+    goToHealthPage() {
+      uni.navigateTo({ url: '/pages/healthData/healthData' });
     },
     appendChip(chip) {
       const sep = this.carbonFootprint && !this.carbonFootprint.endsWith('，') && !this.carbonFootprint.endsWith('，') ? '，' : '';
@@ -209,8 +371,9 @@ export default {
       }
     },
     copyText() {
+      const text = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
       uni.setClipboardData({
-        data: this.suggestion,
+        data: text,
         success: () => uni.showToast({ title: '已复制到剪贴板', icon: 'success' })
       });
     }
@@ -900,5 +1063,140 @@ export default {
 
 .spacer {
   height: 60rpx;
+}
+
+/* ===== 模式切换 Tabs ===== */
+.mode-tabs {
+  margin-top: 100rpx;
+  margin-bottom: 28rpx;
+  display: flex;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24rpx);
+  border-radius: 32rpx;
+  padding: 8rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 20rpx 0;
+  border-radius: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.tab-item.active {
+  background: linear-gradient(135deg, #6FB88A, #3D9B6D);
+  box-shadow: 0 4rpx 16rpx rgba(61, 155, 109, 0.3);
+}
+
+.tab-icon {
+  font-size: 32rpx;
+}
+
+.tab-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #666;
+}
+
+.tab-item.active .tab-text {
+  color: #fff;
+}
+
+/* ===== 健康模式 Banner ===== */
+.health-banner {
+  background: linear-gradient(135deg, rgba(220, 80, 80, 0.85), rgba(200, 60, 60, 0.8)) !important;
+}
+
+/* ===== 健康数据卡片 ===== */
+.health-data-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24rpx);
+  border-radius: 40rpx;
+  padding: 36rpx 32rpx;
+  margin-bottom: 28rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.health-dot {
+  background: linear-gradient(180deg, #E85D5D, #C83C3C) !important;
+  box-shadow: 0 0 8rpx rgba(200, 60, 60, 0.5) !important;
+}
+
+.health-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.btn-health {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #E85D5D, #C83C3C);
+  border-radius: 32rpx;
+  padding: 28rpx 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(200, 60, 60, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-health:active {
+  transform: scale(0.98);
+}
+
+.btn-health-text {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
+.btn-history {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(100, 200, 150, 0.15);
+  border: 1rpx solid rgba(100, 200, 150, 0.3);
+  border-radius: 32rpx;
+  padding: 24rpx 0;
+  transition: all 0.3s ease;
+}
+
+.btn-history:active {
+  transform: scale(0.98);
+  background: rgba(100, 200, 150, 0.25);
+}
+
+.btn-history-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D9B6D;
+}
+
+/* ===== 健康结果卡片 ===== */
+.health-result {
+  border-color: rgba(220, 80, 80, 0.2) !important;
+}
+
+.health-icon-box {
+  background: rgba(220, 80, 80, 0.1) !important;
+}
+
+.health-para-dot {
+  background: #E85D5D !important;
+}
+
+.health-glow {
+  background: radial-gradient(circle, rgba(220, 80, 80, 0.4), transparent) !important;
 }
 </style>

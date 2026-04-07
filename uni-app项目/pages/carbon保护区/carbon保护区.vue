@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="page">
     <!-- 动态渐变背景 -->
     <view class="gradient-bg"></view>
@@ -92,6 +92,13 @@
           <view class="modal-body">
             <text class="detail-location">📍 {{ projectDetail.location }}</text>
             <text class="detail-description">{{ projectDetail.description }}</text>
+            <view v-if="projectDetail.images && projectDetail.images.trim()" class="detail-images">
+              <swiper indicator-dots indicator-color="#9CC0AC" indicator-active-color="#3D9B6D">
+                <swiper-item v-for="(image, index) in projectDetail.images.split(',')" :key="index">
+                  <image v-if="image && image.trim()" :src="'./images/' + image.split('/').pop()" class="detail-image" mode="aspectFill"></image>
+                </swiper-item>
+              </swiper>
+            </view>
             <view class="detail-progress">
               <text class="progress-label">项目进度</text>
               <view class="progress-bar">
@@ -113,7 +120,7 @@
 </template>
 
 <script>
-import { getUserTotalCarbon, getUserProjectList, checkAndUnlock, getProjectDetail } from '../../utils/carbonProject.js';
+import { getUserTotalCarbon, getUserProjectList, checkAndUnlock, getProjectDetail, getProjectsList } from '../../utils/carbonProject.js';
 
 const PROJECT_COORDS = {
   1: { latitude: 38.85, longitude: 105.70 },
@@ -191,25 +198,29 @@ export default {
     async loadData() {
       uni.showLoading({ title: '加载中...' });
       try {
-        const [unlockRes, carbonRes] = await Promise.all([
+        const [unlockRes, carbonRes, projectsRes] = await Promise.all([
           checkAndUnlock(this.username),
-          getUserTotalCarbon(this.username)
+          getUserTotalCarbon(this.username),
+          getProjectsList()
         ]);
         this.userProjects = unlockRes.data || [];
 
         const profile = carbonRes.data || {};
         this.totalCarbon = typeof profile === 'object' ? (profile.totalCarbon || 0) : (profile || 0);
 
-        this.allProjects = [
-          { id: 1, name: '阿拉善梭梭树认养', requiredCarbon: 100 },
-          { id: 2, name: '长江江豚栖息地保护', requiredCarbon: 500 },
-          { id: 3, name: '乡村校园绿色图书室', requiredCarbon: 1000 }
-        ];
+        this.allProjects = projectsRes.data || [];
 
         this.calculateNextGoal();
       } catch (error) {
         console.error('加载数据失败:', error);
         uni.showToast({ title: '加载失败', icon: 'none' });
+        // 加载失败时使用默认数据
+        this.allProjects = [
+          { id: 1, name: '阿拉善梭梭树认养', requiredCarbon: 100 },
+          { id: 2, name: '长江江豚栖息地保护', requiredCarbon: 500 },
+          { id: 3, name: '乡村校园绿色图书室', requiredCarbon: 1000 }
+        ];
+        this.calculateNextGoal();
       } finally {
         uni.hideLoading();
       }
@@ -248,6 +259,7 @@ export default {
       try {
         const res = await getProjectDetail(projectId);
         this.projectDetail = res.data || {};
+        console.log('项目详情数据:', this.projectDetail);
         this.showDetail = true;
       } catch (error) {
         console.error('加载项目详情失败:', error);
@@ -661,6 +673,18 @@ export default {
 .require-text {
   font-size: 24rpx;
   color: #3D9B6D;
+}
+
+/* 图片样式 */
+.detail-images {
+  margin: 24rpx 0;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.detail-image {
+  width: 100%;
+  height: 300rpx;
 }
 
 .modal-footer {

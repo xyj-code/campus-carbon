@@ -293,17 +293,21 @@ export default {
       this.submitting = true;
       try {
         const data = {
-          userId: parseInt(this.userId),
+          userId: this.userId,
           recordDate: this.recordDate,
-          height: this.height ? parseFloat(this.height) : null,
-          weight: this.weight ? parseFloat(this.weight) : null,
+          height: this.height ? this.height : null,
+          weight: this.weight ? this.weight : null,
           bloodPressure: this.bloodPressure || null,
-          heartRate: this.heartRate ? parseInt(this.heartRate) : null,
-          bloodSugar: this.bloodSugar ? parseFloat(this.bloodSugar) : null,
+          heartRate: this.heartRate ? this.heartRate : null,
+          bloodSugar: this.bloodSugar ? this.bloodSugar : null,
           remark: this.remark || null
         };
 
-        await saveHealthData(data);
+        console.log('提交健康数据:', data); // 调试日志
+
+        const result = await saveHealthData(data);
+        console.log('保存结果:', result); // 调试日志
+        
         uni.showToast({ title: '保存成功', icon: 'success' });
 
         // 清空表单
@@ -316,6 +320,7 @@ export default {
 
         this.loadRecords();
       } catch (err) {
+        console.error('保存失败:', err); // 调试日志
         uni.showToast({ title: '保存失败', icon: 'none' });
       } finally {
         this.submitting = false;

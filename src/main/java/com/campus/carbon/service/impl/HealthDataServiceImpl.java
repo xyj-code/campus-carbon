@@ -28,25 +28,32 @@ public class HealthDataServiceImpl implements HealthDataService {
 
     @Override
     public HealthData saveOrUpdate(HealthData healthData) {
-        // 计算BMI：体重(kg) / 身高(m)的平方
-        if (healthData.getHeight() != null && healthData.getWeight() != null && healthData.getHeight().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal heightInMeters = healthData.getHeight().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
-            BigDecimal bmi = healthData.getWeight()
-                    .divide(heightInMeters.multiply(heightInMeters), 2, RoundingMode.HALF_UP);
-            healthData.setBmi(bmi);
-        }
+        try {
+            // 计算BMI：体重(kg) / 身高(m)的平方
+            if (healthData.getHeight() != null && healthData.getWeight() != null && healthData.getHeight().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal heightInMeters = healthData.getHeight().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+                BigDecimal bmi = healthData.getWeight()
+                        .divide(heightInMeters.multiply(heightInMeters), 2, RoundingMode.HALF_UP);
+                healthData.setBmi(bmi);
+            }
 
-        // 检查是否已存在该日期的记录
-        HealthData existing = healthDataMapper.selectByUserIdAndDate(healthData.getUserId(), healthData.getRecordDate());
-        if (existing != null) {
-            // 更新已有记录
-            healthData.setId(existing.getId());
-            healthDataMapper.update(healthData);
-            return healthDataMapper.selectById(existing.getId());
-        } else {
-            // 插入新记录
-            healthDataMapper.insert(healthData);
-            return healthDataMapper.selectById(healthData.getId());
+            // 检查是否已存在该日期的记录
+            HealthData existing = healthDataMapper.selectByUserIdAndDate(healthData.getUserId(), healthData.getRecordDate());
+            if (existing != null) {
+                // 更新已有记录
+                healthData.setId(existing.getId());
+                healthDataMapper.update(healthData);
+                return healthDataMapper.selectById(existing.getId());
+            } else {
+                // 插入新记录
+                healthDataMapper.insert(healthData);
+                return healthDataMapper.selectById(healthData.getId());
+            }
+        } catch (Exception e) {
+            // 记录异常
+            System.err.println("保存健康数据失败: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 

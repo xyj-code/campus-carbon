@@ -73,6 +73,11 @@ public class CarbonProjectController {
         return Result.success(cert);
     }
 
+    @GetMapping("/all")
+    public Result<List<Project>> getAllProjects() {
+        return Result.success(projectMapper.selectAll());
+    }
+
     private String buildCode(Project p) {
         String prefix = (p.getLocation() != null && p.getLocation().length() >= 2)
                 ? p.getLocation().substring(0, 2) : "LC";
