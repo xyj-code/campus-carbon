@@ -146,7 +146,7 @@ export default {
     mapMarkers() {
       return this.allProjects.map(p => {
         const coord = PROJECT_COORDS[p.id] || { latitude: 35.86, longitude: 104.20 };
-        const unlocked = this.isUnlockedById(p.id);
+        const unlocked = this.isProjectUnlocked(p);
         return {
           id: p.id,
           latitude: coord.latitude,
@@ -228,7 +228,7 @@ export default {
     calculateNextGoal() {
       const goals = this.allProjects.map(p => ({
         name: p.name,
-        carbon: p.requiredCarbon
+        carbon: Number(p.requiredCarbon || 0)
       })).sort((a, b) => a.carbon - b.carbon);
 
       for (let i = 0; i < goals.length; i++) {
@@ -249,6 +249,10 @@ export default {
     },
     isUnlockedById(projectId) {
       return this.userProjects.some(p => p.projectId === projectId);
+    },
+    isProjectUnlocked(project) {
+      const requiredCarbon = Number(project.requiredCarbon || 0);
+      return this.isUnlockedById(project.id) && this.totalCarbon >= requiredCarbon;
     },
     async onMarkerTap(e) {
       const projectId = e.markerId;

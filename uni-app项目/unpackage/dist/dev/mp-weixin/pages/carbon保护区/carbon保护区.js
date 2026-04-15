@@ -349,7 +349,7 @@ var _default = {
           latitude: 35.86,
           longitude: 104.20
         };
-        var unlocked = _this.isUnlockedById(p.id);
+        var unlocked = _this.isProjectUnlocked(p);
         return {
           id: p.id,
           latitude: coord.latitude,
@@ -466,7 +466,7 @@ var _default = {
       var goals = this.allProjects.map(function (p) {
         return {
           name: p.name,
-          carbon: p.requiredCarbon
+          carbon: Number(p.requiredCarbon || 0)
         };
       }).sort(function (a, b) {
         return a.carbon - b.carbon;
@@ -491,6 +491,10 @@ var _default = {
       return this.userProjects.some(function (p) {
         return p.projectId === projectId;
       });
+    },
+    isProjectUnlocked: function isProjectUnlocked(project) {
+      var requiredCarbon = Number(project.requiredCarbon || 0);
+      return this.isUnlockedById(project.id) && this.totalCarbon >= requiredCarbon;
     },
     onMarkerTap: function onMarkerTap(e) {
       var _this3 = this;

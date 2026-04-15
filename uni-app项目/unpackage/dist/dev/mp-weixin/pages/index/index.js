@@ -102,19 +102,20 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.dailyHealthSuggestion
+  var g0 = _vm.taskBoard.dailyTasks.length || _vm.taskBoard.weeklyTasks.length
+  var g1 = g0 ? _vm.taskBoard.dailyTasks.length : null
+  var g2 = g0 ? _vm.taskBoard.weeklyTasks.length : null
+  var g3 = _vm.dailyHealthSuggestion
     ? _vm.dailyHealthSuggestion.substring(0, 80)
     : null
-  if (!_vm._isMounted) {
-    _vm.e0 = function ($event) {
-      _vm.badgeVisible = false
-    }
-  }
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
+        g1: g1,
+        g2: g2,
+        g3: g3,
       },
     }
   )
@@ -466,6 +467,93 @@ var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
     return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 168));
@@ -493,7 +581,19 @@ var _default = {
       userRank: '--',
       stepPct: 0,
       stepsLeft: 10000,
-      badgeVisible: false,
+      featuredBadge: null,
+      taskBoard: {
+        summary: {
+          dailyCompleted: 0,
+          dailyTotal: 0,
+          weeklyCompleted: 0,
+          weeklyTotal: 0,
+          dailyPeriodLabel: '',
+          weeklyPeriodLabel: ''
+        },
+        dailyTasks: [],
+        weeklyTasks: []
+      },
       particleStyles: [],
       // 每日健康建议
       dailyHealthSuggestion: '',
@@ -520,6 +620,8 @@ var _default = {
       this.loadTodayData();
       this.loadRankData();
       this.loadDailyHealthSuggestion();
+      this.loadAchievementBadge();
+      this.loadTaskBoard();
     }
   },
   methods: {
@@ -626,7 +728,6 @@ var _default = {
                     _this2.treeLevel = 1;
                     _this2.treeName = '嫩芽';
                   }
-                  if (steps > 0) _this2.badgeVisible = true;
                 }
                 _context2.next = 12;
                 break;
@@ -642,6 +743,104 @@ var _default = {
         }, _callee2, null, [[0, 9]]);
       }))();
     },
+    loadAchievementBadge: function loadAchievementBadge() {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var records, badgeRecord;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+                _context3.next = 3;
+                return (0, _request.getExchangeRecords)(_this3.stuNo);
+              case 3:
+                records = _context3.sent;
+                badgeRecord = (records || []).find(function (item) {
+                  return item.productCode === 'CERT_LOW_CARBON_STAR';
+                });
+                if (badgeRecord) {
+                  _context3.next = 8;
+                  break;
+                }
+                _this3.featuredBadge = null;
+                return _context3.abrupt("return");
+              case 8:
+                _this3.featuredBadge = {
+                  name: badgeRecord.name || '低碳之星徽章',
+                  subtitle: badgeRecord.nextStep || '系统已生成徽章记录，可作为低碳成就展示',
+                  timeText: _this3.formatBadgeTime(badgeRecord.createTime)
+                };
+                _context3.next = 14;
+                break;
+              case 11:
+                _context3.prev = 11;
+                _context3.t0 = _context3["catch"](0);
+                _this3.featuredBadge = null;
+              case 14:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[0, 11]]);
+      }))();
+    },
+    loadTaskBoard: function loadTaskBoard() {
+      var _this4 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
+        var res;
+        return _regenerator.default.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                _context4.prev = 0;
+                _context4.next = 3;
+                return (0, _request.getTaskBoard)(_this4.stuNo);
+              case 3:
+                res = _context4.sent;
+                _this4.taskBoard = {
+                  summary: res.summary || {
+                    dailyCompleted: 0,
+                    dailyTotal: 0,
+                    weeklyCompleted: 0,
+                    weeklyTotal: 0,
+                    dailyPeriodLabel: '',
+                    weeklyPeriodLabel: ''
+                  },
+                  dailyTasks: res.dailyTasks || [],
+                  weeklyTasks: res.weeklyTasks || []
+                };
+                _context4.next = 10;
+                break;
+              case 7:
+                _context4.prev = 7;
+                _context4.t0 = _context4["catch"](0);
+                _this4.taskBoard = {
+                  summary: {
+                    dailyCompleted: 0,
+                    dailyTotal: 0,
+                    weeklyCompleted: 0,
+                    weeklyTotal: 0,
+                    dailyPeriodLabel: '',
+                    weeklyPeriodLabel: ''
+                  },
+                  dailyTasks: [],
+                  weeklyTasks: []
+                };
+              case 10:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, null, [[0, 7]]);
+      }))();
+    },
+    formatBadgeTime: function formatBadgeTime(value) {
+      if (!value) {
+        return '';
+      }
+      return '点亮时间 ' + String(value).replace('T', ' ').slice(0, 16);
+    },
     navigateTo: function navigateTo(url) {
       uni.navigateTo({
         url: url
@@ -656,48 +855,48 @@ var _default = {
     },
     // 加载每日健康建议
     loadDailyHealthSuggestion: function loadDailyHealthSuggestion() {
-      var _this3 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+      var _this5 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
         var healthData, result;
-        return _regenerator.default.wrap(function _callee3$(_context3) {
+        return _regenerator.default.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
-                if (_this3.userId) {
-                  _context3.next = 2;
+                if (_this5.userId) {
+                  _context5.next = 2;
                   break;
                 }
-                return _context3.abrupt("return");
+                return _context5.abrupt("return");
               case 2:
-                _context3.prev = 2;
-                _context3.next = 5;
-                return (0, _request.getHealthDataList)(_this3.userId);
+                _context5.prev = 2;
+                _context5.next = 5;
+                return (0, _request.getHealthDataList)(_this5.userId);
               case 5:
-                healthData = _context3.sent;
+                healthData = _context5.sent;
                 if (!(healthData && healthData.length > 0)) {
-                  _context3.next = 11;
+                  _context5.next = 11;
                   break;
                 }
-                _context3.next = 9;
-                return (0, _request.getHealthSuggestion)(_this3.userId);
+                _context5.next = 9;
+                return (0, _request.getHealthSuggestion)(_this5.userId);
               case 9:
-                result = _context3.sent;
+                result = _context5.sent;
                 if (result && result.suggestion) {
-                  _this3.dailyHealthSuggestion = result.suggestion;
+                  _this5.dailyHealthSuggestion = result.suggestion;
                 }
               case 11:
-                _context3.next = 16;
+                _context5.next = 16;
                 break;
               case 13:
-                _context3.prev = 13;
-                _context3.t0 = _context3["catch"](2);
-                console.error('获取每日健康建议失败:', _context3.t0);
+                _context5.prev = 13;
+                _context5.t0 = _context5["catch"](2);
+                console.error('获取每日健康建议失败:', _context5.t0);
               case 16:
               case "end":
-                return _context3.stop();
+                return _context5.stop();
             }
           }
-        }, _callee3, null, [[2, 13]]);
+        }, _callee5, null, [[2, 13]]);
       }))();
     },
     // 跳转到AI建议页面

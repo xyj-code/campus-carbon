@@ -3,12 +3,39 @@
     <!-- 顶部导航栏 -->
     <view class="nav-bar">
       <text class="nav-back" @click="goBack">←</text>
-      <text class="nav-title">电子认养证书</text>
+      <text class="nav-title">{{ pageTitle }}</text>
     </view>
 
     <!-- 证书生成区域 -->
     <view class="certificate-section">
-      <view class="certificate-container" v-if="certificateData">
+      <view class="certificate-container" v-if="isBenefitMode && benefitRecord">
+        <view class="certificate-bg benefit-bg">
+          <view class="certificate-content">
+            <text class="certificate-title">{{ benefitRecord.name }}</text>
+            <text class="certificate-subtitle">LOW CARBON ACHIEVEMENT CERTIFICATE</text>
+
+            <view class="certificate-body">
+              <text class="certificate-text">兹授予</text>
+              <text class="certificate-username">{{ holderName }}</text>
+              <text class="certificate-text">绿色校园低碳实践荣誉</text>
+              <text class="certificate-carbon">{{ benefitRecord.categoryLabel }}</text>
+              <text class="certificate-text">作为阶段性低碳行动成果记录</text>
+            </view>
+
+            <view class="certificate-info">
+              <text class="info-item">证书编号：{{ benefitCertificateCode }}</text>
+              <text class="info-item">签发时间：{{ benefitRecord.createTime }}</text>
+              <text class="info-item">签发单位：{{ benefitRecord.sponsor }}</text>
+              <text class="info-item">证书说明：{{ benefitRecord.subtitle }}</text>
+            </view>
+
+            <view class="certificate-seal benefit-seal">
+              <text class="seal-text">绿色先锋认证</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="certificate-container" v-else-if="certificateData">
         <!-- 证书背景 -->
         <view class="certificate-bg">
           <!-- 证书内容 -->
@@ -39,12 +66,12 @@
         </view>
       </view>
       <view v-else class="loading-state">
-        <text class="loading-text">生成证书中...</text>
+        <text class="loading-text">{{ loadingText }}</text>
       </view>
     </view>
 
     <!-- 操作按钮 -->
-    <view class="action-buttons">
+    <view class="action-buttons" v-if="(isBenefitMode && benefitRecord) || (!isBenefitMode && certificateData)">
       <button class="btn-primary" @click="saveToAlbum">保存到相册</button>
       <button class="btn-secondary" @click="shareToFriends">分享给好友</button>
     </view>
@@ -53,18 +80,42 @@
 
 <script>
 import { getCertificate } from '../../utils/carbonProject.js';
+import { getExchangeRecords } from '../../utils/request.js';
 
 export default {
   data() {
     return {
+      mode: '',
       username: '',
       userProjectId: null,
       certificateData: null,
-      totalCarbon: 0
+      totalCarbon: 0,
+      holderName: '',
+      benefitRecord: null
     };
   },
+  computed: {
+    isBenefitMode() {
+      return this.mode === 'benefit';
+    },
+    pageTitle() {
+      return this.isBenefitMode ? '绿色权益证书' : '电子认养证书';
+    },
+    loadingText() {
+      return this.isBenefitMode ? '加载证书中...' : '生成证书中...';
+    },
+    benefitCertificateCode() {
+      if (!this.benefitRecord || !this.benefitRecord.id) {
+        return '';
+      }
+      const id = String(this.benefitRecord.id).padStart(6, '0');
+      return 'CERT-' + id;
+    }
+  },
   onLoad(options) {
+    this.mode = options.mode || '';
     this.username = options.username || uni.getStorageSync('username') || '';
+    this.holderName = uni.getStorageSync('userName') || this.username || '低碳用户';
     if (options.userProjectId) {
       this.userProjectId = parseInt(options.userProjectId);
     }
@@ -72,6 +123,11 @@ export default {
   },
   methods: {
     async loadData() {
+      if (this.isBenefitMode) {
+        await this.loadBenefitCertificate();
+        return;
+      }
+
       if (!this.username || !this.userProjectId) {
         uni.showToast({ title: '参数错误', icon: 'none' });
         return;
@@ -85,6 +141,25 @@ export default {
       } catch (error) {
         console.error('生成证书失败:', error);
         uni.showToast({ title: '生成失败', icon: 'none' });
+      } finally {
+        uni.hideLoading();
+      }
+    },
+    async loadBenefitCertificate() {
+      if (!this.username) {
+        uni.showToast({ title: '参数错误', icon: 'none' });
+        return;
+      }
+      uni.showLoading({ title: '加载证书中...' });
+      try {
+        const records = await getExchangeRecords(this.username);
+        this.benefitRecord = (records || []).find(item => item.productCode === 'CERT_GREEN_PIONEER') || null;
+        if (!this.benefitRecord) {
+          uni.showToast({ title: '请先兑换绿色先锋证书', icon: 'none' });
+        }
+      } catch (error) {
+        console.error('加载权益证书失败:', error);
+        uni.showToast({ title: '加载失败', icon: 'none' });
       } finally {
         uni.hideLoading();
       }
@@ -162,6 +237,11 @@ export default {
   background-image: url('https://example.com/cert-template.png');
   background-size: cover;
   background-position: center;
+}
+
+.benefit-bg {
+  border-color: #3f9a63;
+  background: linear-gradient(180deg, #ffffff 0%, #f1fbf4 100%);
 }
 
 .certificate-content {
@@ -253,6 +333,10 @@ export default {
   justify-content: center;
   opacity: 0.8;
   transform: rotate(15deg);
+}
+
+.benefit-seal {
+  background: #2e7d32;
 }
 
 .seal-text {

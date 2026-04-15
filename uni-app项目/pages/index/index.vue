@@ -132,6 +132,92 @@
         </text>
       </view>
 
+      <!-- ===== 任务系统 ===== -->
+      <view class="task-board floating-card" v-if="taskBoard.dailyTasks.length || taskBoard.weeklyTasks.length">
+        <view class="task-board-header">
+          <view>
+            <text class="task-board-title">活动任务</text>
+            <text class="task-board-sub">每日目标与每周挑战会自动结算奖励</text>
+          </view>
+          <view class="task-board-badge">
+            <text class="task-board-badge-text">自动奖励</text>
+          </view>
+        </view>
+
+        <view class="task-summary-row">
+          <view class="task-summary-pill">
+            <text class="task-summary-label">每日任务</text>
+            <text class="task-summary-value">{{ taskBoard.summary.dailyCompleted }}/{{ taskBoard.summary.dailyTotal }}</text>
+          </view>
+          <view class="task-summary-pill weekly">
+            <text class="task-summary-label">每周挑战</text>
+            <text class="task-summary-value">{{ taskBoard.summary.weeklyCompleted }}/{{ taskBoard.summary.weeklyTotal }}</text>
+          </view>
+        </view>
+
+        <view class="task-group" v-if="taskBoard.dailyTasks.length">
+          <view class="task-group-head">
+            <text class="task-group-title">每日任务</text>
+            <text class="task-group-period">{{ taskBoard.summary.dailyPeriodLabel }}</text>
+          </view>
+          <view class="task-list">
+            <view class="task-item" v-for="task in taskBoard.dailyTasks" :key="task.taskCode">
+              <view class="task-item-top">
+                <view class="task-icon-wrap" :style="{ background: task.accent }">
+                  <text class="task-icon">{{ task.icon }}</text>
+                </view>
+                <view class="task-copy">
+                  <text class="task-title">{{ task.title }}</text>
+                  <text class="task-subtitle">{{ task.subtitle }}</text>
+                </view>
+                <view class="task-status-wrap">
+                  <text class="task-reward">+{{ task.rewardPoints }}</text>
+                  <text class="task-status" :class="{ done: task.completed }">{{ task.statusText }}</text>
+                </view>
+              </view>
+              <view class="task-progress-track">
+                <view class="task-progress-fill" :style="{ width: task.progressPercent + '%', background: task.accent }"></view>
+              </view>
+              <view class="task-progress-row">
+                <text class="task-progress-text">{{ task.progressText }}</text>
+                <text class="task-progress-percent">{{ task.progressPercent }}%</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="task-group" v-if="taskBoard.weeklyTasks.length">
+          <view class="task-group-head">
+            <text class="task-group-title">每周挑战</text>
+            <text class="task-group-period">{{ taskBoard.summary.weeklyPeriodLabel }}</text>
+          </view>
+          <view class="task-list">
+            <view class="task-item weekly" v-for="task in taskBoard.weeklyTasks" :key="task.taskCode">
+              <view class="task-item-top">
+                <view class="task-icon-wrap" :style="{ background: task.accent }">
+                  <text class="task-icon">{{ task.icon }}</text>
+                </view>
+                <view class="task-copy">
+                  <text class="task-title">{{ task.title }}</text>
+                  <text class="task-subtitle">{{ task.subtitle }}</text>
+                </view>
+                <view class="task-status-wrap">
+                  <text class="task-reward">+{{ task.rewardPoints }}</text>
+                  <text class="task-status" :class="{ done: task.completed }">{{ task.statusText }}</text>
+                </view>
+              </view>
+              <view class="task-progress-track">
+                <view class="task-progress-fill" :style="{ width: task.progressPercent + '%', background: task.accent }"></view>
+              </view>
+              <view class="task-progress-row">
+                <text class="task-progress-text">{{ task.progressText }}</text>
+                <text class="task-progress-percent">{{ task.progressPercent }}%</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- ===== 每日AI健康建议卡片 ===== -->
       <view class="daily-health-card floating-card" v-if="dailyHealthSuggestion" @click="goToAiSuggest">
         <view class="dhc-header">
@@ -278,16 +364,17 @@
         </view>
       </view>
 
-      <!-- ===== 环保徽章 ===== -->
-      <view class="eco-badge floating-card" v-if="badgeVisible">
+      <!-- ===== 成就徽章 ===== -->
+      <view class="eco-badge floating-card" v-if="featuredBadge">
         <view class="badge-shimmer"></view>
         <view class="badge-icon">🏅</view>
         <view class="badge-info">
-          <text class="badge-title">绿色先锋徽章</text>
-          <text class="badge-text">今日已低碳出行 · 坚持就是胜利</text>
+          <text class="badge-title">{{ featuredBadge.name }}</text>
+          <text class="badge-text">{{ featuredBadge.subtitle }}</text>
+          <text class="badge-time">{{ featuredBadge.timeText }}</text>
         </view>
-        <view class="badge-close" @click="badgeVisible = false">
-          <text>×</text>
+        <view class="badge-tag">
+          <text>已激活</text>
         </view>
       </view>
 
@@ -304,7 +391,7 @@
 </template>
 
 <script>
-import { getStepCount, getRankData, getHealthSuggestion, getHealthDataList } from '../../utils/request.js';
+import { getStepCount, getRankData, getHealthSuggestion, getHealthDataList, getExchangeRecords, getTaskBoard } from '../../utils/request.js';
 import BottomNav from '../../components/bottom-nav.vue';
 
 export default {
@@ -323,7 +410,19 @@ export default {
       userRank: '--',
       stepPct: 0,
       stepsLeft: 10000,
-      badgeVisible: false,
+      featuredBadge: null,
+      taskBoard: {
+        summary: {
+          dailyCompleted: 0,
+          dailyTotal: 0,
+          weeklyCompleted: 0,
+          weeklyTotal: 0,
+          dailyPeriodLabel: '',
+          weeklyPeriodLabel: ''
+        },
+        dailyTasks: [],
+        weeklyTasks: []
+      },
       particleStyles: [],
       // 每日健康建议
       dailyHealthSuggestion: '',
@@ -348,6 +447,8 @@ export default {
       this.loadTodayData();
       this.loadRankData();
       this.loadDailyHealthSuggestion();
+      this.loadAchievementBadge();
+      this.loadTaskBoard();
     }
   },
   methods: {
@@ -410,12 +511,64 @@ export default {
           else if (steps >= 6000) { this.treeLevel = 3; this.treeName = '小树苗'; }
           else if (steps >= 3000) { this.treeLevel = 2; this.treeName = '破土而出'; }
           else { this.treeLevel = 1; this.treeName = '嫩芽'; }
-
-          if (steps > 0) this.badgeVisible = true;
         }
       } catch (e) {
         console.error('获取今日数据失败:', e);
       }
+    },
+    async loadAchievementBadge() {
+      try {
+        const records = await getExchangeRecords(this.stuNo);
+        const badgeRecord = (records || []).find(item => item.productCode === 'CERT_LOW_CARBON_STAR');
+        if (!badgeRecord) {
+          this.featuredBadge = null;
+          return;
+        }
+
+        this.featuredBadge = {
+          name: badgeRecord.name || '低碳之星徽章',
+          subtitle: badgeRecord.nextStep || '系统已生成徽章记录，可作为低碳成就展示',
+          timeText: this.formatBadgeTime(badgeRecord.createTime)
+        };
+      } catch (e) {
+        this.featuredBadge = null;
+      }
+    },
+    async loadTaskBoard() {
+      try {
+        const res = await getTaskBoard(this.stuNo);
+        this.taskBoard = {
+          summary: res.summary || {
+            dailyCompleted: 0,
+            dailyTotal: 0,
+            weeklyCompleted: 0,
+            weeklyTotal: 0,
+            dailyPeriodLabel: '',
+            weeklyPeriodLabel: ''
+          },
+          dailyTasks: res.dailyTasks || [],
+          weeklyTasks: res.weeklyTasks || []
+        };
+      } catch (e) {
+        this.taskBoard = {
+          summary: {
+            dailyCompleted: 0,
+            dailyTotal: 0,
+            weeklyCompleted: 0,
+            weeklyTotal: 0,
+            dailyPeriodLabel: '',
+            weeklyPeriodLabel: ''
+          },
+          dailyTasks: [],
+          weeklyTasks: []
+        };
+      }
+    },
+    formatBadgeTime(value) {
+      if (!value) {
+        return '';
+      }
+      return '点亮时间 ' + String(value).replace('T', ' ').slice(0, 16);
     },
     navigateTo(url) {
       uni.navigateTo({ url });
@@ -1004,6 +1157,221 @@ export default {
 .progress-hint { font-size: 24rpx; color: #5B8C6E; }
 .progress-hint.done { color: #3D9B6D; font-weight: 500; }
 
+.task-board {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 28rpx;
+  padding: 28rpx 26rpx;
+  border-radius: 36rpx;
+  background: linear-gradient(135deg, rgba(245, 253, 248, 0.96), rgba(222, 243, 229, 0.9));
+  box-shadow: 0 16rpx 28rpx rgba(57, 110, 73, 0.1);
+}
+
+.task-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.task-board-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #255238;
+}
+
+.task-board-sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #6c907a;
+}
+
+.task-board-badge {
+  min-width: 124rpx;
+  height: 56rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #67c48b, #419d65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 18rpx rgba(65, 157, 101, 0.16);
+}
+
+.task-board-badge-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.task-summary-row {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.task-summary-pill {
+  flex: 1;
+  padding: 18rpx 20rpx;
+  border-radius: 26rpx;
+  background: rgba(95, 190, 127, 0.12);
+}
+
+.task-summary-pill.weekly {
+  background: rgba(82, 174, 197, 0.14);
+}
+
+.task-summary-label {
+  display: block;
+  font-size: 20rpx;
+  color: #638270;
+}
+
+.task-summary-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #255238;
+}
+
+.task-group {
+  margin-top: 24rpx;
+}
+
+.task-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14rpx;
+}
+
+.task-group-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #255238;
+}
+
+.task-group-period {
+  font-size: 20rpx;
+  color: #6f907c;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.task-item {
+  padding: 22rpx 22rpx 18rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+}
+
+.task-item.weekly {
+  background: rgba(248, 253, 255, 0.88);
+}
+
+.task-item-top {
+  display: flex;
+  gap: 16rpx;
+  align-items: flex-start;
+}
+
+.task-icon-wrap {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.task-icon {
+  font-size: 32rpx;
+}
+
+.task-copy {
+  flex: 1;
+}
+
+.task-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #255238;
+}
+
+.task-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  line-height: 1.45;
+  color: #688776;
+}
+
+.task-status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+}
+
+.task-reward {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #f3a33d;
+}
+
+.task-status {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(108, 144, 122, 0.12);
+  font-size: 18rpx;
+  color: #6f8f7c;
+}
+
+.task-status.done {
+  background: rgba(80, 181, 116, 0.14);
+  color: #35925b;
+}
+
+.task-progress-track {
+  margin-top: 16rpx;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: rgba(190, 215, 198, 0.56);
+  overflow: hidden;
+}
+
+.task-progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+}
+
+.task-progress-row {
+  margin-top: 12rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-progress-text {
+  font-size: 20rpx;
+  color: #638270;
+}
+
+.task-progress-percent {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #2b5d41;
+}
+
 /* ===== 每日AI健康建议卡片 ===== */
 .daily-health-card {
   background: linear-gradient(135deg, rgba(255, 240, 240, 0.9), rgba(255, 220, 220, 0.85));
@@ -1286,8 +1654,18 @@ export default {
 .badge-info { flex: 1; }
 .badge-title { font-size: 28rpx; font-weight: 700; color: #2C5A3A; display: block; margin-bottom: 6rpx; }
 .badge-text { font-size: 22rpx; color: #3D9B6D; }
-.badge-close { width: 48rpx; height: 48rpx; border-radius: 50%; background: rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; }
-.badge-close text { font-size: 36rpx; color: #5B8C6E; }
+.badge-time { display: block; margin-top: 8rpx; font-size: 20rpx; color: #6B8E79; }
+.badge-tag {
+  min-width: 110rpx;
+  height: 56rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #6FB88A, #3D9B6D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 18rpx rgba(61, 155, 109, 0.18);
+}
+.badge-tag text { font-size: 22rpx; font-weight: 700; color: #FFFFFF; }
 
 /* ===== 底部 ===== */
 .footer { text-align: center; padding: 20rpx 0; }

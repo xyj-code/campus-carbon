@@ -445,6 +445,84 @@ to { -webkit-transform: rotate(-360deg); transform: rotate(-360deg);
           transform: translateX(8rpx);
   color: #FFFFFF;
 }
+.rights-card.data-v-60cb334c {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 26rpx 28rpx;
+  border-radius: 34rpx;
+  background: linear-gradient(135deg, rgba(244, 253, 247, 0.96), rgba(221, 244, 228, 0.88));
+  box-shadow: 0 14rpx 28rpx rgba(62, 122, 78, 0.12);
+}
+.rights-glow.data-v-60cb334c {
+  position: absolute;
+  top: -30rpx;
+  right: -30rpx;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(121, 205, 149, 0.28), transparent 72%);
+}
+.rights-left.data-v-60cb334c {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  flex: 1;
+}
+.rights-icon-wrap.data-v-60cb334c {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #63bd81, #3f9a63);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 20rpx rgba(63, 154, 99, 0.22);
+}
+.rights-icon.data-v-60cb334c {
+  font-size: 40rpx;
+}
+.rights-copy.data-v-60cb334c {
+  flex: 1;
+}
+.rights-title.data-v-60cb334c {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #214d32;
+}
+.rights-desc.data-v-60cb334c {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: #628171;
+}
+.rights-right.data-v-60cb334c {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+}
+.rights-status.data-v-60cb334c {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(64, 154, 99, 0.12);
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #3b8f5d;
+}
+.rights-arrow.data-v-60cb334c {
+  font-size: 34rpx;
+  color: #3b8f5d;
+}
 
 /* ===== 关于我们卡片 ===== */
 .about-card.data-v-60cb334c {

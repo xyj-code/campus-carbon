@@ -145,6 +145,34 @@ exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 41));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 43));
 var _carbonProject = __webpack_require__(/*! ../../utils/carbonProject.js */ 117);
+var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -201,14 +229,37 @@ var _carbonProject = __webpack_require__(/*! ../../utils/carbonProject.js */ 117
 var _default = {
   data: function data() {
     return {
+      mode: '',
       username: '',
       userProjectId: null,
       certificateData: null,
-      totalCarbon: 0
+      totalCarbon: 0,
+      holderName: '',
+      benefitRecord: null
     };
   },
+  computed: {
+    isBenefitMode: function isBenefitMode() {
+      return this.mode === 'benefit';
+    },
+    pageTitle: function pageTitle() {
+      return this.isBenefitMode ? '绿色权益证书' : '电子认养证书';
+    },
+    loadingText: function loadingText() {
+      return this.isBenefitMode ? '加载证书中...' : '生成证书中...';
+    },
+    benefitCertificateCode: function benefitCertificateCode() {
+      if (!this.benefitRecord || !this.benefitRecord.id) {
+        return '';
+      }
+      var id = String(this.benefitRecord.id).padStart(6, '0');
+      return 'CERT-' + id;
+    }
+  },
   onLoad: function onLoad(options) {
+    this.mode = options.mode || '';
     this.username = options.username || uni.getStorageSync('username') || '';
+    this.holderName = uni.getStorageSync('userName') || this.username || '低碳用户';
     if (options.userProjectId) {
       this.userProjectId = parseInt(options.userProjectId);
     }
@@ -223,8 +274,17 @@ var _default = {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
+                if (!_this.isBenefitMode) {
+                  _context.next = 4;
+                  break;
+                }
+                _context.next = 3;
+                return _this.loadBenefitCertificate();
+              case 3:
+                return _context.abrupt("return");
+              case 4:
                 if (!(!_this.username || !_this.userProjectId)) {
-                  _context.next = 3;
+                  _context.next = 7;
                   break;
                 }
                 uni.showToast({
@@ -232,38 +292,95 @@ var _default = {
                   icon: 'none'
                 });
                 return _context.abrupt("return");
-              case 3:
+              case 7:
                 uni.showLoading({
                   title: '生成证书中...'
                 });
-                _context.prev = 4;
-                _context.next = 7;
+                _context.prev = 8;
+                _context.next = 11;
                 return (0, _carbonProject.getCertificate)(_this.username, _this.userProjectId);
-              case 7:
+              case 11:
                 certRes = _context.sent;
                 _this.certificateData = certRes.data || {};
                 // certificateUrl 字段后端存储的是 totalCarbon 值
                 _this.totalCarbon = parseFloat(_this.certificateData.certificateUrl || 0).toFixed(2);
-                _context.next = 16;
+                _context.next = 20;
                 break;
-              case 12:
-                _context.prev = 12;
-                _context.t0 = _context["catch"](4);
+              case 16:
+                _context.prev = 16;
+                _context.t0 = _context["catch"](8);
                 console.error('生成证书失败:', _context.t0);
                 uni.showToast({
                   title: '生成失败',
                   icon: 'none'
                 });
-              case 16:
-                _context.prev = 16;
+              case 20:
+                _context.prev = 20;
                 uni.hideLoading();
-                return _context.finish(16);
-              case 19:
+                return _context.finish(20);
+              case 23:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[4, 12, 16, 19]]);
+        }, _callee, null, [[8, 16, 20, 23]]);
+      }))();
+    },
+    loadBenefitCertificate: function loadBenefitCertificate() {
+      var _this2 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+        var records;
+        return _regenerator.default.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (_this2.username) {
+                  _context2.next = 3;
+                  break;
+                }
+                uni.showToast({
+                  title: '参数错误',
+                  icon: 'none'
+                });
+                return _context2.abrupt("return");
+              case 3:
+                uni.showLoading({
+                  title: '加载证书中...'
+                });
+                _context2.prev = 4;
+                _context2.next = 7;
+                return (0, _request.getExchangeRecords)(_this2.username);
+              case 7:
+                records = _context2.sent;
+                _this2.benefitRecord = (records || []).find(function (item) {
+                  return item.productCode === 'CERT_GREEN_PIONEER';
+                }) || null;
+                if (!_this2.benefitRecord) {
+                  uni.showToast({
+                    title: '请先兑换绿色先锋证书',
+                    icon: 'none'
+                  });
+                }
+                _context2.next = 16;
+                break;
+              case 12:
+                _context2.prev = 12;
+                _context2.t0 = _context2["catch"](4);
+                console.error('加载权益证书失败:', _context2.t0);
+                uni.showToast({
+                  title: '加载失败',
+                  icon: 'none'
+                });
+              case 16:
+                _context2.prev = 16;
+                uni.hideLoading();
+                return _context2.finish(16);
+              case 19:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, null, [[4, 12, 16, 19]]);
       }))();
     },
     saveToAlbum: function saveToAlbum() {

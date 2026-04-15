@@ -37,4 +37,10 @@ public interface UserProjectMapper {
     int insertByUsername(@Param("username") String username,
                          @Param("projectId") Integer projectId,
                          @Param("uniqueCode") String uniqueCode);
+
+    @Delete("DELETE up FROM user_project up " +
+            "JOIN `user` u ON up.user_id = u.id " +
+            "WHERE u.username = #{username} AND up.project_id = #{projectId}")
+    int deleteByUsernameAndProjectId(@Param("username") String username,
+                                     @Param("projectId") Integer projectId);
 }

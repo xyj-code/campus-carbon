@@ -12381,8 +12381,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = exports.deleteHealthData = void 0;
-// 接口请求工具类
+exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = exports.deleteHealthData = void 0;
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -12399,7 +12398,7 @@ var request = function request(url) {
           resolve(res.data);
         } else {
           var _res$data;
-          reject(new Error(((_res$data = res.data) === null || _res$data === void 0 ? void 0 : _res$data.message) || '请求失败'));
+          reject(new Error(((_res$data = res.data) === null || _res$data === void 0 ? void 0 : _res$data.message) || 'REQUEST_FAILED'));
         }
       },
       fail: function fail(err) {
@@ -12408,8 +12407,6 @@ var request = function request(url) {
     });
   });
 };
-
-// 用户登录
 exports.request = request;
 var login = function login(username, password) {
   return request('/user/login', {
@@ -12420,8 +12417,6 @@ var login = function login(username, password) {
     }
   });
 };
-
-// AI减排建议接口
 exports.login = login;
 var getCarbonSuggestion = function getCarbonSuggestion(carbonFootprint) {
   return request('/ai/carbon-suggest', {
@@ -12431,14 +12426,10 @@ var getCarbonSuggestion = function getCarbonSuggestion(carbonFootprint) {
     }
   });
 };
-
-// AI健康建议接口（基于用户健康数据）
 exports.getCarbonSuggestion = getCarbonSuggestion;
 var getHealthSuggestion = function getHealthSuggestion(userId) {
   return request("/ai/health-suggest?userId=".concat(userId));
 };
-
-// 步数统计接口
 exports.getHealthSuggestion = getHealthSuggestion;
 var getStepCount = function getStepCount(studentId, date) {
   return request("/step/count?studentId=".concat(studentId, "&date=").concat(date));
@@ -12454,8 +12445,6 @@ var saveStepCount = function saveStepCount(data) {
     data: data
   });
 };
-
-// 运动记录接口
 exports.saveStepCount = saveStepCount;
 var getSportRecord = function getSportRecord(studentId) {
   return request("/sport/record?studentId=".concat(studentId));
@@ -12467,14 +12456,10 @@ var saveSportRecord = function saveSportRecord(data) {
     data: data
   });
 };
-
-// 减碳排名接口
 exports.saveSportRecord = saveSportRecord;
 var getRankData = function getRankData(studentId, timeRange) {
   return request("/rank/data?studentId=".concat(studentId, "&timeRange=").concat(timeRange));
 };
-
-// 积分 & 个人资料
 exports.getRankData = getRankData;
 var getProfile = function getProfile(username) {
   return request("/points/profile?username=".concat(username));
@@ -12486,9 +12471,11 @@ var getPointsRecords = function getPointsRecords(username) {
   var size = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 10;
   return request("/points/records?username=".concat(username, "&type=").concat(type, "&page=").concat(page, "&size=").concat(size));
 };
-
-// 积分商城
 exports.getPointsRecords = getPointsRecords;
+var getTaskBoard = function getTaskBoard(username) {
+  return request("/task/board?username=".concat(username));
+};
+exports.getTaskBoard = getTaskBoard;
 var getProductList = function getProductList() {
   var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
   var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 12;
@@ -12508,8 +12495,6 @@ exports.exchangeProduct = exchangeProduct;
 var getExchangeRecords = function getExchangeRecords(username) {
   return request("/product/exchange/records?username=".concat(username));
 };
-
-// 健康统计接口
 exports.getExchangeRecords = getExchangeRecords;
 var getHealthDataList = function getHealthDataList(userId) {
   return request("/health/list?userId=".concat(userId));
