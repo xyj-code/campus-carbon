@@ -273,7 +273,8 @@ export default {
   },
   computed: {
     paragraphs() {
-      return (this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion).split('\n').filter(p => p.trim());
+      const text = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
+      return this.toDisplayParagraphs(text);
     }
   },
   onLoad() {
@@ -370,8 +371,41 @@ export default {
         this.isLoading = false;
       }
     },
+    toDisplayParagraphs(text) {
+      if (!text) {
+        return [];
+      }
+      return text
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .map(line => this.cleanAiLine(line))
+        .filter(Boolean);
+    },
+    cleanAiLine(line) {
+      if (!line) {
+        return '';
+      }
+      let value = line.trim();
+      if (!value || /^[-*_#>`~\s]+$/.test(value)) {
+        return '';
+      }
+      value = value
+        .replace(/^#{1,6}\s*/, '')
+        .replace(/^[-*]+\s*/, '')
+        .replace(/^\d+[.)]\s*/, '')
+        .replace(/\*\*/g, '')
+        .replace(/__/g, '')
+        .replace(/`/g, '')
+        .replace(/#/g, '')
+        .replace(/\*/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+      return value;
+    },
     copyText() {
-      const text = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
+      const rawText = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
+      const text = this.toDisplayParagraphs(rawText).join('\n');
       uni.setClipboardData({
         data: text,
         success: () => uni.showToast({ title: '已复制到剪贴板', icon: 'success' })

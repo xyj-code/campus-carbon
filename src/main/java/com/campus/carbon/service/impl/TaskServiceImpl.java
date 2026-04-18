@@ -29,11 +29,15 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -131,32 +135,44 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Map<String, Object> getTaskBoard(String username) {
+        return getTaskBoard(username, Collections.emptyList());
+    }
+
+    @Override
+    public Map<String, Object> getTaskBoard(String username, List<String> taskCodes) {
         syncUserTasks(username);
 
-        List<TaskTemplate> templates = taskTemplateMapper.selectActive();
+        List<TaskTemplate> templates = selectTemplates(taskCodes);
         LocalDate today = LocalDate.now(CHINA_ZONE);
         PeriodWindow dailyWindow = buildDailyWindow(today);
         PeriodWindow weeklyWindow = buildWeeklyWindow(today);
 
         List<TaskBoardItemVO> dailyTasks = new ArrayList<>();
         List<TaskBoardItemVO> weeklyTasks = new ArrayList<>();
+        List<TaskBoardItemVO> allTasks = new ArrayList<>();
 
         int dailyCompleted = 0;
         int weeklyCompleted = 0;
+        int totalRewardPoints = 0;
+        int completedRewardPoints = 0;
 
         for (TaskTemplate template : templates) {
             PeriodWindow window = PERIOD_WEEKLY.equals(template.getPeriodType()) ? weeklyWindow : dailyWindow;
             UserTask userTask = userTaskMapper.selectOne(username, template.getTaskCode(), window.periodKey);
             TaskBoardItemVO item = toBoardItem(template, userTask, window);
+            allTasks.add(item);
+            totalRewardPoints += defaultInt(template.getRewardPoints());
             if (PERIOD_WEEKLY.equals(template.getPeriodType())) {
                 weeklyTasks.add(item);
                 if (Boolean.TRUE.equals(item.getCompleted())) {
                     weeklyCompleted++;
+                    completedRewardPoints += defaultInt(template.getRewardPoints());
                 }
             } else {
                 dailyTasks.add(item);
                 if (Boolean.TRUE.equals(item.getCompleted())) {
                     dailyCompleted++;
+                    completedRewardPoints += defaultInt(template.getRewardPoints());
                 }
             }
         }
@@ -168,11 +184,16 @@ public class TaskServiceImpl implements TaskService {
         summary.put("weeklyTotal", weeklyTasks.size());
         summary.put("dailyPeriodLabel", dailyWindow.label);
         summary.put("weeklyPeriodLabel", weeklyWindow.label);
+        summary.put("totalTaskCount", allTasks.size());
+        summary.put("completedTaskCount", dailyCompleted + weeklyCompleted);
+        summary.put("totalRewardPoints", totalRewardPoints);
+        summary.put("completedRewardPoints", completedRewardPoints);
 
         Map<String, Object> result = new HashMap<>();
         result.put("summary", summary);
         result.put("dailyTasks", dailyTasks);
         result.put("weeklyTasks", weeklyTasks);
+        result.put("allTasks", allTasks);
         return result;
     }
 
@@ -185,6 +206,37 @@ public class TaskServiceImpl implements TaskService {
         record.setRemark("task=" + template.getTaskCode() + " period=" + periodKey);
         pointsRecordMapper.insert(record);
         studentMapper.addPoints(username, defaultInt(template.getRewardPoints()));
+    }
+
+    private List<TaskTemplate> selectTemplates(List<String> taskCodes) {
+        List<TaskTemplate> templates = taskTemplateMapper.selectActive();
+        if (templates == null || templates.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (taskCodes == null || taskCodes.isEmpty()) {
+            return templates;
+        }
+
+        Map<String, TaskTemplate> templateMap = new LinkedHashMap<>();
+        for (TaskTemplate template : templates) {
+            templateMap.put(template.getTaskCode(), template);
+        }
+
+        Set<String> orderedCodes = new LinkedHashSet<>();
+        for (String taskCode : taskCodes) {
+            if (taskCode != null && !taskCode.trim().isEmpty()) {
+                orderedCodes.add(taskCode.trim().toUpperCase());
+            }
+        }
+
+        List<TaskTemplate> selected = new ArrayList<>();
+        for (String code : orderedCodes) {
+            TaskTemplate template = templateMap.get(code);
+            if (template != null) {
+                selected.add(template);
+            }
+        }
+        return selected.isEmpty() ? templates : selected;
     }
 
     private TaskBoardItemVO toBoardItem(TaskTemplate template, UserTask userTask, PeriodWindow window) {
@@ -209,6 +261,9 @@ public class TaskServiceImpl implements TaskService {
         item.setProgressPercent(percent);
         item.setProgressText(formatProgress(template.getTaskCode(), currentValue, targetValue));
         item.setStatusText(resolveStatusText(completed, rewarded));
+        item.setActionText(meta.actionText);
+        item.setActionPath(meta.actionPath);
+        item.setActionType(meta.actionType);
         item.setCompleted(completed);
         item.setRewarded(rewarded);
         return item;
@@ -243,7 +298,10 @@ public class TaskServiceImpl implements TaskService {
                     "\u4eca\u65e5\u6b65\u884c 6000 \u6b65",
                     "\u5b8c\u6210\u4eca\u65e5\u7eff\u8272\u51fa\u884c\u76ee\u6807\uff0c\u81ea\u52a8\u589e\u52a0\u4efb\u52a1\u79ef\u5206",
                     "\uD83D\uDC5F",
-                    "#55b879"
+                    "#55b879",
+                    "\u53bb\u8bb0\u6b65\u6570",
+                    "/pages/stepCount/stepCount",
+                    "navigate"
             );
         }
         if ("DAILY_SPORT_2KM".equals(taskCode)) {
@@ -251,7 +309,10 @@ public class TaskServiceImpl implements TaskService {
                     "\u4eca\u65e5\u8fd0\u52a8 2km",
                     "\u8bb0\u5f55\u4e00\u6b21\u8fd0\u52a8\u8ddd\u79bb\uff0c\u5b8c\u6210\u5f53\u65e5\u6d3b\u529b\u6307\u6807",
                     "\uD83C\uDFC3",
-                    "#4fa8bb"
+                    "#4fa8bb",
+                    "\u53bb\u8bb0\u8fd0\u52a8",
+                    "/pages/sportRecord/sportRecord",
+                    "navigate"
             );
         }
         if ("DAILY_CHECKIN_1".equals(taskCode)) {
@@ -259,7 +320,10 @@ public class TaskServiceImpl implements TaskService {
                     "\u5b8c\u6210\u4e00\u6b21\u4f4e\u78b3\u6253\u5361",
                     "\u5f53\u65e5\u53ea\u8981\u6709\u6b65\u6570\u6216\u8fd0\u52a8\u8bb0\u5f55\uff0c\u5373\u89c6\u4e3a\u5b8c\u6210\u6253\u5361",
                     "\uD83C\uDF31",
-                    "#3e9c69"
+                    "#3e9c69",
+                    "\u53bb\u5b8c\u6210\u6253\u5361",
+                    "/pages/stepCount/stepCount",
+                    "navigate"
             );
         }
         if ("WEEKLY_STEP_50000".equals(taskCode)) {
@@ -267,7 +331,10 @@ public class TaskServiceImpl implements TaskService {
                     "\u672c\u5468\u7d2f\u8ba1 50000 \u6b65",
                     "\u5c06\u6bcf\u65e5\u51fa\u884c\u79ef\u7d2f\u6210\u5468\u6311\u6218\uff0c\u5f62\u6210\u7a33\u5b9a\u7684\u4f4e\u78b3\u8282\u594f",
                     "\uD83D\uDEB6",
-                    "#2f8c58"
+                    "#2f8c58",
+                    "\u7ee7\u7eed\u79ef\u6b65",
+                    "/pages/stepCount/stepCount",
+                    "navigate"
             );
         }
         if ("WEEKLY_SPORT_3_TIMES".equals(taskCode)) {
@@ -275,7 +342,10 @@ public class TaskServiceImpl implements TaskService {
                     "\u672c\u5468\u8fd0\u52a8 3 \u6b21",
                     "\u4ee5\u8fd0\u52a8\u9891\u6b21\u5f62\u6210\u6bcf\u5468\u575a\u6301\u673a\u5236\uff0c\u5f3a\u5316\u4f4e\u78b3\u884c\u4e3a\u4e60\u60ef",
                     "\u26A1",
-                    "#5b9cff"
+                    "#5b9cff",
+                    "\u53bb\u6dfb\u52a0\u8fd0\u52a8",
+                    "/pages/sportRecord/sportRecord",
+                    "navigate"
             );
         }
         if ("WEEKLY_REDEEM_1".equals(taskCode)) {
@@ -283,14 +353,20 @@ public class TaskServiceImpl implements TaskService {
                     "\u672c\u5468\u5151\u6362 1 \u6b21\u7eff\u8272\u6743\u76ca",
                     "\u628a\u79ef\u5206\u884c\u4e3a\u8f6c\u5316\u4e3a\u771f\u5b9e\u6821\u56ed\u6743\u76ca\uff0c\u5f62\u6210\u6fc0\u52b1\u95ed\u73af",
                     "\uD83C\uDF81",
-                    "#f39c3b"
+                    "#f39c3b",
+                    "\u53bb\u5151\u6362\u6743\u76ca",
+                    "/pages/mall/mall",
+                    "tab"
             );
         }
         return new TaskBoardMeta(
                 "\u4efb\u52a1\u76ee\u6807",
                 "\u5b8c\u6210\u4efb\u52a1\u540e\u53ef\u81ea\u52a8\u83b7\u5f97\u989d\u5916\u79ef\u5206",
                 "\u2728",
-                "#63bd81"
+                "#63bd81",
+                "\u53bb\u5b8c\u6210",
+                "/pages/index/index",
+                "tab"
         );
     }
 
@@ -413,12 +489,19 @@ public class TaskServiceImpl implements TaskService {
         private final String subtitle;
         private final String icon;
         private final String accent;
+        private final String actionText;
+        private final String actionPath;
+        private final String actionType;
 
-        private TaskBoardMeta(String title, String subtitle, String icon, String accent) {
+        private TaskBoardMeta(String title, String subtitle, String icon, String accent,
+                              String actionText, String actionPath, String actionType) {
             this.title = title;
             this.subtitle = subtitle;
             this.icon = icon;
             this.accent = accent;
+            this.actionText = actionText;
+            this.actionPath = actionPath;
+            this.actionType = actionType;
         }
     }
 }

@@ -65,6 +65,8 @@ public class RankServiceImpl {
                 return now.minusDays(6);
             case "month":
                 return LocalDate.of(now.getYear(), now.getMonthValue(), 1);
+            case "all":
+                return LocalDate.of(2000, 1, 1);
             default:
                 return now.minusDays(6);
         }

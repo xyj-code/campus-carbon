@@ -160,403 +160,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 41));
+var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 43));
 var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+var _methods;
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 168));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 176));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -577,6 +187,7 @@ var _default = {
       },
       carbonKg: '0.000',
       treeLevel: 1,
+      treeStage: 'seed',
       treeName: '嫩芽',
       userRank: '--',
       stepPct: 0,
@@ -615,16 +226,23 @@ var _default = {
     this.initParticleStyles();
   },
   onShow: function onShow() {
+    var _this = this;
     if (this.stuNo) {
       this.initDate();
-      this.loadTodayData();
+      this.loadTodayData().finally(function () {
+        _this.loadProfileData();
+      });
       this.loadRankData();
       this.loadDailyHealthSuggestion();
       this.loadAchievementBadge();
-      this.loadTaskBoard();
     }
   },
-  methods: {
+  computed: {
+    treeStageClass: function treeStageClass() {
+      return 'tree-stage-' + this.resolveTreeStage(this.treeStage, this.treeLevel);
+    }
+  },
+  methods: (_methods = {
     initParticleStyles: function initParticleStyles() {
       var styles = [];
       for (var i = 0; i < 60; i++) {
@@ -639,6 +257,70 @@ var _default = {
       }
       this.particleStyles = styles;
     },
+    normalizeNumber: function normalizeNumber(value) {
+      var digits = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+      var num = Number(value);
+      if (!Number.isFinite(num)) {
+        return digits > 0 ? 0 .toFixed(digits) : 0;
+      }
+      return digits > 0 ? num.toFixed(digits) : num;
+    },
+    resolveTreeStage: function resolveTreeStage(stage, level) {
+      if (stage) return stage;
+      if (level >= 6) return 'guardian';
+      if (level >= 5) return 'canopy';
+      if (level >= 4) return 'flourishing';
+      if (level >= 3) return 'sapling';
+      if (level >= 2) return 'sprout';
+      return 'seed';
+    },
+    loadProfileData: function loadProfileData() {
+      var _this2 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
+        var profile;
+        return _regenerator.default.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (_this2.stuNo) {
+                  _context.next = 2;
+                  break;
+                }
+                return _context.abrupt("return");
+              case 2:
+                _context.prev = 2;
+                _context.next = 5;
+                return (0, _request.getProfile)(_this2.stuNo);
+              case 5:
+                profile = _context.sent;
+                if (!(!profile || profile.code === 404)) {
+                  _context.next = 8;
+                  break;
+                }
+                return _context.abrupt("return");
+              case 8:
+                _this2.studentName = profile.name || _this2.studentName;
+                _this2.points = Number(profile.points || 0);
+                _this2.carbonKg = _this2.normalizeNumber(profile.totalCarbon, 3);
+                _this2.treeLevel = Number(profile.treeLevel || 1);
+                _this2.treeStage = _this2.resolveTreeStage(profile.treeStage, _this2.treeLevel);
+                if (profile.treeName) {
+                  _this2.treeName = profile.treeName;
+                }
+                _context.next = 19;
+                break;
+              case 16:
+                _context.prev = 16;
+                _context.t0 = _context["catch"](2);
+                console.error('load profile failed', _context.t0);
+              case 19:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[2, 16]]);
+      }))();
+    },
     initDate: function initDate() {
       var now = new Date();
       var h = now.getHours();
@@ -648,157 +330,155 @@ var _default = {
       this.todayDate = "".concat(days[now.getDay()], "\uFF0C").concat(months[now.getMonth()], " ").concat(now.getDate(), "\u65E5");
     },
     loadRankData: function loadRankData() {
-      var _this = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var res;
-        return _regenerator.default.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                if (_this.stuNo) {
-                  _context.next = 2;
-                  break;
-                }
-                return _context.abrupt("return");
-              case 2:
-                _context.prev = 2;
-                _context.next = 5;
-                return (0, _request.getRankData)(_this.stuNo, 'today');
-              case 5:
-                res = _context.sent;
-                if (res && res.code === 200 && res.data && res.data.myRank) {
-                  _this.userRank = res.data.myRank.rank || '--';
-                }
-                _context.next = 12;
-                break;
-              case 9:
-                _context.prev = 9;
-                _context.t0 = _context["catch"](2);
-                console.error('获取排名数据失败:', _context.t0);
-              case 12:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, null, [[2, 9]]);
-      }))();
-    },
-    loadTodayData: function loadTodayData() {
-      var _this2 = this;
+      var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
-        var now, dateStr, res, steps, duration, carbonKg, carbonG;
+        var res;
         return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.prev = 0;
-                now = new Date();
-                dateStr = "".concat(now.getFullYear(), "-").concat(String(now.getMonth() + 1).padStart(2, '0'), "-").concat(String(now.getDate()).padStart(2, '0'));
+                if (_this3.stuNo) {
+                  _context2.next = 2;
+                  break;
+                }
+                return _context2.abrupt("return");
+              case 2:
+                _context2.prev = 2;
                 _context2.next = 5;
-                return (0, _request.getStepCount)(_this2.stuNo, dateStr);
+                return (0, _request.getRankData)(_this3.stuNo, 'all');
               case 5:
                 res = _context2.sent;
-                if (res) {
-                  steps = res.steps || 0;
-                  duration = res.duration || 0;
-                  carbonKg = steps * 0.005 / 100;
-                  carbonG = Math.round(carbonKg * 1000);
-                  _this2.todayData = {
-                    steps: steps,
-                    duration: duration,
-                    carbon: carbonG
-                  };
-                  _this2.points = Math.round(carbonKg * 100);
-                  _this2.carbonKg = carbonKg.toFixed(3);
-                  _this2.stepPct = Math.min(Math.round(steps / 10000 * 100), 100);
-                  _this2.stepsLeft = Math.max(10000 - steps, 0);
-                  if (steps >= 15000) {
-                    _this2.treeLevel = 5;
-                    _this2.treeName = '参天大树';
-                  } else if (steps >= 10000) {
-                    _this2.treeLevel = 4;
-                    _this2.treeName = '茁壮成长';
-                  } else if (steps >= 6000) {
-                    _this2.treeLevel = 3;
-                    _this2.treeName = '小树苗';
-                  } else if (steps >= 3000) {
-                    _this2.treeLevel = 2;
-                    _this2.treeName = '破土而出';
-                  } else {
-                    _this2.treeLevel = 1;
-                    _this2.treeName = '嫩芽';
-                  }
+                if (res && res.code === 200 && res.data && res.data.myRank) {
+                  _this3.userRank = res.data.myRank.rank || '--';
                 }
                 _context2.next = 12;
                 break;
               case 9:
                 _context2.prev = 9;
-                _context2.t0 = _context2["catch"](0);
-                console.error('获取今日数据失败:', _context2.t0);
+                _context2.t0 = _context2["catch"](2);
+                console.error('获取排名数据失败:', _context2.t0);
               case 12:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, null, [[0, 9]]);
+        }, _callee2, null, [[2, 9]]);
       }))();
     },
-    loadAchievementBadge: function loadAchievementBadge() {
-      var _this3 = this;
+    loadTodayData: function loadTodayData() {
+      var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var records, badgeRecord;
+        var now, dateStr, res, steps, duration, carbonKg, carbonG;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 _context3.prev = 0;
-                _context3.next = 3;
-                return (0, _request.getExchangeRecords)(_this3.stuNo);
-              case 3:
-                records = _context3.sent;
-                badgeRecord = (records || []).find(function (item) {
-                  return item.productCode === 'CERT_LOW_CARBON_STAR';
-                });
-                if (badgeRecord) {
-                  _context3.next = 8;
-                  break;
+                now = new Date();
+                dateStr = "".concat(now.getFullYear(), "-").concat(String(now.getMonth() + 1).padStart(2, '0'), "-").concat(String(now.getDate()).padStart(2, '0'));
+                _context3.next = 5;
+                return (0, _request.getStepCount)(_this4.stuNo, dateStr);
+              case 5:
+                res = _context3.sent;
+                if (res) {
+                  steps = res.steps || 0;
+                  duration = res.duration || 0;
+                  carbonKg = steps * 0.005 / 100;
+                  carbonG = Math.round(carbonKg * 1000);
+                  _this4.todayData = {
+                    steps: steps,
+                    duration: duration,
+                    carbon: carbonG
+                  };
+                  _this4.stepPct = Math.min(Math.round(steps / 10000 * 100), 100);
+                  _this4.stepsLeft = Math.max(10000 - steps, 0);
+                  if (steps >= 15000) {
+                    _this4.treeLevel = 5;
+                    _this4.treeName = '参天大树';
+                  } else if (steps >= 10000) {
+                    _this4.treeLevel = 4;
+                    _this4.treeName = '茁壮成长';
+                  } else if (steps >= 6000) {
+                    _this4.treeLevel = 3;
+                    _this4.treeName = '小树苗';
+                  } else if (steps >= 3000) {
+                    _this4.treeLevel = 2;
+                    _this4.treeName = '破土而出';
+                  } else {
+                    _this4.treeLevel = 1;
+                    _this4.treeName = '嫩芽';
+                  }
                 }
-                _this3.featuredBadge = null;
-                return _context3.abrupt("return");
-              case 8:
-                _this3.featuredBadge = {
-                  name: badgeRecord.name || '低碳之星徽章',
-                  subtitle: badgeRecord.nextStep || '系统已生成徽章记录，可作为低碳成就展示',
-                  timeText: _this3.formatBadgeTime(badgeRecord.createTime)
-                };
-                _context3.next = 14;
+                _context3.next = 12;
                 break;
-              case 11:
-                _context3.prev = 11;
+              case 9:
+                _context3.prev = 9;
                 _context3.t0 = _context3["catch"](0);
-                _this3.featuredBadge = null;
-              case 14:
+                console.error('获取今日数据失败:', _context3.t0);
+              case 12:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, null, [[0, 11]]);
+        }, _callee3, null, [[0, 9]]);
       }))();
     },
-    loadTaskBoard: function loadTaskBoard() {
-      var _this4 = this;
+    loadAchievementBadge: function loadAchievementBadge() {
+      var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-        var res;
+        var records, badgeRecord;
         return _regenerator.default.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
                 _context4.prev = 0;
                 _context4.next = 3;
-                return (0, _request.getTaskBoard)(_this4.stuNo);
+                return (0, _request.getExchangeRecords)(_this5.stuNo);
               case 3:
-                res = _context4.sent;
-                _this4.taskBoard = {
+                records = _context4.sent;
+                badgeRecord = (records || []).find(function (item) {
+                  return item.productCode === 'CERT_LOW_CARBON_STAR';
+                });
+                if (badgeRecord) {
+                  _context4.next = 8;
+                  break;
+                }
+                _this5.featuredBadge = null;
+                return _context4.abrupt("return");
+              case 8:
+                _this5.featuredBadge = {
+                  name: badgeRecord.name || '低碳之星徽章',
+                  subtitle: badgeRecord.nextStep || '系统已生成徽章记录，可作为低碳成就展示',
+                  timeText: _this5.formatBadgeTime(badgeRecord.createTime)
+                };
+                _context4.next = 14;
+                break;
+              case 11:
+                _context4.prev = 11;
+                _context4.t0 = _context4["catch"](0);
+                _this5.featuredBadge = null;
+              case 14:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, null, [[0, 11]]);
+      }))();
+    },
+    loadTaskBoard: function loadTaskBoard() {
+      var _this6 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
+        var res;
+        return _regenerator.default.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.prev = 0;
+                _context5.next = 3;
+                return (0, _request.getTaskBoard)(_this6.stuNo);
+              case 3:
+                res = _context5.sent;
+                _this6.taskBoard = {
                   summary: res.summary || {
                     dailyCompleted: 0,
                     dailyTotal: 0,
@@ -810,12 +490,12 @@ var _default = {
                   dailyTasks: res.dailyTasks || [],
                   weeklyTasks: res.weeklyTasks || []
                 };
-                _context4.next = 10;
+                _context5.next = 10;
                 break;
               case 7:
-                _context4.prev = 7;
-                _context4.t0 = _context4["catch"](0);
-                _this4.taskBoard = {
+                _context5.prev = 7;
+                _context5.t0 = _context5["catch"](0);
+                _this6.taskBoard = {
                   summary: {
                     dailyCompleted: 0,
                     dailyTotal: 0,
@@ -829,10 +509,10 @@ var _default = {
                 };
               case 10:
               case "end":
-                return _context4.stop();
+                return _context5.stop();
             }
           }
-        }, _callee4, null, [[0, 7]]);
+        }, _callee5, null, [[0, 7]]);
       }))();
     },
     formatBadgeTime: function formatBadgeTime(value) {
@@ -855,57 +535,61 @@ var _default = {
     },
     // 加载每日健康建议
     loadDailyHealthSuggestion: function loadDailyHealthSuggestion() {
-      var _this5 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
+      var _this7 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
         var healthData, result;
-        return _regenerator.default.wrap(function _callee5$(_context5) {
+        return _regenerator.default.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
-                if (_this5.userId) {
-                  _context5.next = 2;
+                if (_this7.userId) {
+                  _context6.next = 2;
                   break;
                 }
-                return _context5.abrupt("return");
+                return _context6.abrupt("return");
               case 2:
-                _context5.prev = 2;
-                _context5.next = 5;
-                return (0, _request.getHealthDataList)(_this5.userId);
+                _context6.prev = 2;
+                _context6.next = 5;
+                return (0, _request.getHealthDataList)(_this7.userId);
               case 5:
-                healthData = _context5.sent;
+                healthData = _context6.sent;
                 if (!(healthData && healthData.length > 0)) {
-                  _context5.next = 11;
+                  _context6.next = 11;
                   break;
                 }
-                _context5.next = 9;
-                return (0, _request.getHealthSuggestion)(_this5.userId);
+                _context6.next = 9;
+                return (0, _request.getHealthSuggestion)(_this7.userId);
               case 9:
-                result = _context5.sent;
+                result = _context6.sent;
                 if (result && result.suggestion) {
-                  _this5.dailyHealthSuggestion = result.suggestion;
+                  _this7.dailyHealthSuggestion = result.suggestion;
                 }
               case 11:
-                _context5.next = 16;
+                _context6.next = 16;
                 break;
               case 13:
-                _context5.prev = 13;
-                _context5.t0 = _context5["catch"](2);
-                console.error('获取每日健康建议失败:', _context5.t0);
+                _context6.prev = 13;
+                _context6.t0 = _context6["catch"](2);
+                console.error('获取每日健康建议失败:', _context6.t0);
               case 16:
               case "end":
-                return _context5.stop();
+                return _context6.stop();
             }
           }
-        }, _callee5, null, [[2, 13]]);
+        }, _callee6, null, [[2, 13]]);
       }))();
-    },
-    // 跳转到AI建议页面
-    goToAiSuggest: function goToAiSuggest() {
-      uni.navigateTo({
-        url: '/pages/aiSuggest/aiSuggest'
-      });
     }
-  }
+  }, (0, _defineProperty2.default)(_methods, "showPointsTip", function showPointsTip() {
+    uni.showToast({
+      title: "\u5F53\u524D\u79EF\u5206\uFF1A".concat(this.points, "\u5206"),
+      icon: 'none',
+      duration: 2000
+    });
+  }), (0, _defineProperty2.default)(_methods, "goToAiSuggest", function goToAiSuggest() {
+    uni.navigateTo({
+      url: '/pages/aiSuggest/aiSuggest'
+    });
+  }), _methods)
 };
 exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))

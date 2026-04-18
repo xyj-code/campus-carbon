@@ -1,10 +1,7 @@
 package com.campus.carbon.mapper;
 
 import com.campus.carbon.model.TaskTemplate;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Result;
-import org.apache.ibatis.annotations.Results;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -26,4 +23,26 @@ public interface TaskTemplateMapper {
             @Result(column = "createTime", property = "createTime")
     })
     List<TaskTemplate> selectActive();
+
+    @Select("SELECT id, task_code AS taskCode, period_type AS periodType, metric_type AS metricType, " +
+            "target_value AS targetValue, reward_points AS rewardPoints, status, sort_order AS sortOrder, " +
+            "create_time AS createTime FROM task_template ORDER BY sort_order ASC, id ASC")
+    @ResultMap("taskTemplateMap")
+    List<TaskTemplate> selectAll();
+
+    @Select("SELECT id, task_code AS taskCode, period_type AS periodType, metric_type AS metricType, " +
+            "target_value AS targetValue, reward_points AS rewardPoints, status, sort_order AS sortOrder, " +
+            "create_time AS createTime FROM task_template WHERE id = #{id}")
+    @ResultMap("taskTemplateMap")
+    TaskTemplate selectById(Long id);
+
+    @Insert("INSERT INTO task_template(task_code, period_type, metric_type, target_value, reward_points, status, sort_order) " +
+            "VALUES(#{taskCode}, #{periodType}, #{metricType}, #{targetValue}, #{rewardPoints}, #{status}, #{sortOrder})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    int insert(TaskTemplate taskTemplate);
+
+    @Update("UPDATE task_template SET task_code = #{taskCode}, period_type = #{periodType}, metric_type = #{metricType}, " +
+            "target_value = #{targetValue}, reward_points = #{rewardPoints}, status = #{status}, sort_order = #{sortOrder} " +
+            "WHERE id = #{id}")
+    int update(TaskTemplate taskTemplate);
 }

@@ -83,6 +83,13 @@ export const getTaskBoard = (username) => {
   return request(`/task/board?username=${username}`);
 };
 
+export const getActivityHub = (username, activityCode = '') => {
+  const query = activityCode
+    ? `/activity/hub?username=${username}&activityCode=${encodeURIComponent(activityCode)}`
+    : `/activity/hub?username=${username}`;
+  return request(query);
+};
+
 export const getProductList = (page = 1, size = 12) => {
   return request(`/product/list?page=${page}&size=${size}`);
 };

@@ -14,6 +14,9 @@ public class TaskBoardItemVO {
     private Integer progressPercent;
     private String progressText;
     private String statusText;
+    private String actionText;
+    private String actionPath;
+    private String actionType;
     private Boolean completed;
     private Boolean rewarded;
 
@@ -55,6 +58,15 @@ public class TaskBoardItemVO {
 
     public String getStatusText() { return statusText; }
     public void setStatusText(String statusText) { this.statusText = statusText; }
+
+    public String getActionText() { return actionText; }
+    public void setActionText(String actionText) { this.actionText = actionText; }
+
+    public String getActionPath() { return actionPath; }
+    public void setActionPath(String actionPath) { this.actionPath = actionPath; }
+
+    public String getActionType() { return actionType; }
+    public void setActionType(String actionType) { this.actionType = actionType; }
 
     public Boolean getCompleted() { return completed; }
     public void setCompleted(Boolean completed) { this.completed = completed; }

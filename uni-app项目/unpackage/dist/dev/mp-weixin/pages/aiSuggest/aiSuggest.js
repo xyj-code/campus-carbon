@@ -470,9 +470,8 @@ var _default = {
   },
   computed: {
     paragraphs: function paragraphs() {
-      return (this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion).split('\n').filter(function (p) {
-        return p.trim();
-      });
+      var text = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
+      return this.toDisplayParagraphs(text);
     }
   },
   onLoad: function onLoad() {
@@ -668,8 +667,29 @@ var _default = {
         }, _callee3, null, [[7, 14, 17, 20]]);
       }))();
     },
+    toDisplayParagraphs: function toDisplayParagraphs(text) {
+      var _this4 = this;
+      if (!text) {
+        return [];
+      }
+      return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(function (line) {
+        return _this4.cleanAiLine(line);
+      }).filter(Boolean);
+    },
+    cleanAiLine: function cleanAiLine(line) {
+      if (!line) {
+        return '';
+      }
+      var value = line.trim();
+      if (!value || /^[-*_#>`~\s]+$/.test(value)) {
+        return '';
+      }
+      value = value.replace(/^#{1,6}\s*/, '').replace(/^[-*]+\s*/, '').replace(/^\d+[.)]\s*/, '').replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '').replace(/#/g, '').replace(/\*/g, '').replace(/\s{2,}/g, ' ').trim();
+      return value;
+    },
     copyText: function copyText() {
-      var text = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
+      var rawText = this.currentMode === 'carbon' ? this.suggestion : this.healthSuggestion;
+      var text = this.toDisplayParagraphs(rawText).join('\n');
       uni.setClipboardData({
         data: text,
         success: function success() {

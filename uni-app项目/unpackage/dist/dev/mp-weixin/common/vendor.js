@@ -12381,7 +12381,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = exports.deleteHealthData = void 0;
+exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.getActivityHub = exports.exchangeProduct = exports.deleteHealthData = void 0;
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -12476,6 +12476,12 @@ var getTaskBoard = function getTaskBoard(username) {
   return request("/task/board?username=".concat(username));
 };
 exports.getTaskBoard = getTaskBoard;
+var getActivityHub = function getActivityHub(username) {
+  var activityCode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  var query = activityCode ? "/activity/hub?username=".concat(username, "&activityCode=").concat(encodeURIComponent(activityCode)) : "/activity/hub?username=".concat(username);
+  return request(query);
+};
+exports.getActivityHub = getActivityHub;
 var getProductList = function getProductList() {
   var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
   var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 12;

@@ -575,6 +575,132 @@ to { -webkit-transform: translate(-50%, -50%) rotate(-360deg); transform: transl
   background: linear-gradient(0deg, rgba(80, 200, 140, 0.2), transparent);
   pointer-events: none;
 }
+.capsule-wrap.tree-stage-seed .capsule-outer-ring.data-v-57280228,
+.capsule-wrap.tree-stage-seed .capsule-middle-ring.data-v-57280228,
+.capsule-wrap.tree-stage-seed .capsule-inner-ring.data-v-57280228 {
+  opacity: 0.45;
+}
+.capsule-wrap.tree-stage-seed .capsule-outer-ring.data-v-57280228 {
+  -webkit-transform: translate(-50%, -50%) scale(0.82);
+          transform: translate(-50%, -50%) scale(0.82);
+}
+.capsule-wrap.tree-stage-seed .capsule-middle-ring.data-v-57280228 {
+  -webkit-transform: translate(-50%, -50%) scale(0.78);
+          transform: translate(-50%, -50%) scale(0.78);
+}
+.capsule-wrap.tree-stage-seed .capsule-inner-ring.data-v-57280228 {
+  -webkit-transform: translate(-50%, -50%) scale(0.74);
+          transform: translate(-50%, -50%) scale(0.74);
+}
+.capsule.tree-stage-seed .tree-aura.data-v-57280228 {
+  width: 74rpx;
+  bottom: 168rpx;
+  opacity: 0.35;
+}
+.capsule.tree-stage-seed .trunk.data-v-57280228 {
+  height: 26rpx;
+}
+.capsule.tree-stage-seed .l1.data-v-57280228 {
+  -webkit-transform: translateX(-50%) scale(0.68);
+          transform: translateX(-50%) scale(0.68);
+}
+.capsule.tree-stage-seed .l2.data-v-57280228,
+.capsule.tree-stage-seed .l3.data-v-57280228,
+.capsule.tree-stage-seed .l4.data-v-57280228,
+.capsule.tree-stage-seed .l5.data-v-57280228 {
+  opacity: 0;
+  -webkit-transform: translateX(-50%) scale(0.5);
+          transform: translateX(-50%) scale(0.5);
+}
+.capsule.tree-stage-sprout .tree-aura.data-v-57280228 {
+  width: 82rpx;
+  bottom: 182rpx;
+  opacity: 0.46;
+}
+.capsule.tree-stage-sprout .trunk.data-v-57280228 {
+  height: 34rpx;
+}
+.capsule.tree-stage-sprout .l1.data-v-57280228 {
+  -webkit-transform: translateX(-50%) scale(0.8);
+          transform: translateX(-50%) scale(0.8);
+}
+.capsule.tree-stage-sprout .l2.data-v-57280228 {
+  opacity: 0.92;
+  -webkit-transform: translateX(-50%) scale(0.76);
+          transform: translateX(-50%) scale(0.76);
+}
+.capsule.tree-stage-sprout .l3.data-v-57280228,
+.capsule.tree-stage-sprout .l4.data-v-57280228,
+.capsule.tree-stage-sprout .l5.data-v-57280228 {
+  opacity: 0;
+  -webkit-transform: translateX(-50%) scale(0.5);
+          transform: translateX(-50%) scale(0.5);
+}
+.capsule.tree-stage-sapling .tree-aura.data-v-57280228 {
+  width: 92rpx;
+  bottom: 194rpx;
+  opacity: 0.58;
+}
+.capsule.tree-stage-sapling .trunk.data-v-57280228 {
+  height: 40rpx;
+}
+.capsule.tree-stage-sapling .l1.data-v-57280228,
+.capsule.tree-stage-sapling .l2.data-v-57280228,
+.capsule.tree-stage-sapling .l3.data-v-57280228 {
+  opacity: 0.94;
+}
+.capsule.tree-stage-sapling .l4.data-v-57280228,
+.capsule.tree-stage-sapling .l5.data-v-57280228 {
+  opacity: 0;
+  -webkit-transform: translateX(-50%) scale(0.58);
+          transform: translateX(-50%) scale(0.58);
+}
+.capsule.tree-stage-flourishing .tree-aura.data-v-57280228 {
+  width: 104rpx;
+  opacity: 0.72;
+}
+.capsule.tree-stage-flourishing .trunk.data-v-57280228 {
+  height: 46rpx;
+}
+.capsule.tree-stage-flourishing .l5.data-v-57280228 {
+  opacity: 0;
+  -webkit-transform: translateX(-50%) scale(0.7);
+          transform: translateX(-50%) scale(0.7);
+}
+.capsule.tree-stage-canopy .tree-aura.data-v-57280228,
+.capsule.tree-stage-guardian .tree-aura.data-v-57280228 {
+  width: 116rpx;
+  opacity: 0.82;
+}
+.capsule.tree-stage-canopy .trunk.data-v-57280228 {
+  height: 50rpx;
+}
+.capsule.tree-stage-canopy .leaf.data-v-57280228 {
+  opacity: 0.96;
+}
+.capsule.tree-stage-guardian .trunk.data-v-57280228 {
+  height: 54rpx;
+}
+.capsule.tree-stage-guardian .leaf.data-v-57280228 {
+  opacity: 0.98;
+  -webkit-filter: drop-shadow(0 0 10rpx rgba(117, 215, 154, 0.26));
+          filter: drop-shadow(0 0 10rpx rgba(117, 215, 154, 0.26));
+}
+.capsule.tree-stage-guardian .l1.data-v-57280228 {
+  -webkit-transform: translateX(-50%) scale(1.04);
+          transform: translateX(-50%) scale(1.04);
+}
+.capsule.tree-stage-guardian .l2.data-v-57280228 {
+  -webkit-transform: translateX(-50%) scale(1.03);
+          transform: translateX(-50%) scale(1.03);
+}
+.capsule.tree-stage-guardian .l3.data-v-57280228 {
+  -webkit-transform: translateX(-50%) scale(1.02);
+          transform: translateX(-50%) scale(1.02);
+}
+.capsule.tree-stage-guardian .capsule-bottom-glow.data-v-57280228 {
+  background: linear-gradient(0deg, rgba(80, 200, 140, 0.3), transparent);
+}
 
 /* 统计信息栏 */
 .hero-info.data-v-57280228 {
@@ -1009,6 +1135,8 @@ to { -webkit-transform: translate(-50%, -50%) rotate(-360deg); transform: transl
 .feature-card-sport.data-v-57280228 { background: linear-gradient(135deg, rgba(90, 180, 170, 0.9), rgba(70, 150, 140, 0.85));
 }
 .feature-card-rank.data-v-57280228 { background: linear-gradient(135deg, rgba(70, 170, 180, 0.9), rgba(50, 140, 150, 0.85));
+}
+.feature-card-activity.data-v-57280228 { background: linear-gradient(135deg, rgba(88, 184, 122, 0.92), rgba(58, 145, 95, 0.86));
 }
 
 /* 图标容器 */

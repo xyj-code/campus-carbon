@@ -26,4 +26,10 @@ public interface UserTaskMapper {
             "reward_points = #{rewardPoints}, completed = #{completed}, reward_status = #{rewardStatus}, " +
             "completed_time = #{completedTime}, reward_time = #{rewardTime} WHERE id = #{id}")
     int update(UserTask userTask);
+
+    @Select("SELECT COUNT(*) FROM user_task WHERE task_code = #{taskCode} AND period_key = #{periodKey}")
+    int countByTaskAndPeriod(@Param("taskCode") String taskCode, @Param("periodKey") String periodKey);
+
+    @Select("SELECT COUNT(*) FROM user_task WHERE task_code = #{taskCode} AND period_key = #{periodKey} AND completed = 1")
+    int countCompletedByTaskAndPeriod(@Param("taskCode") String taskCode, @Param("periodKey") String periodKey);
 }

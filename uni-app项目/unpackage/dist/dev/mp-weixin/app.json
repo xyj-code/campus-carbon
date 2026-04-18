@@ -15,7 +15,8 @@
     "pages/carbonLedger/carbonLedger",
     "pages/settings/settings",
     "pages/about/about",
-    "pages/healthData/healthData"
+    "pages/healthData/healthData",
+    "pages/activityHub/activityHub"
   ],
   "subPackages": [],
   "window": {

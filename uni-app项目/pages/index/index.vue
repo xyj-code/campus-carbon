@@ -24,7 +24,7 @@
 
       <!-- ===== 主视觉：能量胶囊 + 向外扩张光晕 ===== -->
       <view class="hero-section">
-        <view class="capsule-wrap">
+        <view class="capsule-wrap" :class="treeStageClass">
           <!-- 三层旋转光环 -->
           <view class="capsule-outer-ring"></view>
           <view class="capsule-middle-ring"></view>
@@ -45,7 +45,7 @@
           <view class="life-particle life-particle-5">✨</view>
           <view class="life-particle life-particle-6">⭐</view>
 
-          <view class="capsule">
+          <view class="capsule" :class="treeStageClass">
             <!-- 闪烁粒子 -->
             <view class="sp sp1"></view>
             <view class="sp sp2"></view>
@@ -239,6 +239,42 @@
       </view>
 
       <!-- ===== 功能导航标题 ===== -->
+      <view class="activity-preview-card floating-card" v-if="activityPreview" @click="goToActivityHub">
+        <view class="activity-preview-top">
+          <text class="activity-preview-tag">{{ activityCopy.title }}</text>
+          <text class="activity-preview-action">{{ activityCopy.action }}</text>
+        </view>
+        <view class="activity-preview-main">
+          <view class="activity-preview-icon" :style="{ background: activityPreviewTheme }">
+            <text class="activity-preview-emoji">{{ activityPreview.coverEmoji || '\uD83C\uDF3F' }}</text>
+          </view>
+          <view class="activity-preview-copy">
+            <text class="activity-preview-title">{{ activityPreview.bannerTitle || activityPreview.title }}</text>
+            <text class="activity-preview-desc">{{ activityPreviewDescription }}</text>
+          </view>
+        </view>
+        <view class="activity-preview-meta">
+          <view class="activity-preview-pill">
+            <text class="activity-preview-pill-label">{{ activityPreviewTaskText }}</text>
+          </view>
+          <view class="activity-preview-pill">
+            <text class="activity-preview-pill-label">{{ activityPreviewRewardText }}</text>
+          </view>
+        </view>
+        <view class="activity-preview-progress">
+          <view class="activity-preview-progress-track">
+            <view class="activity-preview-progress-fill" :style="{ width: activityPreviewProgressRate + '%', background: activityPreviewTheme }"></view>
+          </view>
+          <view class="activity-preview-progress-row">
+            <text class="activity-preview-progress-text">{{ activityPreviewProgress.progressText || activityCopy.progressFallback }}</text>
+            <text class="activity-preview-progress-value">{{ activityPreviewProgressRate }}%</text>
+          </view>
+        </view>
+        <view class="activity-preview-footer">
+          <text class="activity-preview-target">{{ activityPreviewTargetText }}</text>
+        </view>
+      </view>
+
       <view class="section-header">
         <view class="section-bar"></view>
         <text class="section-title">功能导航</text>
@@ -340,6 +376,28 @@
         </view>
 
         <view class="feature-row">
+          <view class="feature-card feature-card-activity floating-card" @click="navigateTo('/pages/activityHub/activityHub')">
+            <view class="feature-icon-container">
+              <view class="particle-glow particle-glow-1"></view>
+              <view class="particle-glow particle-glow-2"></view>
+              <view class="particle-glow particle-glow-3"></view>
+              <view class="particle-glow particle-glow-4"></view>
+              <view class="particle-glow particle-glow-5"></view>
+              <view class="feature-icon-wrapper">
+                <view class="feature-outer-ring"></view>
+                <view class="feature-middle-ring"></view>
+                <view class="feature-inner-ring"></view>
+                <view class="feature-icon-box">
+                  <text class="feature-icon">🎯</text>
+                </view>
+              </view>
+            </view>
+            <text class="feature-name">主题活动</text>
+            <text class="feature-desc">统一查看主题活动与任务主线</text>
+            <view class="feature-arrow">→</view>
+            <view class="radial-glow"></view>
+          </view>
+
           <view class="feature-card feature-card-health floating-card" @click="navigateTo('/pages/healthData/healthData')">
             <view class="feature-icon-container">
               <view class="particle-glow particle-glow-1"></view>
@@ -391,7 +449,7 @@
 </template>
 
 <script>
-import { getStepCount, getRankData, getHealthSuggestion, getHealthDataList, getExchangeRecords, getTaskBoard } from '../../utils/request.js';
+import { getStepCount, getRankData, getHealthSuggestion, getHealthDataList, getExchangeRecords, getTaskBoard, getProfile, getActivityHub } from '../../utils/request.js';
 import BottomNav from '../../components/bottom-nav.vue';
 
 export default {
@@ -406,6 +464,7 @@ export default {
       todayData: { steps: 0, duration: 0, carbon: 0 },
       carbonKg: '0.000',
       treeLevel: 1,
+      treeStage: 'seed',
       treeName: '嫩芽',
       userRank: '--',
       stepPct: 0,
@@ -444,11 +503,17 @@ export default {
   onShow() {
     if (this.stuNo) {
       this.initDate();
-      this.loadTodayData();
+      this.loadTodayData().finally(() => {
+        this.loadProfileData();
+      });
       this.loadRankData();
       this.loadDailyHealthSuggestion();
       this.loadAchievementBadge();
-      this.loadTaskBoard();
+    }
+  },
+  computed: {
+    treeStageClass() {
+      return 'tree-stage-' + this.resolveTreeStage(this.treeStage, this.treeLevel);
     }
   },
   methods: {
@@ -466,6 +531,40 @@ export default {
       }
       this.particleStyles = styles;
     },
+    normalizeNumber(value, digits = 0) {
+      const num = Number(value);
+      if (!Number.isFinite(num)) {
+        return digits > 0 ? (0).toFixed(digits) : 0;
+      }
+      return digits > 0 ? num.toFixed(digits) : num;
+    },
+    resolveTreeStage(stage, level) {
+      if (stage) return stage;
+      if (level >= 6) return 'guardian';
+      if (level >= 5) return 'canopy';
+      if (level >= 4) return 'flourishing';
+      if (level >= 3) return 'sapling';
+      if (level >= 2) return 'sprout';
+      return 'seed';
+    },
+    async loadProfileData() {
+      if (!this.stuNo) return;
+      try {
+        const profile = await getProfile(this.stuNo);
+        if (!profile || profile.code === 404) return;
+
+        this.studentName = profile.name || this.studentName;
+        this.points = Number(profile.points || 0);
+        this.carbonKg = this.normalizeNumber(profile.totalCarbon, 3);
+        this.treeLevel = Number(profile.treeLevel || 1);
+        this.treeStage = this.resolveTreeStage(profile.treeStage, this.treeLevel);
+        if (profile.treeName) {
+          this.treeName = profile.treeName;
+        }
+      } catch (error) {
+        console.error('load profile failed', error);
+      }
+    },
     initDate() {
       const now = new Date();
       const h = now.getHours();
@@ -482,7 +581,7 @@ export default {
     async loadRankData() {
       if (!this.stuNo) return;
       try {
-        const res = await getRankData(this.stuNo, 'today');
+        const res = await getRankData(this.stuNo, 'all');
         if (res && res.code === 200 && res.data && res.data.myRank) {
           this.userRank = res.data.myRank.rank || '--';
         }
@@ -501,8 +600,6 @@ export default {
           const carbonKg = steps * 0.005 / 100;
           const carbonG = Math.round(carbonKg * 1000);
           this.todayData = { steps, duration, carbon: carbonG };
-          this.points = Math.round(carbonKg * 100);
-          this.carbonKg = carbonKg.toFixed(3);
           this.stepPct = Math.min(Math.round((steps / 10000) * 100), 100);
           this.stepsLeft = Math.max(10000 - steps, 0);
 
@@ -593,6 +690,13 @@ export default {
       }
     },
     // 跳转到AI建议页面
+    showPointsTip() {
+      uni.showToast({
+        title: `\u5f53\u524d\u79ef\u5206\uff1a${this.points}\u5206`,
+        icon: 'none',
+        duration: 2000
+      });
+    },
     goToAiSuggest() {
       uni.navigateTo({ url: '/pages/aiSuggest/aiSuggest' });
     }
@@ -1031,6 +1135,147 @@ export default {
   height: 70rpx;
   background: linear-gradient(0deg, rgba(80, 200, 140, 0.2), transparent);
   pointer-events: none;
+}
+
+.capsule-wrap.tree-stage-seed .capsule-outer-ring,
+.capsule-wrap.tree-stage-seed .capsule-middle-ring,
+.capsule-wrap.tree-stage-seed .capsule-inner-ring {
+  opacity: 0.45;
+}
+
+.capsule-wrap.tree-stage-seed .capsule-outer-ring {
+  transform: translate(-50%, -50%) scale(0.82);
+}
+
+.capsule-wrap.tree-stage-seed .capsule-middle-ring {
+  transform: translate(-50%, -50%) scale(0.78);
+}
+
+.capsule-wrap.tree-stage-seed .capsule-inner-ring {
+  transform: translate(-50%, -50%) scale(0.74);
+}
+
+.capsule.tree-stage-seed .tree-aura {
+  width: 74rpx;
+  bottom: 168rpx;
+  opacity: 0.35;
+}
+
+.capsule.tree-stage-seed .trunk {
+  height: 26rpx;
+}
+
+.capsule.tree-stage-seed .l1 {
+  transform: translateX(-50%) scale(0.68);
+}
+
+.capsule.tree-stage-seed .l2,
+.capsule.tree-stage-seed .l3,
+.capsule.tree-stage-seed .l4,
+.capsule.tree-stage-seed .l5 {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.5);
+}
+
+.capsule.tree-stage-sprout .tree-aura {
+  width: 82rpx;
+  bottom: 182rpx;
+  opacity: 0.46;
+}
+
+.capsule.tree-stage-sprout .trunk {
+  height: 34rpx;
+}
+
+.capsule.tree-stage-sprout .l1 {
+  transform: translateX(-50%) scale(0.8);
+}
+
+.capsule.tree-stage-sprout .l2 {
+  opacity: 0.92;
+  transform: translateX(-50%) scale(0.76);
+}
+
+.capsule.tree-stage-sprout .l3,
+.capsule.tree-stage-sprout .l4,
+.capsule.tree-stage-sprout .l5 {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.5);
+}
+
+.capsule.tree-stage-sapling .tree-aura {
+  width: 92rpx;
+  bottom: 194rpx;
+  opacity: 0.58;
+}
+
+.capsule.tree-stage-sapling .trunk {
+  height: 40rpx;
+}
+
+.capsule.tree-stage-sapling .l1,
+.capsule.tree-stage-sapling .l2,
+.capsule.tree-stage-sapling .l3 {
+  opacity: 0.94;
+}
+
+.capsule.tree-stage-sapling .l4,
+.capsule.tree-stage-sapling .l5 {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.58);
+}
+
+.capsule.tree-stage-flourishing .tree-aura {
+  width: 104rpx;
+  opacity: 0.72;
+}
+
+.capsule.tree-stage-flourishing .trunk {
+  height: 46rpx;
+}
+
+.capsule.tree-stage-flourishing .l5 {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.7);
+}
+
+.capsule.tree-stage-canopy .tree-aura,
+.capsule.tree-stage-guardian .tree-aura {
+  width: 116rpx;
+  opacity: 0.82;
+}
+
+.capsule.tree-stage-canopy .trunk {
+  height: 50rpx;
+}
+
+.capsule.tree-stage-canopy .leaf {
+  opacity: 0.96;
+}
+
+.capsule.tree-stage-guardian .trunk {
+  height: 54rpx;
+}
+
+.capsule.tree-stage-guardian .leaf {
+  opacity: 0.98;
+  filter: drop-shadow(0 0 10rpx rgba(117, 215, 154, 0.26));
+}
+
+.capsule.tree-stage-guardian .l1 {
+  transform: translateX(-50%) scale(1.04);
+}
+
+.capsule.tree-stage-guardian .l2 {
+  transform: translateX(-50%) scale(1.03);
+}
+
+.capsule.tree-stage-guardian .l3 {
+  transform: translateX(-50%) scale(1.02);
+}
+
+.capsule.tree-stage-guardian .capsule-bottom-glow {
+  background: linear-gradient(0deg, rgba(80, 200, 140, 0.3), transparent);
 }
 
 /* 统计信息栏 */
@@ -1505,6 +1750,7 @@ export default {
 .feature-card-steps { background: linear-gradient(135deg, rgba(100, 190, 160, 0.9), rgba(80, 160, 140, 0.85)); }
 .feature-card-sport { background: linear-gradient(135deg, rgba(90, 180, 170, 0.9), rgba(70, 150, 140, 0.85)); }
 .feature-card-rank { background: linear-gradient(135deg, rgba(70, 170, 180, 0.9), rgba(50, 140, 150, 0.85)); }
+.feature-card-activity { background: linear-gradient(135deg, rgba(88, 184, 122, 0.92), rgba(58, 145, 95, 0.86)); }
 
 /* 图标容器 */
 .feature-icon-container {
