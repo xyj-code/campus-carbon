@@ -208,6 +208,29 @@ var _default = {
       particleStyles: [],
       // 每日健康建议
       dailyHealthSuggestion: '',
+      activityPreview: null,
+      activityPreviewProgress: {
+        taskCount: 0,
+        completedCount: 0,
+        completionRate: 0,
+        progressText: '',
+        totalRewardPoints: 0,
+        completedRewardPoints: 0,
+        nextTaskTitle: '',
+        nextActionText: '',
+        nextActionPath: '',
+        nextActionType: ''
+      },
+      activityCopy: {
+        title: "\u4E3B\u9898\u6D3B\u52A8",
+        action: "\u67E5\u770B\u4E3B\u7EBF",
+        progressLabel: "\u4E3B\u7EBF\u8FDB\u5EA6",
+        progressFallback: "\u70B9\u51FB\u8FDB\u5165\u4E13\u9898\u9875\u7EE7\u7EED\u5B8C\u6210\u6D3B\u52A8\u4EFB\u52A1",
+        rewardFallback: "\u4EFB\u52A1\u79EF\u5206\u4E0E\u6210\u5C31\u5956\u52B1",
+        targetFallback: "\u67E5\u770B\u5F53\u524D\u6D3B\u52A8\u76EE\u6807",
+        descriptionFallback: "\u8FDB\u5165\u4E13\u9898\u9875\u67E5\u770B\u6D3B\u52A8\u5956\u52B1\u3001\u4EFB\u52A1\u8DEF\u5F84\u4E0E\u5B8C\u6210\u60C5\u51B5",
+        taskEmpty: "\u6682\u65E0\u4EFB\u52A1"
+      },
       userId: ''
     };
   },
@@ -234,12 +257,49 @@ var _default = {
       });
       this.loadRankData();
       this.loadDailyHealthSuggestion();
+      this.loadActivityPreview();
       this.loadAchievementBadge();
     }
   },
   computed: {
     treeStageClass: function treeStageClass() {
       return 'tree-stage-' + this.resolveTreeStage(this.treeStage, this.treeLevel);
+    },
+    activityPreviewTheme: function activityPreviewTheme() {
+      return this.activityPreview && this.activityPreview.themeColor ? this.activityPreview.themeColor : '#4fa86f';
+    },
+    activityPreviewDescription: function activityPreviewDescription() {
+      if (!this.activityPreview) {
+        return '';
+      }
+      return this.activityPreview.bannerSubtitle || this.activityPreview.subtitle || this.activityPreview.description || this.activityCopy.descriptionFallback;
+    },
+    activityPreviewTaskText: function activityPreviewTaskText() {
+      var completed = Number(this.activityPreviewProgress.completedCount || 0);
+      var total = Number(this.activityPreviewProgress.taskCount || 0);
+      if (!total) {
+        return this.activityCopy.taskEmpty;
+      }
+      return "".concat(this.activityCopy.progressLabel, " ").concat(completed, "/").concat(total);
+    },
+    activityPreviewRewardText: function activityPreviewRewardText() {
+      if (this.activityPreview && this.activityPreview.rewardText) {
+        return this.activityPreview.rewardText;
+      }
+      return this.activityCopy.rewardFallback;
+    },
+    activityPreviewTargetText: function activityPreviewTargetText() {
+      if (this.activityPreview && this.activityPreview.targetText) {
+        return this.activityPreview.targetText;
+      }
+      if (this.activityPreviewProgress.nextTaskTitle) {
+        return this.activityPreviewProgress.nextTaskTitle;
+      }
+      return this.activityCopy.targetFallback;
+    },
+    activityPreviewProgressRate: function activityPreviewProgressRate() {
+      var rate = Number(this.activityPreviewProgress.completionRate || 0);
+      return Math.max(0, Math.min(100, rate));
     }
   },
   methods: (_methods = {
@@ -515,6 +575,76 @@ var _default = {
         }, _callee5, null, [[0, 7]]);
       }))();
     },
+    loadActivityPreview: function loadActivityPreview() {
+      var _this7 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
+        var res;
+        return _regenerator.default.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                if (_this7.stuNo) {
+                  _context6.next = 2;
+                  break;
+                }
+                return _context6.abrupt("return");
+              case 2:
+                _context6.prev = 2;
+                _context6.next = 5;
+                return (0, _request.getActivityHub)(_this7.stuNo);
+              case 5:
+                res = _context6.sent;
+                _this7.activityPreview = res && (res.selected || res.featured) ? res.selected || res.featured : null;
+                _this7.activityPreviewProgress = res && res.activityProgress ? {
+                  taskCount: Number(res.activityProgress.taskCount || 0),
+                  completedCount: Number(res.activityProgress.completedCount || 0),
+                  completionRate: Number(res.activityProgress.completionRate || 0),
+                  progressText: res.activityProgress.progressText || '',
+                  totalRewardPoints: Number(res.activityProgress.totalRewardPoints || 0),
+                  completedRewardPoints: Number(res.activityProgress.completedRewardPoints || 0),
+                  nextTaskTitle: res.activityProgress.nextTaskTitle || '',
+                  nextActionText: res.activityProgress.nextActionText || '',
+                  nextActionPath: res.activityProgress.nextActionPath || '',
+                  nextActionType: res.activityProgress.nextActionType || ''
+                } : {
+                  taskCount: 0,
+                  completedCount: 0,
+                  completionRate: 0,
+                  progressText: '',
+                  totalRewardPoints: 0,
+                  completedRewardPoints: 0,
+                  nextTaskTitle: '',
+                  nextActionText: '',
+                  nextActionPath: '',
+                  nextActionType: ''
+                };
+                _context6.next = 15;
+                break;
+              case 10:
+                _context6.prev = 10;
+                _context6.t0 = _context6["catch"](2);
+                console.error('load activity preview failed', _context6.t0);
+                _this7.activityPreview = null;
+                _this7.activityPreviewProgress = {
+                  taskCount: 0,
+                  completedCount: 0,
+                  completionRate: 0,
+                  progressText: '',
+                  totalRewardPoints: 0,
+                  completedRewardPoints: 0,
+                  nextTaskTitle: '',
+                  nextActionText: '',
+                  nextActionPath: '',
+                  nextActionType: ''
+                };
+              case 15:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, null, [[2, 10]]);
+      }))();
+    },
     formatBadgeTime: function formatBadgeTime(value) {
       if (!value) {
         return '';
@@ -535,48 +665,48 @@ var _default = {
     },
     // 加载每日健康建议
     loadDailyHealthSuggestion: function loadDailyHealthSuggestion() {
-      var _this7 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
+      var _this8 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee7() {
         var healthData, result;
-        return _regenerator.default.wrap(function _callee6$(_context6) {
+        return _regenerator.default.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
-                if (_this7.userId) {
-                  _context6.next = 2;
+                if (_this8.userId) {
+                  _context7.next = 2;
                   break;
                 }
-                return _context6.abrupt("return");
+                return _context7.abrupt("return");
               case 2:
-                _context6.prev = 2;
-                _context6.next = 5;
-                return (0, _request.getHealthDataList)(_this7.userId);
+                _context7.prev = 2;
+                _context7.next = 5;
+                return (0, _request.getHealthDataList)(_this8.userId);
               case 5:
-                healthData = _context6.sent;
+                healthData = _context7.sent;
                 if (!(healthData && healthData.length > 0)) {
-                  _context6.next = 11;
+                  _context7.next = 11;
                   break;
                 }
-                _context6.next = 9;
-                return (0, _request.getHealthSuggestion)(_this7.userId);
+                _context7.next = 9;
+                return (0, _request.getHealthSuggestion)(_this8.userId);
               case 9:
-                result = _context6.sent;
+                result = _context7.sent;
                 if (result && result.suggestion) {
-                  _this7.dailyHealthSuggestion = result.suggestion;
+                  _this8.dailyHealthSuggestion = result.suggestion;
                 }
               case 11:
-                _context6.next = 16;
+                _context7.next = 16;
                 break;
               case 13:
-                _context6.prev = 13;
-                _context6.t0 = _context6["catch"](2);
-                console.error('获取每日健康建议失败:', _context6.t0);
+                _context7.prev = 13;
+                _context7.t0 = _context7["catch"](2);
+                console.error('获取每日健康建议失败:', _context7.t0);
               case 16:
               case "end":
-                return _context6.stop();
+                return _context7.stop();
             }
           }
-        }, _callee6, null, [[2, 13]]);
+        }, _callee7, null, [[2, 13]]);
       }))();
     }
   }, (0, _defineProperty2.default)(_methods, "showPointsTip", function showPointsTip() {
@@ -584,6 +714,12 @@ var _default = {
       title: "\u5F53\u524D\u79EF\u5206\uFF1A".concat(this.points, "\u5206"),
       icon: 'none',
       duration: 2000
+    });
+  }), (0, _defineProperty2.default)(_methods, "goToActivityHub", function goToActivityHub() {
+    var activityCode = this.activityPreview && this.activityPreview.activityCode ? encodeURIComponent(this.activityPreview.activityCode) : '';
+    var url = activityCode ? "/pages/activityHub/activityHub?activityCode=".concat(activityCode) : '/pages/activityHub/activityHub';
+    uni.navigateTo({
+      url: url
     });
   }), (0, _defineProperty2.default)(_methods, "goToAiSuggest", function goToAiSuggest() {
     uni.navigateTo({

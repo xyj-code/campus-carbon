@@ -376,7 +376,7 @@
         </view>
 
         <view class="feature-row">
-          <view class="feature-card feature-card-activity floating-card" @click="navigateTo('/pages/activityHub/activityHub')">
+          <view v-if="false" class="feature-card feature-card-activity floating-card" @click="navigateTo('/pages/activityHub/activityHub')">
             <view class="feature-icon-container">
               <view class="particle-glow particle-glow-1"></view>
               <view class="particle-glow particle-glow-2"></view>
@@ -485,6 +485,29 @@ export default {
       particleStyles: [],
       // 每日健康建议
       dailyHealthSuggestion: '',
+      activityPreview: null,
+      activityPreviewProgress: {
+        taskCount: 0,
+        completedCount: 0,
+        completionRate: 0,
+        progressText: '',
+        totalRewardPoints: 0,
+        completedRewardPoints: 0,
+        nextTaskTitle: '',
+        nextActionText: '',
+        nextActionPath: '',
+        nextActionType: ''
+      },
+      activityCopy: {
+        title: '\u4e3b\u9898\u6d3b\u52a8',
+        action: '\u67e5\u770b\u4e3b\u7ebf',
+        progressLabel: '\u4e3b\u7ebf\u8fdb\u5ea6',
+        progressFallback: '\u70b9\u51fb\u8fdb\u5165\u4e13\u9898\u9875\u7ee7\u7eed\u5b8c\u6210\u6d3b\u52a8\u4efb\u52a1',
+        rewardFallback: '\u4efb\u52a1\u79ef\u5206\u4e0e\u6210\u5c31\u5956\u52b1',
+        targetFallback: '\u67e5\u770b\u5f53\u524d\u6d3b\u52a8\u76ee\u6807',
+        descriptionFallback: '\u8fdb\u5165\u4e13\u9898\u9875\u67e5\u770b\u6d3b\u52a8\u5956\u52b1\u3001\u4efb\u52a1\u8def\u5f84\u4e0e\u5b8c\u6210\u60c5\u51b5',
+        taskEmpty: '\u6682\u65e0\u4efb\u52a1'
+      },
       userId: ''
     };
   },
@@ -508,12 +531,54 @@ export default {
       });
       this.loadRankData();
       this.loadDailyHealthSuggestion();
+      this.loadActivityPreview();
       this.loadAchievementBadge();
     }
   },
   computed: {
     treeStageClass() {
       return 'tree-stage-' + this.resolveTreeStage(this.treeStage, this.treeLevel);
+    },
+    activityPreviewTheme() {
+      return this.activityPreview && this.activityPreview.themeColor
+        ? this.activityPreview.themeColor
+        : '#4fa86f';
+    },
+    activityPreviewDescription() {
+      if (!this.activityPreview) {
+        return '';
+      }
+      return this.activityPreview.bannerSubtitle
+        || this.activityPreview.subtitle
+        || this.activityPreview.description
+        || this.activityCopy.descriptionFallback;
+    },
+    activityPreviewTaskText() {
+      const completed = Number(this.activityPreviewProgress.completedCount || 0);
+      const total = Number(this.activityPreviewProgress.taskCount || 0);
+      if (!total) {
+        return this.activityCopy.taskEmpty;
+      }
+      return `${this.activityCopy.progressLabel} ${completed}/${total}`;
+    },
+    activityPreviewRewardText() {
+      if (this.activityPreview && this.activityPreview.rewardText) {
+        return this.activityPreview.rewardText;
+      }
+      return this.activityCopy.rewardFallback;
+    },
+    activityPreviewTargetText() {
+      if (this.activityPreview && this.activityPreview.targetText) {
+        return this.activityPreview.targetText;
+      }
+      if (this.activityPreviewProgress.nextTaskTitle) {
+        return this.activityPreviewProgress.nextTaskTitle;
+      }
+      return this.activityCopy.targetFallback;
+    },
+    activityPreviewProgressRate() {
+      const rate = Number(this.activityPreviewProgress.completionRate || 0);
+      return Math.max(0, Math.min(100, rate));
     }
   },
   methods: {
@@ -661,6 +726,53 @@ export default {
         };
       }
     },
+    async loadActivityPreview() {
+      if (!this.stuNo) return;
+      try {
+        const res = await getActivityHub(this.stuNo);
+        this.activityPreview = (res && (res.selected || res.featured)) ? (res.selected || res.featured) : null;
+        this.activityPreviewProgress = res && res.activityProgress
+          ? {
+              taskCount: Number(res.activityProgress.taskCount || 0),
+              completedCount: Number(res.activityProgress.completedCount || 0),
+              completionRate: Number(res.activityProgress.completionRate || 0),
+              progressText: res.activityProgress.progressText || '',
+              totalRewardPoints: Number(res.activityProgress.totalRewardPoints || 0),
+              completedRewardPoints: Number(res.activityProgress.completedRewardPoints || 0),
+              nextTaskTitle: res.activityProgress.nextTaskTitle || '',
+              nextActionText: res.activityProgress.nextActionText || '',
+              nextActionPath: res.activityProgress.nextActionPath || '',
+              nextActionType: res.activityProgress.nextActionType || ''
+            }
+          : {
+              taskCount: 0,
+              completedCount: 0,
+              completionRate: 0,
+              progressText: '',
+              totalRewardPoints: 0,
+              completedRewardPoints: 0,
+              nextTaskTitle: '',
+              nextActionText: '',
+              nextActionPath: '',
+              nextActionType: ''
+            };
+      } catch (error) {
+        console.error('load activity preview failed', error);
+        this.activityPreview = null;
+        this.activityPreviewProgress = {
+          taskCount: 0,
+          completedCount: 0,
+          completionRate: 0,
+          progressText: '',
+          totalRewardPoints: 0,
+          completedRewardPoints: 0,
+          nextTaskTitle: '',
+          nextActionText: '',
+          nextActionPath: '',
+          nextActionType: ''
+        };
+      }
+    },
     formatBadgeTime(value) {
       if (!value) {
         return '';
@@ -696,6 +808,15 @@ export default {
         icon: 'none',
         duration: 2000
       });
+    },
+    goToActivityHub() {
+      const activityCode = this.activityPreview && this.activityPreview.activityCode
+        ? encodeURIComponent(this.activityPreview.activityCode)
+        : '';
+      const url = activityCode
+        ? `/pages/activityHub/activityHub?activityCode=${activityCode}`
+        : '/pages/activityHub/activityHub';
+      uni.navigateTo({ url });
     },
     goToAiSuggest() {
       uni.navigateTo({ url: '/pages/aiSuggest/aiSuggest' });
@@ -1700,6 +1821,148 @@ export default {
 }
 
 /* ===== 功能导航标题 ===== */
+.activity-preview-card {
+  background: linear-gradient(135deg, rgba(239, 249, 243, 0.95), rgba(221, 242, 228, 0.92));
+  border-radius: 40rpx;
+  padding: 28rpx;
+  margin-bottom: 32rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 14rpx 32rpx rgba(46, 102, 67, 0.1);
+  overflow: hidden;
+}
+
+.activity-preview-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.activity-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(79, 168, 111, 0.14);
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #2d6a45;
+}
+
+.activity-preview-action {
+  font-size: 22rpx;
+  color: #4f8e67;
+  font-weight: 600;
+}
+
+.activity-preview-main {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.activity-preview-icon {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 22rpx rgba(79, 168, 111, 0.18);
+  flex-shrink: 0;
+}
+
+.activity-preview-emoji {
+  font-size: 40rpx;
+}
+
+.activity-preview-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-preview-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #255238;
+}
+
+.activity-preview-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #6a8b76;
+}
+
+.activity-preview-meta {
+  margin-top: 20rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.activity-preview-pill {
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.activity-preview-pill-label {
+  font-size: 20rpx;
+  color: #4a7d5f;
+  font-weight: 600;
+}
+
+.activity-preview-progress {
+  margin-top: 20rpx;
+}
+
+.activity-preview-progress-track {
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: rgba(162, 202, 173, 0.35);
+  overflow: hidden;
+}
+
+.activity-preview-progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  box-shadow: 0 0 12rpx rgba(79, 168, 111, 0.28);
+}
+
+.activity-preview-progress-row {
+  margin-top: 12rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.activity-preview-progress-text {
+  flex: 1;
+  font-size: 20rpx;
+  color: #5f8370;
+}
+
+.activity-preview-progress-value {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #2d6a45;
+}
+
+.activity-preview-footer {
+  margin-top: 16rpx;
+}
+
+.activity-preview-target {
+  font-size: 22rpx;
+  color: #335f45;
+  font-weight: 600;
+}
+
 .section-header {
   display: flex;
   align-items: baseline;
