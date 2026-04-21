@@ -133,6 +133,44 @@
       </view>
 
       <!-- ===== 任务系统 ===== -->
+      <view class="agent-brief-card floating-card" v-if="agentBrief.actions.length" @click="goToAgentDesk">
+        <view class="agent-brief-head">
+          <view class="agent-brief-copy">
+            <text class="agent-brief-kicker">{{ agentBrief.kicker }}</text>
+            <text class="agent-brief-title">{{ agentBrief.summary.title }}</text>
+            <text class="agent-brief-reason">{{ agentBrief.summary.reason }}</text>
+          </view>
+          <view class="agent-brief-points">
+            <text class="agent-brief-points-value">+{{ agentBrief.summary.estimatedPoints }}</text>
+            <text class="agent-brief-points-label">pts</text>
+          </view>
+        </view>
+        <view class="agent-brief-metrics">
+          <view class="agent-metric-pill">
+            <text class="agent-metric-label">{{ agentBrief.focusLabel }}</text>
+            <text class="agent-metric-value">{{ agentBrief.summary.focusLabel }}</text>
+          </view>
+          <view class="agent-metric-pill">
+            <text class="agent-metric-label">{{ agentBrief.carbonLabel }}</text>
+            <text class="agent-metric-value">{{ agentBrief.summary.estimatedCarbonSaving }}g</text>
+          </view>
+          <view class="agent-metric-pill">
+            <text class="agent-metric-label">{{ agentBrief.progressLabel }}</text>
+            <text class="agent-metric-value">{{ agentBrief.summary.completionLabel }}</text>
+          </view>
+        </view>
+        <view class="agent-action-list">
+          <view class="agent-action-item" v-for="action in agentBriefActions" :key="action.id">
+            <view class="agent-action-copy">
+              <text class="agent-action-tag">{{ action.priorityTag }}</text>
+              <text class="agent-action-title">{{ action.title }}</text>
+              <text class="agent-action-meta">{{ action.durationMinutes }} min | {{ action.estimatedCarbonSaving }}g CO2</text>
+            </view>
+            <text class="agent-action-arrow">{{ agentBrief.actionText }}</text>
+          </view>
+        </view>
+      </view>
+
       <view class="task-board floating-card" v-if="taskBoard.dailyTasks.length || taskBoard.weeklyTasks.length">
         <view class="task-board-header">
           <view>
@@ -219,7 +257,7 @@
       </view>
 
       <!-- ===== 每日AI健康建议卡片 ===== -->
-      <view class="daily-health-card floating-card" v-if="dailyHealthSuggestion" @click="goToAiSuggest">
+      <view class="daily-health-card floating-card" v-if="dailyHealthSuggestion" @click="goToAiSuggest('health')">
         <view class="dhc-header">
           <view class="dhc-title-wrap">
             <view class="dhc-icon-box">
@@ -284,7 +322,7 @@
       <!-- ===== 2x2 功能导航网格 ===== -->
       <view class="feature-grid">
         <view class="feature-row">
-          <view class="feature-card feature-card-ai floating-card" @click="goToAiSuggest">
+          <view class="feature-card feature-card-ai floating-card" @click="goToAiSuggest('carbon')">
             <view class="feature-icon-container">
               <view class="particle-glow particle-glow-1"></view>
               <view class="particle-glow particle-glow-2"></view>
@@ -449,7 +487,7 @@
 </template>
 
 <script>
-import { getStepCount, getRankData, getHealthSuggestion, getHealthDataList, getExchangeRecords, getTaskBoard, getProfile, getActivityHub } from '../../utils/request.js';
+import { getStepCount, getRankData, getHealthSuggestion, getHealthDataList, getExchangeRecords, getTaskBoard, getProfile, getActivityHub, getAgentBrief } from '../../utils/request.js';
 import BottomNav from '../../components/bottom-nav.vue';
 
 export default {
@@ -481,6 +519,22 @@ export default {
         },
         dailyTasks: [],
         weeklyTasks: []
+      },
+      agentBrief: {
+        kicker: '\u4eca\u65e5 Agent \u7b80\u62a5',
+        focusLabel: '\u7126\u70b9',
+        carbonLabel: '\u9884\u8ba1\u51cf\u6392',
+        progressLabel: '\u603b\u8fdb\u5ea6',
+        actionText: '\u8fdb\u5165\u5de5\u4f5c\u53f0',
+        summary: {
+          title: '\u6b63\u5728\u751f\u6210\u4eca\u65e5\u8ba1\u5212',
+          reason: '\u8bfb\u53d6\u4f60\u7684\u4efb\u52a1\u3001\u5065\u5eb7\u4e0e\u8fdb\u5ea6\u6570\u636e',
+          focusLabel: '\u5f85\u751f\u6210',
+          estimatedCarbonSaving: 0,
+          estimatedPoints: 0,
+          completionLabel: '0/0'
+        },
+        actions: []
       },
       particleStyles: [],
       // 每日健康建议
@@ -530,6 +584,8 @@ export default {
         this.loadProfileData();
       });
       this.loadRankData();
+      this.loadTaskBoard();
+      this.loadAgentBrief();
       this.loadDailyHealthSuggestion();
       this.loadActivityPreview();
       this.loadAchievementBadge();
@@ -579,6 +635,11 @@ export default {
     activityPreviewProgressRate() {
       const rate = Number(this.activityPreviewProgress.completionRate || 0);
       return Math.max(0, Math.min(100, rate));
+    },
+    agentBriefActions() {
+      return Array.isArray(this.agentBrief.actions)
+        ? this.agentBrief.actions.slice(0, 2)
+        : [];
     }
   },
   methods: {
@@ -726,6 +787,25 @@ export default {
         };
       }
     },
+    async loadAgentBrief() {
+      if (!this.stuNo) return;
+      try {
+        const res = await getAgentBrief(this.stuNo);
+        if (!res || typeof res !== 'object') {
+          return;
+        }
+        this.agentBrief = {
+          ...this.agentBrief,
+          summary: {
+            ...this.agentBrief.summary,
+            ...(res.summary || {})
+          },
+          actions: Array.isArray(res.actions) ? res.actions : []
+        };
+      } catch (error) {
+        console.error('load agent brief failed', error);
+      }
+    },
     async loadActivityPreview() {
       if (!this.stuNo) return;
       try {
@@ -818,8 +898,12 @@ export default {
         : '/pages/activityHub/activityHub';
       uni.navigateTo({ url });
     },
-    goToAiSuggest() {
-      uni.navigateTo({ url: '/pages/aiSuggest/aiSuggest' });
+    goToAiSuggest(mode = 'carbon') {
+      const safeMode = mode === 'health' ? 'health' : 'carbon';
+      uni.navigateTo({ url: `/pages/aiSuggest/aiSuggest?mode=${safeMode}` });
+    },
+    goToAgentDesk() {
+      uni.navigateTo({ url: '/pages/agentDesk/agentDesk' });
     }
   }
 };
@@ -1522,6 +1606,146 @@ export default {
 
 .progress-hint { font-size: 24rpx; color: #5B8C6E; }
 .progress-hint.done { color: #3D9B6D; font-weight: 500; }
+
+.agent-brief-card {
+  margin-bottom: 28rpx;
+  padding: 28rpx;
+  border-radius: 36rpx;
+  background: linear-gradient(140deg, rgba(41, 112, 63, 0.96), rgba(86, 156, 105, 0.92));
+  box-shadow: 0 20rpx 36rpx rgba(35, 83, 51, 0.14);
+}
+
+.agent-brief-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.agent-brief-copy {
+  flex: 1;
+}
+
+.agent-brief-kicker {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.78);
+  letter-spacing: 2rpx;
+}
+
+.agent-brief-title {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.agent-brief-reason {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.agent-brief-points {
+  min-width: 120rpx;
+  text-align: right;
+}
+
+.agent-brief-points-value {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #ffe69c;
+}
+
+.agent-brief-points-label {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.agent-brief-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.agent-metric-pill {
+  min-width: 180rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.agent-metric-label {
+  display: block;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.agent-metric-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.agent-action-list {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.agent-action-item {
+  padding: 22rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  justify-content: space-between;
+  gap: 18rpx;
+  align-items: center;
+}
+
+.agent-action-copy {
+  flex: 1;
+}
+
+.agent-action-tag {
+  display: inline-flex;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.agent-action-title {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.agent-action-meta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.agent-action-arrow {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 600;
+}
 
 .task-board {
   position: relative;

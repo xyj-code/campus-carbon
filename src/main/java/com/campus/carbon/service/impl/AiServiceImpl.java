@@ -2,7 +2,13 @@ package com.campus.carbon.service.impl;
 
 import com.campus.carbon.model.AiSuggest;
 import com.campus.carbon.model.HealthData;
+import com.campus.carbon.model.dto.AgentActionVO;
+import com.campus.carbon.model.dto.AgentBriefVO;
+import com.campus.carbon.model.dto.AgentSummaryVO;
+import com.campus.carbon.model.dto.TaskBoardItemVO;
 import com.campus.carbon.service.AiService;
+import com.campus.carbon.service.HealthDataService;
+import com.campus.carbon.service.TaskService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -13,19 +19,28 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class AiServiceImpl implements AiService {
 
     private static final String MODEL_NAME = "qwen-turbo";
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
+    private static final ZoneId CHINA_ZONE = ZoneId.of("Asia/Shanghai");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
 
     private static final String CARBON_SYSTEM_PROMPT =
             "\u4f60\u662f\u4e00\u4e2a\u6821\u56ed\u4f4e\u78b3\u751f\u6d3b\u987e\u95ee\u3002" +
@@ -61,6 +76,12 @@ public class AiServiceImpl implements AiService {
 
     @Value("${carbon.ai.endpoint}")
     private String endpoint;
+
+    @Autowired
+    private TaskService taskService;
+
+    @Autowired
+    private HealthDataService healthDataService;
 
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
@@ -104,6 +125,26 @@ public class AiServiceImpl implements AiService {
         }
 
         return aiSuggest;
+    }
+
+    @Override
+    public AgentBriefVO getAgentBrief(String userId, String userNote) {
+        AgentBriefVO brief = new AgentBriefVO();
+        if (userId == null || userId.trim().isEmpty()) {
+            brief.setSummary(createEmptySummary());
+            brief.getEvidence().add("\u8bf7\u5148\u767b\u5f55\u540e\u518d\u751f\u6210\u4eca\u65e5\u884c\u52a8\u8ba1\u5212");
+            return brief;
+        }
+
+        Map<String, Object> taskBoard = taskService.getTaskBoard(userId.trim());
+        List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
+        List<HealthData> healthDataList = healthDataService.getByUserId(userId.trim());
+        List<AgentActionVO> actions = buildActionPlan(allTasks, healthDataList, userNote);
+
+        brief.setActions(actions);
+        brief.setSummary(buildSummary(taskBoard, healthDataList, userNote, actions));
+        brief.setEvidence(buildEvidence(taskBoard, healthDataList, userNote, actions));
+        return brief;
     }
 
     private ArrayNode createMessages(String systemPrompt, String userPrompt) {
@@ -244,5 +285,290 @@ public class AiServiceImpl implements AiService {
 
     private String safeText(String text) {
         return text == null ? "" : text.trim();
+    }
+
+    private AgentSummaryVO createEmptySummary() {
+        AgentSummaryVO summary = new AgentSummaryVO();
+        summary.setTitle("\u4eca\u65e5\u884c\u52a8\u5de5\u4f5c\u53f0");
+        summary.setStatus("idle");
+        summary.setReason("\u6682\u65e0\u53ef\u7528\u7684\u7528\u6237\u6570\u636e");
+        summary.setFocusLabel("\u5f85\u51c6\u5907");
+        summary.setCompletionLabel("0/0");
+        summary.setEstimatedCarbonSaving(0);
+        summary.setEstimatedPoints(0);
+        summary.setUpdatedAt(LocalDateTime.now(CHINA_ZONE).format(TIME_FORMATTER));
+        return summary;
+    }
+
+    private AgentSummaryVO buildSummary(Map<String, Object> taskBoard, List<HealthData> healthDataList,
+                                        String userNote, List<AgentActionVO> actions) {
+        AgentSummaryVO summary = createEmptySummary();
+        Map<String, Object> summaryMap = castMap(taskBoard.get("summary"));
+        int dailyCompleted = toInt(summaryMap.get("dailyCompleted"));
+        int dailyTotal = toInt(summaryMap.get("dailyTotal"));
+        int weeklyCompleted = toInt(summaryMap.get("weeklyCompleted"));
+        int weeklyTotal = toInt(summaryMap.get("weeklyTotal"));
+        int totalCarbon = actions.stream()
+                .map(AgentActionVO::getEstimatedCarbonSaving)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+        int totalPoints = actions.stream()
+                .map(AgentActionVO::getEstimatedPoints)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        summary.setEstimatedCarbonSaving(totalCarbon);
+        summary.setEstimatedPoints(totalPoints);
+        summary.setCompletionLabel((dailyCompleted + weeklyCompleted) + "/" + (dailyTotal + weeklyTotal));
+        summary.setUpdatedAt(LocalDateTime.now(CHINA_ZONE).format(TIME_FORMATTER));
+
+        if (dailyCompleted < dailyTotal) {
+            summary.setTitle("\u4eca\u65e5\u5148\u5b8c\u6210\u65e5\u5e38\u4efb\u52a1");
+            summary.setStatus("daily_gap");
+            summary.setReason("\u4f60\u4eca\u5929\u8fd8\u6709" + (dailyTotal - dailyCompleted) + "\u4e2a\u65e5\u5e38\u4efb\u52a1\u672a\u5b8c\u6210\uff0c\u5148\u628a\u6700\u5bb9\u6613\u843d\u5730\u7684\u52a8\u4f5c\u505a\u6389\u3002");
+            summary.setFocusLabel("\u65e5\u5e38\u4efb\u52a1");
+            return summary;
+        }
+
+        if (weeklyCompleted < weeklyTotal) {
+            summary.setTitle("\u4eca\u65e5\u63a8\u8fdb\u672c\u5468\u8fdb\u5ea6");
+            summary.setStatus("weekly_push");
+            summary.setReason("\u65e5\u5e38\u76ee\u6807\u5df2\u7ecf\u7a33\u4f4f\uff0c\u73b0\u5728\u66f4\u503c\u5f97\u63d0\u524d\u8865\u9f50\u672c\u5468\u6311\u6218\u3002");
+            summary.setFocusLabel("\u672c\u5468\u6311\u6218");
+            return summary;
+        }
+
+        if (healthDataList == null || healthDataList.isEmpty()) {
+            summary.setTitle("\u8865\u5168\u5065\u5eb7\u6863\u6848\uff0c\u8ba9\u5efa\u8bae\u66f4\u51c6");
+            summary.setStatus("health_missing");
+            summary.setReason("\u5f53\u524d\u884c\u52a8\u4efb\u52a1\u5df2\u8fbe\u6807\uff0c\u4e0b\u4e00\u6b65\u5efa\u8bae\u8865\u5168\u5065\u5eb7\u6570\u636e\uff0c\u8ba9 Agent \u80fd\u505a\u66f4\u5177\u4f53\u7684\u8282\u594f\u8c03\u5ea6\u3002");
+            summary.setFocusLabel("\u8865\u5168\u6863\u6848");
+            return summary;
+        }
+
+        if (userNote != null && !userNote.trim().isEmpty()) {
+            summary.setTitle("\u5df2\u6309\u4f60\u7684\u8865\u5145\u8bf4\u660e\u91cd\u6392\u4eca\u65e5\u8ba1\u5212");
+            summary.setStatus("note_adjusted");
+            summary.setReason("\u5f53\u524d\u8ba1\u5212\u5df2\u7ed3\u5408\u4f60\u7684\u5b9e\u9645\u60c5\u51b5\uff0c\u4f18\u5148\u9009\u62e9\u4f4e\u95e8\u69db\u3001\u53ef\u7acb\u5373\u6267\u884c\u7684\u52a8\u4f5c\u3002");
+            summary.setFocusLabel("\u5df2\u91cd\u6392");
+            return summary;
+        }
+
+        summary.setTitle("\u4eca\u65e5\u4fdd\u6301\u7eff\u8272\u8282\u594f");
+        summary.setStatus("steady");
+        summary.setReason("\u4f60\u7684\u57fa\u672c\u76ee\u6807\u8dd1\u5f97\u6bd4\u8f83\u7a33\uff0c\u4eca\u5929\u66f4\u9002\u5408\u505a\u4e24\u5230\u4e09\u4e2a\u4f4e\u6210\u672c\u7684\u7ef4\u6301\u578b\u52a8\u4f5c\u3002");
+        summary.setFocusLabel("\u4fdd\u6301\u8282\u594f");
+        return summary;
+    }
+
+    private List<AgentActionVO> buildActionPlan(List<TaskBoardItemVO> allTasks, List<HealthData> healthDataList, String userNote) {
+        List<TaskBoardItemVO> candidates = new ArrayList<>();
+        for (TaskBoardItemVO item : allTasks) {
+            if (!Boolean.TRUE.equals(item.getCompleted())) {
+                candidates.add(item);
+            }
+        }
+
+        candidates.sort(Comparator
+                .comparing((TaskBoardItemVO item) -> !"DAILY".equalsIgnoreCase(item.getPeriodType()))
+                .thenComparing(item -> item.getProgressPercent() == null ? 0 : item.getProgressPercent()));
+
+        if (isTimeSensitive(userNote)) {
+            candidates.sort(Comparator
+                    .comparingInt((TaskBoardItemVO item) -> estimateDurationMinutes(item.getTaskCode()))
+                    .thenComparing(item -> !"DAILY".equalsIgnoreCase(item.getPeriodType())));
+        }
+
+        List<AgentActionVO> actions = new ArrayList<>();
+        for (TaskBoardItemVO item : candidates) {
+            actions.add(toAgentAction(item));
+            if (actions.size() >= 3) {
+                break;
+            }
+        }
+
+        if ((healthDataList == null || healthDataList.isEmpty()) && actions.size() < 3) {
+            actions.add(createHealthProfileAction());
+        }
+
+        if (actions.isEmpty()) {
+            actions.add(createMaintenanceAction());
+        }
+
+        return actions;
+    }
+
+    private List<String> buildEvidence(Map<String, Object> taskBoard, List<HealthData> healthDataList,
+                                       String userNote, List<AgentActionVO> actions) {
+        List<String> evidence = new ArrayList<>();
+        Map<String, Object> summaryMap = castMap(taskBoard.get("summary"));
+        int dailyCompleted = toInt(summaryMap.get("dailyCompleted"));
+        int dailyTotal = toInt(summaryMap.get("dailyTotal"));
+        int weeklyCompleted = toInt(summaryMap.get("weeklyCompleted"));
+        int weeklyTotal = toInt(summaryMap.get("weeklyTotal"));
+
+        evidence.add("\u65e5\u5e38\u4efb\u52a1\u8fdb\u5ea6\uff1a" + dailyCompleted + "/" + dailyTotal);
+        evidence.add("\u6bcf\u5468\u6311\u6218\u8fdb\u5ea6\uff1a" + weeklyCompleted + "/" + weeklyTotal);
+
+        if (healthDataList == null || healthDataList.isEmpty()) {
+            evidence.add("\u5065\u5eb7\u6863\u6848\uff1a\u6682\u65e0\u8bb0\u5f55");
+        } else {
+            HealthData latest = healthDataList.get(0);
+            StringBuilder builder = new StringBuilder("\u6700\u65b0\u5065\u5eb7\u8bb0\u5f55\uff1a");
+            if (latest.getBmi() != null) {
+                builder.append(" BMI ").append(latest.getBmi());
+            }
+            if (latest.getHeartRate() != null) {
+                builder.append(" \u5fc3\u7387 ").append(latest.getHeartRate()).append("/min");
+            }
+            if (latest.getBloodPressure() != null && !latest.getBloodPressure().trim().isEmpty()) {
+                builder.append(" \u8840\u538b ").append(latest.getBloodPressure());
+            }
+            evidence.add(builder.toString());
+        }
+
+        if (userNote != null && !userNote.trim().isEmpty()) {
+            evidence.add("\u5df2\u8bfb\u53d6\u8865\u5145\u8bf4\u660e\uff1a" + userNote.trim());
+        }
+
+        if (!actions.isEmpty()) {
+            AgentActionVO firstAction = actions.get(0);
+            evidence.add("\u7cfb\u7edf\u5f53\u524d\u6700\u4f18\u5148\u63a8\u8fdb\uff1a" + firstAction.getTitle());
+        }
+
+        return evidence;
+    }
+
+    private AgentActionVO toAgentAction(TaskBoardItemVO item) {
+        AgentActionVO action = new AgentActionVO();
+        action.setId("task:" + item.getTaskCode());
+        action.setTaskCode(item.getTaskCode());
+        action.setTitle(item.getTitle());
+        action.setReason(item.getSubtitle());
+        action.setPriorityTag("DAILY".equalsIgnoreCase(item.getPeriodType()) ? "\u4eca\u65e5\u4f18\u5148" : "\u672c\u5468\u63a8\u8fdb");
+        action.setDurationMinutes(estimateDurationMinutes(item.getTaskCode()));
+        action.setEstimatedCarbonSaving(estimateCarbonSaving(item.getTaskCode()));
+        action.setEstimatedPoints(item.getRewardPoints() == null ? 0 : item.getRewardPoints());
+        action.setActionText(item.getActionText());
+        action.setActionPath(item.getActionPath());
+        action.setActionType(item.getActionType());
+        return action;
+    }
+
+    private AgentActionVO createHealthProfileAction() {
+        AgentActionVO action = new AgentActionVO();
+        action.setId("health:profile");
+        action.setTaskCode("HEALTH_PROFILE");
+        action.setTitle("\u5148\u8865\u9f50\u4eca\u65e5\u5065\u5eb7\u6863\u6848");
+        action.setReason("\u6709\u4e86 BMI\u3001\u5fc3\u7387\u6216\u8840\u538b\u7b49\u57fa\u7840\u6570\u636e\uff0cAgent \u624d\u80fd\u628a\u4f4e\u78b3\u52a8\u4f5c\u548c\u5065\u5eb7\u8282\u594f\u540c\u65f6\u8c03\u5ea6\u3002");
+        action.setPriorityTag("\u8865\u5168\u8d44\u6599");
+        action.setDurationMinutes(8);
+        action.setEstimatedCarbonSaving(0);
+        action.setEstimatedPoints(0);
+        action.setActionText("\u53bb\u5f55\u5165");
+        action.setActionPath("/pages/healthData/healthData");
+        action.setActionType("navigate");
+        return action;
+    }
+
+    private AgentActionVO createMaintenanceAction() {
+        AgentActionVO action = new AgentActionVO();
+        action.setId("maintain:walk");
+        action.setTaskCode("MAINTAIN_WALK");
+        action.setTitle("\u4fdd\u6301\u4e00\u6b21 15 \u5206\u949f\u6b65\u884c");
+        action.setReason("\u4eca\u5929\u7684\u57fa\u7840\u76ee\u6807\u5df2\u7ecf\u6bd4\u8f83\u5b8c\u6574\uff0c\u7528\u4f4e\u95e8\u69db\u6b65\u884c\u6765\u7ef4\u6301\u8282\u594f\u6700\u7a33\u3002");
+        action.setPriorityTag("\u4fdd\u6301\u72b6\u6001");
+        action.setDurationMinutes(15);
+        action.setEstimatedCarbonSaving(120);
+        action.setEstimatedPoints(0);
+        action.setActionText("\u53bb\u770b\u6b65\u6570");
+        action.setActionPath("/pages/stepCount/stepCount");
+        action.setActionType("navigate");
+        return action;
+    }
+
+    private int estimateDurationMinutes(String taskCode) {
+        if ("DAILY_STEP_6000".equals(taskCode)) {
+            return 20;
+        }
+        if ("DAILY_SPORT_2KM".equals(taskCode)) {
+            return 25;
+        }
+        if ("DAILY_CHECKIN_1".equals(taskCode)) {
+            return 5;
+        }
+        if ("WEEKLY_STEP_50000".equals(taskCode)) {
+            return 30;
+        }
+        if ("WEEKLY_SPORT_3_TIMES".equals(taskCode)) {
+            return 35;
+        }
+        if ("WEEKLY_REDEEM_1".equals(taskCode)) {
+            return 10;
+        }
+        return 15;
+    }
+
+    private int estimateCarbonSaving(String taskCode) {
+        if ("DAILY_STEP_6000".equals(taskCode)) {
+            return 180;
+        }
+        if ("DAILY_SPORT_2KM".equals(taskCode)) {
+            return 130;
+        }
+        if ("DAILY_CHECKIN_1".equals(taskCode)) {
+            return 60;
+        }
+        if ("WEEKLY_STEP_50000".equals(taskCode)) {
+            return 220;
+        }
+        if ("WEEKLY_SPORT_3_TIMES".equals(taskCode)) {
+            return 150;
+        }
+        return 0;
+    }
+
+    private boolean isTimeSensitive(String userNote) {
+        if (userNote == null || userNote.trim().isEmpty()) {
+            return false;
+        }
+        String value = userNote.trim();
+        return value.contains("\u8d76")
+                || value.contains("\u5fd9")
+                || value.contains("\u6ca1\u65f6\u95f4")
+                || value.contains("\u4e0a\u8bfe")
+                || value.contains("deadline");
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<TaskBoardItemVO> castTaskItems(Object source) {
+        if (source instanceof List) {
+            return (List<TaskBoardItemVO>) source;
+        }
+        return new ArrayList<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> castMap(Object source) {
+        if (source instanceof Map) {
+            return (Map<String, Object>) source;
+        }
+        return java.util.Collections.emptyMap();
+    }
+
+    private int toInt(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value == null) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 }

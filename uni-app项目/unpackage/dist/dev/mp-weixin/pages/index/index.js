@@ -102,10 +102,11 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.taskBoard.dailyTasks.length || _vm.taskBoard.weeklyTasks.length
-  var g1 = g0 ? _vm.taskBoard.dailyTasks.length : null
-  var g2 = g0 ? _vm.taskBoard.weeklyTasks.length : null
-  var g3 = _vm.dailyHealthSuggestion
+  var g0 = _vm.agentBrief.actions.length
+  var g1 = _vm.taskBoard.dailyTasks.length || _vm.taskBoard.weeklyTasks.length
+  var g2 = g1 ? _vm.taskBoard.dailyTasks.length : null
+  var g3 = g1 ? _vm.taskBoard.weeklyTasks.length : null
+  var g4 = _vm.dailyHealthSuggestion
     ? _vm.dailyHealthSuggestion.substring(0, 80)
     : null
   _vm.$mp.data = Object.assign(
@@ -116,6 +117,7 @@ var render = function () {
         g1: g1,
         g2: g2,
         g3: g3,
+        g4: g4,
       },
     }
   )
@@ -161,12 +163,15 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 41));
 var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
+var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/typeof */ 13));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 43));
 var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
 var _methods;
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 176));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 184));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -204,6 +209,22 @@ var _default = {
         },
         dailyTasks: [],
         weeklyTasks: []
+      },
+      agentBrief: {
+        kicker: "\u4ECA\u65E5 Agent \u7B80\u62A5",
+        focusLabel: "\u7126\u70B9",
+        carbonLabel: "\u9884\u8BA1\u51CF\u6392",
+        progressLabel: "\u603B\u8FDB\u5EA6",
+        actionText: "\u8FDB\u5165\u5DE5\u4F5C\u53F0",
+        summary: {
+          title: "\u6B63\u5728\u751F\u6210\u4ECA\u65E5\u8BA1\u5212",
+          reason: "\u8BFB\u53D6\u4F60\u7684\u4EFB\u52A1\u3001\u5065\u5EB7\u4E0E\u8FDB\u5EA6\u6570\u636E",
+          focusLabel: "\u5F85\u751F\u6210",
+          estimatedCarbonSaving: 0,
+          estimatedPoints: 0,
+          completionLabel: '0/0'
+        },
+        actions: []
       },
       particleStyles: [],
       // 每日健康建议
@@ -256,6 +277,8 @@ var _default = {
         _this.loadProfileData();
       });
       this.loadRankData();
+      this.loadTaskBoard();
+      this.loadAgentBrief();
       this.loadDailyHealthSuggestion();
       this.loadActivityPreview();
       this.loadAchievementBadge();
@@ -300,6 +323,9 @@ var _default = {
     activityPreviewProgressRate: function activityPreviewProgressRate() {
       var rate = Number(this.activityPreviewProgress.completionRate || 0);
       return Math.max(0, Math.min(100, rate));
+    },
+    agentBriefActions: function agentBriefActions() {
+      return Array.isArray(this.agentBrief.actions) ? this.agentBrief.actions.slice(0, 2) : [];
     }
   },
   methods: (_methods = {
@@ -575,7 +601,7 @@ var _default = {
         }, _callee5, null, [[0, 7]]);
       }))();
     },
-    loadActivityPreview: function loadActivityPreview() {
+    loadAgentBrief: function loadAgentBrief() {
       var _this7 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
         var res;
@@ -591,11 +617,54 @@ var _default = {
               case 2:
                 _context6.prev = 2;
                 _context6.next = 5;
-                return (0, _request.getActivityHub)(_this7.stuNo);
+                return (0, _request.getAgentBrief)(_this7.stuNo);
               case 5:
                 res = _context6.sent;
-                _this7.activityPreview = res && (res.selected || res.featured) ? res.selected || res.featured : null;
-                _this7.activityPreviewProgress = res && res.activityProgress ? {
+                if (!(!res || (0, _typeof2.default)(res) !== 'object')) {
+                  _context6.next = 8;
+                  break;
+                }
+                return _context6.abrupt("return");
+              case 8:
+                _this7.agentBrief = _objectSpread(_objectSpread({}, _this7.agentBrief), {}, {
+                  summary: _objectSpread(_objectSpread({}, _this7.agentBrief.summary), res.summary || {}),
+                  actions: Array.isArray(res.actions) ? res.actions : []
+                });
+                _context6.next = 14;
+                break;
+              case 11:
+                _context6.prev = 11;
+                _context6.t0 = _context6["catch"](2);
+                console.error('load agent brief failed', _context6.t0);
+              case 14:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, null, [[2, 11]]);
+      }))();
+    },
+    loadActivityPreview: function loadActivityPreview() {
+      var _this8 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee7() {
+        var res;
+        return _regenerator.default.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                if (_this8.stuNo) {
+                  _context7.next = 2;
+                  break;
+                }
+                return _context7.abrupt("return");
+              case 2:
+                _context7.prev = 2;
+                _context7.next = 5;
+                return (0, _request.getActivityHub)(_this8.stuNo);
+              case 5:
+                res = _context7.sent;
+                _this8.activityPreview = res && (res.selected || res.featured) ? res.selected || res.featured : null;
+                _this8.activityPreviewProgress = res && res.activityProgress ? {
                   taskCount: Number(res.activityProgress.taskCount || 0),
                   completedCount: Number(res.activityProgress.completedCount || 0),
                   completionRate: Number(res.activityProgress.completionRate || 0),
@@ -618,14 +687,14 @@ var _default = {
                   nextActionPath: '',
                   nextActionType: ''
                 };
-                _context6.next = 15;
+                _context7.next = 15;
                 break;
               case 10:
-                _context6.prev = 10;
-                _context6.t0 = _context6["catch"](2);
-                console.error('load activity preview failed', _context6.t0);
-                _this7.activityPreview = null;
-                _this7.activityPreviewProgress = {
+                _context7.prev = 10;
+                _context7.t0 = _context7["catch"](2);
+                console.error('load activity preview failed', _context7.t0);
+                _this8.activityPreview = null;
+                _this8.activityPreviewProgress = {
                   taskCount: 0,
                   completedCount: 0,
                   completionRate: 0,
@@ -639,10 +708,10 @@ var _default = {
                 };
               case 15:
               case "end":
-                return _context6.stop();
+                return _context7.stop();
             }
           }
-        }, _callee6, null, [[2, 10]]);
+        }, _callee7, null, [[2, 10]]);
       }))();
     },
     formatBadgeTime: function formatBadgeTime(value) {
@@ -665,48 +734,48 @@ var _default = {
     },
     // 加载每日健康建议
     loadDailyHealthSuggestion: function loadDailyHealthSuggestion() {
-      var _this8 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee7() {
+      var _this9 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee8() {
         var healthData, result;
-        return _regenerator.default.wrap(function _callee7$(_context7) {
+        return _regenerator.default.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                if (_this8.userId) {
-                  _context7.next = 2;
+                if (_this9.userId) {
+                  _context8.next = 2;
                   break;
                 }
-                return _context7.abrupt("return");
+                return _context8.abrupt("return");
               case 2:
-                _context7.prev = 2;
-                _context7.next = 5;
-                return (0, _request.getHealthDataList)(_this8.userId);
+                _context8.prev = 2;
+                _context8.next = 5;
+                return (0, _request.getHealthDataList)(_this9.userId);
               case 5:
-                healthData = _context7.sent;
+                healthData = _context8.sent;
                 if (!(healthData && healthData.length > 0)) {
-                  _context7.next = 11;
+                  _context8.next = 11;
                   break;
                 }
-                _context7.next = 9;
-                return (0, _request.getHealthSuggestion)(_this8.userId);
+                _context8.next = 9;
+                return (0, _request.getHealthSuggestion)(_this9.userId);
               case 9:
-                result = _context7.sent;
+                result = _context8.sent;
                 if (result && result.suggestion) {
-                  _this8.dailyHealthSuggestion = result.suggestion;
+                  _this9.dailyHealthSuggestion = result.suggestion;
                 }
               case 11:
-                _context7.next = 16;
+                _context8.next = 16;
                 break;
               case 13:
-                _context7.prev = 13;
-                _context7.t0 = _context7["catch"](2);
-                console.error('获取每日健康建议失败:', _context7.t0);
+                _context8.prev = 13;
+                _context8.t0 = _context8["catch"](2);
+                console.error('获取每日健康建议失败:', _context8.t0);
               case 16:
               case "end":
-                return _context7.stop();
+                return _context8.stop();
             }
           }
-        }, _callee7, null, [[2, 13]]);
+        }, _callee8, null, [[2, 13]]);
       }))();
     }
   }, (0, _defineProperty2.default)(_methods, "showPointsTip", function showPointsTip() {
@@ -722,8 +791,14 @@ var _default = {
       url: url
     });
   }), (0, _defineProperty2.default)(_methods, "goToAiSuggest", function goToAiSuggest() {
+    var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'carbon';
+    var safeMode = mode === 'health' ? 'health' : 'carbon';
     uni.navigateTo({
-      url: '/pages/aiSuggest/aiSuggest'
+      url: "/pages/aiSuggest/aiSuggest?mode=".concat(safeMode)
+    });
+  }), (0, _defineProperty2.default)(_methods, "goToAgentDesk", function goToAgentDesk() {
+    uni.navigateTo({
+      url: '/pages/agentDesk/agentDesk'
     });
   }), _methods)
 };

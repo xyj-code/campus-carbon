@@ -431,39 +431,19 @@ var _request = __webpack_require__(/*! ../../utils/request */ 44);
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
   data: function data() {
     return {
-      // 当前模式：'carbon' 或 'health'
       currentMode: 'carbon',
-      // 碳足迹模式
       carbonFootprint: '',
       suggestion: '',
       isLoading: false,
       isFocused: false,
       isPress: false,
       chips: ['每天开车上班', '使用一次性餐具', '不做垃圾分类', '长时间开灯', '外卖点餐频繁', '不使用公共交通'],
-      // 健康模式
       healthSuggestion: '',
       isHealthLoading: false,
       hasHealthData: false,
-      // 公共
       particleStyles: [],
       userId: ''
     };
@@ -474,12 +454,14 @@ var _default = {
       return this.toDisplayParagraphs(text);
     }
   },
-  onLoad: function onLoad() {
+  onLoad: function onLoad(options) {
     this.initParticleStyles();
     this.userId = uni.getStorageSync('username') || '';
+    if (options && options.mode === 'health') {
+      this.currentMode = 'health';
+    }
   },
   onShow: function onShow() {
-    // 每次显示页面时刷新用户ID和健康数据
     this.userId = uni.getStorageSync('username') || '';
     if (this.currentMode === 'health' && this.userId) {
       this.checkHealthData();
@@ -500,14 +482,12 @@ var _default = {
       }
       this.particleStyles = styles;
     },
-    // 切换模式
     switchMode: function switchMode(mode) {
       this.currentMode = mode;
       if (mode === 'health' && this.userId) {
         this.checkHealthData();
       }
     },
-    // 检查健康数据
     checkHealthData: function checkHealthData() {
       var _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
@@ -546,7 +526,6 @@ var _default = {
         }, _callee, null, [[3, 10]]);
       }))();
     },
-    // 获取健康建议
     getHealthSuggestion: function getHealthSuggestion() {
       var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
@@ -600,14 +579,18 @@ var _default = {
         }, _callee2, null, [[7, 14, 17, 20]]);
       }))();
     },
-    // 跳转到健康数据页面
     goToHealthPage: function goToHealthPage() {
       uni.navigateTo({
         url: '/pages/healthData/healthData'
       });
     },
+    goToAgentDesk: function goToAgentDesk() {
+      uni.navigateTo({
+        url: '/pages/agentDesk/agentDesk'
+      });
+    },
     appendChip: function appendChip(chip) {
-      var sep = this.carbonFootprint && !this.carbonFootprint.endsWith('，') && !this.carbonFootprint.endsWith('，') ? '，' : '';
+      var sep = this.carbonFootprint && !this.carbonFootprint.endsWith('，') ? '，' : '';
       this.carbonFootprint = (this.carbonFootprint + sep + chip).slice(0, 200);
     },
     clearInput: function clearInput() {

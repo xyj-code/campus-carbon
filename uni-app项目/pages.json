@@ -58,6 +58,16 @@
       }
     },
     {
+      "path": "pages/agentDesk/agentDesk",
+      "style": {
+        "navigationBarTitleText": "Agent Planner",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
       "path": "pages/stepCount/stepCount",
       "style": {
         "navigationBarTitleText": "步数统计",

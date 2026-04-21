@@ -41,6 +41,17 @@ export const getHealthSuggestion = (userId) => {
   return request(`/ai/health-suggest?userId=${userId}`);
 };
 
+export const getAgentBrief = (userId) => {
+  return request(`/ai/agent-brief?userId=${encodeURIComponent(userId)}`);
+};
+
+export const getAgentPlan = (userId, userNote = '') => {
+  return request('/ai/agent-plan', {
+    method: 'POST',
+    data: { userId, userNote }
+  });
+};
+
 export const getStepCount = (studentId, date) => {
   return request(`/step/count?studentId=${studentId}&date=${date}`);
 };

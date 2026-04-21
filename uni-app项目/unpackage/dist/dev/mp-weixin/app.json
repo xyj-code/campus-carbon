@@ -6,6 +6,7 @@
     "pages/profile/profile",
     "pages/pointsDetail/pointsDetail",
     "pages/aiSuggest/aiSuggest",
+    "pages/agentDesk/agentDesk",
     "pages/stepCount/stepCount",
     "pages/sportRecord/sportRecord",
     "pages/rank/rank",

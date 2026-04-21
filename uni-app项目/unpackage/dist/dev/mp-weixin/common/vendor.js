@@ -12381,7 +12381,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.getActivityHub = exports.exchangeProduct = exports.deleteHealthData = void 0;
+exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.getAgentPlan = exports.getAgentBrief = exports.getActivityHub = exports.exchangeProduct = exports.deleteHealthData = void 0;
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -12431,6 +12431,21 @@ var getHealthSuggestion = function getHealthSuggestion(userId) {
   return request("/ai/health-suggest?userId=".concat(userId));
 };
 exports.getHealthSuggestion = getHealthSuggestion;
+var getAgentBrief = function getAgentBrief(userId) {
+  return request("/ai/agent-brief?userId=".concat(encodeURIComponent(userId)));
+};
+exports.getAgentBrief = getAgentBrief;
+var getAgentPlan = function getAgentPlan(userId) {
+  var userNote = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  return request('/ai/agent-plan', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      userNote: userNote
+    }
+  });
+};
+exports.getAgentPlan = getAgentPlan;
 var getStepCount = function getStepCount(studentId, date) {
   return request("/step/count?studentId=".concat(studentId, "&date=").concat(date));
 };
@@ -12594,7 +12609,15 @@ exports.deleteHealthData = deleteHealthData;
 /* 114 */,
 /* 115 */,
 /* 116 */,
-/* 117 */
+/* 117 */,
+/* 118 */,
+/* 119 */,
+/* 120 */,
+/* 121 */,
+/* 122 */,
+/* 123 */,
+/* 124 */,
+/* 125 */
 /*!*******************************************************************!*\
   !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/carbonProject.js ***!
   \*******************************************************************/
