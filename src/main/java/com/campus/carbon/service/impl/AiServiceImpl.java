@@ -139,11 +139,12 @@ public class AiServiceImpl implements AiService {
         Map<String, Object> taskBoard = taskService.getTaskBoard(userId.trim());
         List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
         List<HealthData> healthDataList = healthDataService.getByUserId(userId.trim());
-        List<AgentActionVO> actions = buildActionPlan(allTasks, healthDataList, userNote);
+        AgentPreferenceProfile preferences = parsePreferences(userNote);
+        List<AgentActionVO> actions = buildActionPlan(allTasks, healthDataList, preferences);
 
         brief.setActions(actions);
-        brief.setSummary(buildSummary(taskBoard, healthDataList, userNote, actions));
-        brief.setEvidence(buildEvidence(taskBoard, healthDataList, userNote, actions));
+        brief.setSummary(buildSummary(taskBoard, healthDataList, preferences, actions));
+        brief.setEvidence(buildEvidence(taskBoard, healthDataList, preferences, actions));
         return brief;
     }
 
@@ -301,7 +302,7 @@ public class AiServiceImpl implements AiService {
     }
 
     private AgentSummaryVO buildSummary(Map<String, Object> taskBoard, List<HealthData> healthDataList,
-                                        String userNote, List<AgentActionVO> actions) {
+                                        AgentPreferenceProfile preferences, List<AgentActionVO> actions) {
         AgentSummaryVO summary = createEmptySummary();
         Map<String, Object> summaryMap = castMap(taskBoard.get("summary"));
         int dailyCompleted = toInt(summaryMap.get("dailyCompleted"));
@@ -323,6 +324,14 @@ public class AiServiceImpl implements AiService {
         summary.setEstimatedPoints(totalPoints);
         summary.setCompletionLabel((dailyCompleted + weeklyCompleted) + "/" + (dailyTotal + weeklyTotal));
         summary.setUpdatedAt(LocalDateTime.now(CHINA_ZONE).format(TIME_FORMATTER));
+
+        if (preferences.hasStrongPreference()) {
+            summary.setTitle(buildPreferenceTitle(preferences));
+            summary.setStatus("preference_adapted");
+            summary.setReason(buildPreferenceReason(preferences, actions));
+            summary.setFocusLabel(preferences.focusLabel);
+            return summary;
+        }
 
         if (dailyCompleted < dailyTotal) {
             summary.setTitle("\u4eca\u65e5\u5148\u5b8c\u6210\u65e5\u5e38\u4efb\u52a1");
@@ -348,14 +357,6 @@ public class AiServiceImpl implements AiService {
             return summary;
         }
 
-        if (userNote != null && !userNote.trim().isEmpty()) {
-            summary.setTitle("\u5df2\u6309\u4f60\u7684\u8865\u5145\u8bf4\u660e\u91cd\u6392\u4eca\u65e5\u8ba1\u5212");
-            summary.setStatus("note_adjusted");
-            summary.setReason("\u5f53\u524d\u8ba1\u5212\u5df2\u7ed3\u5408\u4f60\u7684\u5b9e\u9645\u60c5\u51b5\uff0c\u4f18\u5148\u9009\u62e9\u4f4e\u95e8\u69db\u3001\u53ef\u7acb\u5373\u6267\u884c\u7684\u52a8\u4f5c\u3002");
-            summary.setFocusLabel("\u5df2\u91cd\u6392");
-            return summary;
-        }
-
         summary.setTitle("\u4eca\u65e5\u4fdd\u6301\u7eff\u8272\u8282\u594f");
         summary.setStatus("steady");
         summary.setReason("\u4f60\u7684\u57fa\u672c\u76ee\u6807\u8dd1\u5f97\u6bd4\u8f83\u7a33\uff0c\u4eca\u5929\u66f4\u9002\u5408\u505a\u4e24\u5230\u4e09\u4e2a\u4f4e\u6210\u672c\u7684\u7ef4\u6301\u578b\u52a8\u4f5c\u3002");
@@ -363,45 +364,50 @@ public class AiServiceImpl implements AiService {
         return summary;
     }
 
-    private List<AgentActionVO> buildActionPlan(List<TaskBoardItemVO> allTasks, List<HealthData> healthDataList, String userNote) {
-        List<TaskBoardItemVO> candidates = new ArrayList<>();
+    private List<AgentActionVO> buildActionPlan(List<TaskBoardItemVO> allTasks, List<HealthData> healthDataList,
+                                                AgentPreferenceProfile preferences) {
+        List<PlannedAction> candidates = new ArrayList<>();
         for (TaskBoardItemVO item : allTasks) {
             if (!Boolean.TRUE.equals(item.getCompleted())) {
-                candidates.add(item);
+                AgentActionVO action = toAgentAction(item, preferences);
+                candidates.add(new PlannedAction(action, scoreAction(action, preferences)));
             }
         }
 
-        candidates.sort(Comparator
-                .comparing((TaskBoardItemVO item) -> !"DAILY".equalsIgnoreCase(item.getPeriodType()))
-                .thenComparing(item -> item.getProgressPercent() == null ? 0 : item.getProgressPercent()));
-
-        if (isTimeSensitive(userNote)) {
-            candidates.sort(Comparator
-                    .comparingInt((TaskBoardItemVO item) -> estimateDurationMinutes(item.getTaskCode()))
-                    .thenComparing(item -> !"DAILY".equalsIgnoreCase(item.getPeriodType())));
+        if ((healthDataList == null || healthDataList.isEmpty()) && (preferences.healthFirst || preferences.preferIndoor || preferences.energyLow)) {
+            AgentActionVO healthProfile = createHealthProfileAction(preferences);
+            candidates.add(new PlannedAction(healthProfile, scoreAction(healthProfile, preferences) + 60D));
         }
 
+        candidates.sort((left, right) -> Double.compare(right.score, left.score));
+
         List<AgentActionVO> actions = new ArrayList<>();
-        for (TaskBoardItemVO item : candidates) {
-            actions.add(toAgentAction(item));
+        for (PlannedAction candidate : candidates) {
+            if (containsAction(actions, candidate.action.getId())) {
+                continue;
+            }
+            actions.add(candidate.action);
             if (actions.size() >= 3) {
                 break;
             }
         }
 
         if ((healthDataList == null || healthDataList.isEmpty()) && actions.size() < 3) {
-            actions.add(createHealthProfileAction());
+            AgentActionVO healthProfile = createHealthProfileAction(preferences);
+            if (!containsAction(actions, healthProfile.getId())) {
+                actions.add(healthProfile);
+            }
         }
 
         if (actions.isEmpty()) {
-            actions.add(createMaintenanceAction());
+            actions.add(createMaintenanceAction(preferences));
         }
 
         return actions;
     }
 
     private List<String> buildEvidence(Map<String, Object> taskBoard, List<HealthData> healthDataList,
-                                       String userNote, List<AgentActionVO> actions) {
+                                       AgentPreferenceProfile preferences, List<AgentActionVO> actions) {
         List<String> evidence = new ArrayList<>();
         Map<String, Object> summaryMap = castMap(taskBoard.get("summary"));
         int dailyCompleted = toInt(summaryMap.get("dailyCompleted"));
@@ -429,8 +435,8 @@ public class AiServiceImpl implements AiService {
             evidence.add(builder.toString());
         }
 
-        if (userNote != null && !userNote.trim().isEmpty()) {
-            evidence.add("\u5df2\u8bfb\u53d6\u8865\u5145\u8bf4\u660e\uff1a" + userNote.trim());
+        if (preferences.hasAnyNote()) {
+            evidence.add("\u5df2\u5e94\u7528\u504f\u597d\uff1a" + preferences.describeAppliedPreferences());
         }
 
         if (!actions.isEmpty()) {
@@ -441,12 +447,12 @@ public class AiServiceImpl implements AiService {
         return evidence;
     }
 
-    private AgentActionVO toAgentAction(TaskBoardItemVO item) {
+    private AgentActionVO toAgentAction(TaskBoardItemVO item, AgentPreferenceProfile preferences) {
         AgentActionVO action = new AgentActionVO();
         action.setId("task:" + item.getTaskCode());
         action.setTaskCode(item.getTaskCode());
         action.setTitle(item.getTitle());
-        action.setReason(item.getSubtitle());
+        action.setReason(buildActionReason(item, preferences));
         action.setPriorityTag("DAILY".equalsIgnoreCase(item.getPeriodType()) ? "\u4eca\u65e5\u4f18\u5148" : "\u672c\u5468\u63a8\u8fdb");
         action.setDurationMinutes(estimateDurationMinutes(item.getTaskCode()));
         action.setEstimatedCarbonSaving(estimateCarbonSaving(item.getTaskCode()));
@@ -457,13 +463,15 @@ public class AiServiceImpl implements AiService {
         return action;
     }
 
-    private AgentActionVO createHealthProfileAction() {
+    private AgentActionVO createHealthProfileAction(AgentPreferenceProfile preferences) {
         AgentActionVO action = new AgentActionVO();
         action.setId("health:profile");
         action.setTaskCode("HEALTH_PROFILE");
         action.setTitle("\u5148\u8865\u9f50\u4eca\u65e5\u5065\u5eb7\u6863\u6848");
-        action.setReason("\u6709\u4e86 BMI\u3001\u5fc3\u7387\u6216\u8840\u538b\u7b49\u57fa\u7840\u6570\u636e\uff0cAgent \u624d\u80fd\u628a\u4f4e\u78b3\u52a8\u4f5c\u548c\u5065\u5eb7\u8282\u594f\u540c\u65f6\u8c03\u5ea6\u3002");
-        action.setPriorityTag("\u8865\u5168\u8d44\u6599");
+        action.setReason(preferences.healthFirst
+                ? "\u4f60\u5f53\u524d\u66f4\u5173\u6ce8\u5065\u5eb7\u4e0e\u8282\u594f\uff0c\u5148\u8865\u9f50\u57fa\u7840\u6570\u636e\uff0cAgent \u540e\u7eed\u624d\u80fd\u7ed9\u51fa\u66f4\u7a33\u7684\u52a8\u4f5c\u6392\u5e8f\u3002"
+                : "\u6709\u4e86 BMI\u3001\u5fc3\u7387\u6216\u8840\u538b\u7b49\u57fa\u7840\u6570\u636e\uff0cAgent \u624d\u80fd\u628a\u4f4e\u78b3\u52a8\u4f5c\u548c\u5065\u5eb7\u8282\u594f\u540c\u65f6\u8c03\u5ea6\u3002");
+        action.setPriorityTag(preferences.healthFirst ? "\u5065\u5eb7\u4f18\u5148" : "\u8865\u5168\u8d44\u6599");
         action.setDurationMinutes(8);
         action.setEstimatedCarbonSaving(0);
         action.setEstimatedPoints(0);
@@ -473,19 +481,31 @@ public class AiServiceImpl implements AiService {
         return action;
     }
 
-    private AgentActionVO createMaintenanceAction() {
+    private AgentActionVO createMaintenanceAction(AgentPreferenceProfile preferences) {
         AgentActionVO action = new AgentActionVO();
         action.setId("maintain:walk");
-        action.setTaskCode("MAINTAIN_WALK");
-        action.setTitle("\u4fdd\u6301\u4e00\u6b21 15 \u5206\u949f\u6b65\u884c");
-        action.setReason("\u4eca\u5929\u7684\u57fa\u7840\u76ee\u6807\u5df2\u7ecf\u6bd4\u8f83\u5b8c\u6574\uff0c\u7528\u4f4e\u95e8\u69db\u6b65\u884c\u6765\u7ef4\u6301\u8282\u594f\u6700\u7a33\u3002");
-        action.setPriorityTag("\u4fdd\u6301\u72b6\u6001");
-        action.setDurationMinutes(15);
-        action.setEstimatedCarbonSaving(120);
+        if (preferences.preferIndoor || preferences.avoidExercise || preferences.energyLow) {
+            action.setTaskCode("MAINTAIN_INDOOR");
+            action.setTitle("\u7528\u4e00\u4e2a\u5ba4\u5185\u8f7b\u52a8\u4f5c\u4fdd\u4f4f\u4eca\u65e5\u8282\u594f");
+            action.setReason("\u4f60\u8fd9\u6b21\u7ed9\u51fa\u7684\u4fe1\u53f7\u66f4\u504f\u5411\u8f7b\u91cf\u3001\u4f4e\u6469\u64e6\u7684\u6267\u884c\u65b9\u5f0f\uff0c\u5148\u4ece\u5ba4\u5185\u53ef\u5b8c\u6210\u7684\u52a8\u4f5c\u5f00\u59cb\u66f4\u5408\u9002\u3002");
+            action.setPriorityTag("\u8f7b\u91cf\u7248");
+            action.setDurationMinutes(10);
+            action.setEstimatedCarbonSaving(40);
+            action.setActionText("\u53bb\u5f55\u5165");
+            action.setActionPath("/pages/healthData/healthData");
+            action.setActionType("navigate");
+        } else {
+            action.setTaskCode("MAINTAIN_WALK");
+            action.setTitle("\u4fdd\u6301\u4e00\u6b21 15 \u5206\u949f\u6b65\u884c");
+            action.setReason("\u4eca\u5929\u7684\u57fa\u7840\u76ee\u6807\u5df2\u7ecf\u6bd4\u8f83\u5b8c\u6574\uff0c\u7528\u4f4e\u95e8\u69db\u6b65\u884c\u6765\u7ef4\u6301\u8282\u594f\u6700\u7a33\u3002");
+            action.setPriorityTag("\u4fdd\u6301\u72b6\u6001");
+            action.setDurationMinutes(15);
+            action.setEstimatedCarbonSaving(120);
+            action.setActionText("\u53bb\u770b\u6b65\u6570");
+            action.setActionPath("/pages/stepCount/stepCount");
+            action.setActionType("navigate");
+        }
         action.setEstimatedPoints(0);
-        action.setActionText("\u53bb\u770b\u6b65\u6570");
-        action.setActionPath("/pages/stepCount/stepCount");
-        action.setActionType("navigate");
         return action;
     }
 
@@ -530,16 +550,204 @@ public class AiServiceImpl implements AiService {
         return 0;
     }
 
-    private boolean isTimeSensitive(String userNote) {
+    private AgentPreferenceProfile parsePreferences(String userNote) {
+        AgentPreferenceProfile profile = new AgentPreferenceProfile();
         if (userNote == null || userNote.trim().isEmpty()) {
-            return false;
+            return profile;
         }
-        String value = userNote.trim();
-        return value.contains("\u8d76")
-                || value.contains("\u5fd9")
-                || value.contains("\u6ca1\u65f6\u95f4")
-                || value.contains("\u4e0a\u8bfe")
-                || value.contains("deadline");
+
+        String value = userNote.trim().toLowerCase();
+        profile.hasNote = true;
+        profile.timeSensitive = containsAny(value, "\u8d76", "\u5fd9", "\u6ca1\u65f6\u95f4", "\u4e0a\u8bfe", "deadline", "ddl", "urgent");
+        profile.preferEasy = containsAny(value, "\u8f7b\u677e", "\u7b80\u5355", "\u7701\u529b", "\u4f4e\u6469\u64e6", "\u4e0d\u60f3\u592a\u7d2f");
+        profile.energyLow = containsAny(value, "\u7d2f", "\u75b2\u60eb", "\u56f0", "\u6ca1\u529b\u6c14", "\u4e0d\u60f3\u52a8");
+        profile.preferPoints = containsAny(value, "\u79ef\u5206", "\u5956\u52b1", "\u62ff\u5206", "\u5956\u52b1\u6700\u9ad8");
+        profile.preferIndoor = containsAny(value, "\u5ba4\u5185", "\u5bbf\u820d", "\u4e0d\u60f3\u51fa\u53bb", "\u697c\u5185", "\u6559\u5b66\u697c\u91cc");
+        profile.wantExercise = containsAny(value, "\u8fd0\u52a8", "\u6d41\u6c57", "\u8bad\u7ec3", "\u60f3\u52a8\u4e00\u4e0b");
+        profile.wantSteps = containsAny(value, "\u6b65\u6570", "\u8d70\u8def", "\u6563\u6b65", "\u8d70\u4e00\u8d70");
+        profile.avoidExercise = containsAny(value, "\u4e0d\u60f3\u8fd0\u52a8", "\u4e0d\u60f3\u8d70", "\u522b\u8fd0\u52a8", "\u522b\u8d70", "\u80fd\u4e0d\u52a8");
+        profile.healthFirst = containsAny(value, "\u5065\u5eb7", "\u8eab\u4f53", "\u5fc3\u7387", "bmi", "\u4f18\u5148\u5065\u5eb7");
+
+        if (profile.preferPoints) {
+            profile.focusLabel = "\u79ef\u5206\u4f18\u5148";
+        } else if (profile.timeSensitive) {
+            profile.focusLabel = "\u8d76\u65f6\u95f4";
+        } else if (profile.preferIndoor) {
+            profile.focusLabel = "\u5ba4\u5185\u4f18\u5148";
+        } else if (profile.healthFirst) {
+            profile.focusLabel = "\u5065\u5eb7\u4f18\u5148";
+        } else if (profile.wantSteps) {
+            profile.focusLabel = "\u8865\u6b65\u6570";
+        } else if (profile.wantExercise) {
+            profile.focusLabel = "\u60f3\u52a8\u8d77\u6765";
+        } else if (profile.preferEasy || profile.energyLow || profile.avoidExercise) {
+            profile.focusLabel = "\u8f7b\u91cf\u6267\u884c";
+        } else {
+            profile.focusLabel = "\u5df2\u91cd\u6392";
+        }
+        return profile;
+    }
+
+    private boolean containsAny(String value, String... keywords) {
+        for (String keyword : keywords) {
+            if (value.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsAction(List<AgentActionVO> actions, String id) {
+        for (AgentActionVO action : actions) {
+            if (action != null && id.equals(action.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private double scoreAction(AgentActionVO action, AgentPreferenceProfile preferences) {
+        double score = action.getEstimatedPoints() == null ? 0 : action.getEstimatedPoints() * 2D;
+        score += action.getEstimatedCarbonSaving() == null ? 0 : action.getEstimatedCarbonSaving() / 12D;
+
+        if (isDailyTask(action.getTaskCode())) {
+            score += 80D;
+        } else {
+            score += 40D;
+        }
+
+        if (preferences.timeSensitive) {
+            score += shortDurationBonus(action.getDurationMinutes());
+        }
+        if (preferences.preferEasy || preferences.energyLow) {
+            score += isLowEffortAction(action.getTaskCode()) ? 45D : -18D;
+        }
+        if (preferences.preferIndoor) {
+            score += isIndoorFriendlyAction(action.getTaskCode()) ? 48D : -26D;
+        }
+        if (preferences.preferPoints) {
+            score += (action.getEstimatedPoints() == null ? 0 : action.getEstimatedPoints()) * 3D;
+        }
+        if (preferences.wantExercise) {
+            score += isExerciseAction(action.getTaskCode()) ? 52D : -8D;
+        }
+        if (preferences.wantSteps) {
+            score += isWalkingAction(action.getTaskCode()) ? 58D : -10D;
+        }
+        if (preferences.avoidExercise) {
+            score += isExerciseAction(action.getTaskCode()) ? -70D : 18D;
+        }
+        if (preferences.healthFirst) {
+            score += isHealthFriendlyAction(action.getTaskCode()) ? 32D : 5D;
+        }
+        return score;
+    }
+
+    private double shortDurationBonus(Integer durationMinutes) {
+        int minutes = durationMinutes == null ? 15 : durationMinutes;
+        if (minutes <= 8) {
+            return 55D;
+        }
+        if (minutes <= 15) {
+            return 35D;
+        }
+        if (minutes <= 25) {
+            return 12D;
+        }
+        return -20D;
+    }
+
+    private boolean isDailyTask(String taskCode) {
+        return taskCode != null && taskCode.startsWith("DAILY_");
+    }
+
+    private boolean isWalkingAction(String taskCode) {
+        return "DAILY_STEP_6000".equals(taskCode)
+                || "WEEKLY_STEP_50000".equals(taskCode)
+                || "MAINTAIN_WALK".equals(taskCode);
+    }
+
+    private boolean isExerciseAction(String taskCode) {
+        return "DAILY_SPORT_2KM".equals(taskCode)
+                || "WEEKLY_SPORT_3_TIMES".equals(taskCode)
+                || isWalkingAction(taskCode);
+    }
+
+    private boolean isIndoorFriendlyAction(String taskCode) {
+        return "WEEKLY_REDEEM_1".equals(taskCode)
+                || "HEALTH_PROFILE".equals(taskCode)
+                || "MAINTAIN_INDOOR".equals(taskCode);
+    }
+
+    private boolean isLowEffortAction(String taskCode) {
+        return "DAILY_CHECKIN_1".equals(taskCode)
+                || "WEEKLY_REDEEM_1".equals(taskCode)
+                || "HEALTH_PROFILE".equals(taskCode)
+                || "MAINTAIN_INDOOR".equals(taskCode);
+    }
+
+    private boolean isHealthFriendlyAction(String taskCode) {
+        return "HEALTH_PROFILE".equals(taskCode)
+                || "DAILY_STEP_6000".equals(taskCode)
+                || "MAINTAIN_WALK".equals(taskCode)
+                || "MAINTAIN_INDOOR".equals(taskCode);
+    }
+
+    private String buildActionReason(TaskBoardItemVO item, AgentPreferenceProfile preferences) {
+        String taskCode = item.getTaskCode();
+        if (preferences.preferPoints) {
+            return "\u4f60\u8fd9\u6b21\u66f4\u60f3\u4f18\u5148\u62ff\u79ef\u5206\uff0c\u8fd9\u6761\u52a8\u4f5c\u5728\u5f53\u524d\u5019\u9009\u91cc\u5956\u52b1\u6bd4\u8f83\u9ad8\uff0c\u5b8c\u6210\u540e\u53cd\u9988\u6700\u76f4\u63a5\u3002";
+        }
+        if (preferences.timeSensitive) {
+            return "\u4f60\u8fd9\u6b21\u63d0\u5230\u65f6\u95f4\u7d27\uff0c\u6240\u4ee5\u6211\u4f18\u5148\u9009\u4e86\u66f4\u77ed\u3001\u66f4\u5bb9\u6613\u63a5\u4e0a\u4f60\u5f53\u524d\u8282\u594f\u7684\u52a8\u4f5c\u3002";
+        }
+        if ((preferences.preferEasy || preferences.energyLow) && isLowEffortAction(taskCode)) {
+            return "\u4f60\u8fd9\u6b21\u66f4\u9002\u5408\u4ece\u8f7b\u91cf\u7248\u52a8\u4f5c\u5f00\u59cb\uff0c\u8fd9\u6761\u57fa\u672c\u6ca1\u6709\u6267\u884c\u538b\u529b\uff0c\u66f4\u5bb9\u6613\u771f\u6b63\u505a\u6389\u3002";
+        }
+        if (preferences.preferIndoor && isIndoorFriendlyAction(taskCode)) {
+            return "\u4f60\u8fd9\u6b21\u66f4\u504f\u5411\u5ba4\u5185\u5b8c\u6210\uff0c\u8fd9\u6761\u4e0d\u9700\u8981\u4f9d\u8d56\u5ba4\u5916\u8def\u7ebf\uff0c\u6267\u884c\u6469\u64e6\u66f4\u4f4e\u3002";
+        }
+        if (preferences.wantSteps && isWalkingAction(taskCode)) {
+            return "\u4f60\u8fd9\u6b21\u60f3\u8865\u8db3\u6b65\u6570\uff0c\u6240\u4ee5\u6211\u628a\u80fd\u76f4\u63a5\u62ac\u9ad8\u6b65\u884c\u8fdb\u5ea6\u7684\u52a8\u4f5c\u9876\u5230\u524d\u9762\u3002";
+        }
+        if (preferences.wantExercise && isExerciseAction(taskCode)) {
+            return "\u4f60\u8fd9\u6b21\u660e\u786e\u60f3\u52a8\u8d77\u6765\uff0c\u6240\u4ee5\u6211\u4f18\u5148\u9009\u4e86\u80fd\u5e26\u6765\u5b9e\u9645\u6d3b\u52a8\u91cf\u7684\u52a8\u4f5c\u3002";
+        }
+        if (preferences.healthFirst && isHealthFriendlyAction(taskCode)) {
+            return "\u4f60\u8fd9\u6b21\u66f4\u91cd\u89c6\u5065\u5eb7\u8282\u594f\uff0c\u8fd9\u6761\u52a8\u4f5c\u5bf9\u8eab\u4f53\u8d1f\u62c5\u66f4\u53ef\u63a7\uff0c\u66f4\u9002\u5408\u5148\u6267\u884c\u3002";
+        }
+        if (preferences.avoidExercise && !isExerciseAction(taskCode)) {
+            return "\u4f60\u8fd9\u6b21\u4e0d\u60f3\u505a\u592a\u591a\u8fd0\u52a8\uff0c\u6240\u4ee5\u6211\u628a\u4e0d\u4f9d\u8d56\u4f53\u529b\u6295\u5165\u7684\u52a8\u4f5c\u5f80\u524d\u63d0\u4e86\u3002";
+        }
+        return item.getSubtitle();
+    }
+
+    private String buildPreferenceTitle(AgentPreferenceProfile preferences) {
+        if (preferences.preferPoints) {
+            return "\u4eca\u65e5\u6309\u62ff\u5206\u6548\u7387\u91cd\u6392\u8ba1\u5212";
+        }
+        if (preferences.timeSensitive) {
+            return "\u4eca\u65e5\u5148\u7ed9\u4f60\u4e00\u4e2a\u8d76\u65f6\u95f4\u7248\u8ba1\u5212";
+        }
+        if (preferences.preferIndoor) {
+            return "\u4eca\u65e5\u5148\u7528\u5ba4\u5185\u7248\u8ba1\u5212\u63a5\u4f4f\u4f60";
+        }
+        if (preferences.wantSteps) {
+            return "\u4eca\u65e5\u4f18\u5148\u8865\u6b65\u6570\u8fdb\u5ea6";
+        }
+        if (preferences.wantExercise) {
+            return "\u4eca\u65e5\u4f18\u5148\u6392\u4e00\u4e2a\u80fd\u52a8\u8d77\u6765\u7684\u7248\u672c";
+        }
+        if (preferences.healthFirst) {
+            return "\u4eca\u65e5\u5148\u6309\u5065\u5eb7\u8282\u594f\u6392\u52a8\u4f5c";
+        }
+        return "\u4eca\u65e5\u5df2\u6309\u4f60\u7684\u60c5\u51b5\u91cd\u6392\u8ba1\u5212";
+    }
+
+    private String buildPreferenceReason(AgentPreferenceProfile preferences, List<AgentActionVO> actions) {
+        String focus = actions.isEmpty() ? "\u5f53\u524d\u52a8\u4f5c" : actions.get(0).getTitle();
+        return "\u8bfb\u53d6\u5230\u4f60\u7684\u504f\u597d\u540e\uff0cAgent \u5df2\u6539\u7528\u300c" + preferences.describeAppliedPreferences()
+                + "\u300d\u8fd9\u5957\u7b56\u7565\u91cd\u6392\u987a\u5e8f\uff0c\u73b0\u5728\u6700\u4f18\u5148\u7684\u52a8\u4f5c\u662f\uff1a" + focus + "\u3002";
     }
 
     @SuppressWarnings("unchecked")
@@ -569,6 +777,78 @@ public class AiServiceImpl implements AiService {
             return Integer.parseInt(String.valueOf(value));
         } catch (NumberFormatException ignored) {
             return 0;
+        }
+    }
+
+    private static class PlannedAction {
+        private final AgentActionVO action;
+        private final double score;
+
+        private PlannedAction(AgentActionVO action, double score) {
+            this.action = action;
+            this.score = score;
+        }
+    }
+
+    private static class AgentPreferenceProfile {
+        private boolean hasNote;
+        private boolean timeSensitive;
+        private boolean preferEasy;
+        private boolean energyLow;
+        private boolean preferPoints;
+        private boolean preferIndoor;
+        private boolean wantExercise;
+        private boolean wantSteps;
+        private boolean avoidExercise;
+        private boolean healthFirst;
+        private String focusLabel = "\u5df2\u91cd\u6392";
+
+        private boolean hasAnyNote() {
+            return hasNote;
+        }
+
+        private boolean hasStrongPreference() {
+            return timeSensitive
+                    || preferEasy
+                    || energyLow
+                    || preferPoints
+                    || preferIndoor
+                    || wantExercise
+                    || wantSteps
+                    || avoidExercise
+                    || healthFirst;
+        }
+
+        private String describeAppliedPreferences() {
+            List<String> labels = new ArrayList<>();
+            if (timeSensitive) {
+                labels.add("\u8d76\u65f6\u95f4");
+            }
+            if (preferEasy || energyLow) {
+                labels.add("\u8f7b\u91cf\u6267\u884c");
+            }
+            if (preferPoints) {
+                labels.add("\u79ef\u5206\u4f18\u5148");
+            }
+            if (preferIndoor) {
+                labels.add("\u5ba4\u5185\u4f18\u5148");
+            }
+            if (wantExercise) {
+                labels.add("\u60f3\u52a8\u8d77\u6765");
+            }
+            if (wantSteps) {
+                labels.add("\u8865\u6b65\u6570");
+            }
+            if (avoidExercise) {
+                labels.add("\u907f\u5f00\u9ad8\u4f53\u529b");
+            }
+            if (healthFirst) {
+                labels.add("\u5065\u5eb7\u4f18\u5148");
+            }
+            if (labels.isEmpty()) {
+                return "\u9ed8\u8ba4\u7b56\u7565";
+            }
+            return String.join(" / ", labels);
         }
     }
 }

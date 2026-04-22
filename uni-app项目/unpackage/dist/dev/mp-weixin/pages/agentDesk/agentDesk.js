@@ -378,6 +378,13 @@ var _default = {
       var minute = String(date.getMinutes()).padStart(2, '0');
       return "".concat(month, "-").concat(day, " ").concat(hour, ":").concat(minute);
     }
+  },
+  computed: {
+    preferenceEvidence: function preferenceEvidence() {
+      return Array.isArray(this.plan.evidence) ? this.plan.evidence.find(function (item) {
+        return typeof item === 'string' && item.indexOf("\u5DF2\u5E94\u7528\u504F\u597D") === 0;
+      }) || '' : '';
+    }
   }
 };
 exports.default = _default;

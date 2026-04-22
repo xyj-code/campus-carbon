@@ -7,6 +7,9 @@
         <text class="hero-kicker">{{ copy.heroKicker }}</text>
         <text class="hero-title">{{ plan.summary.title }}</text>
         <text class="hero-subtitle">{{ plan.summary.reason }}</text>
+        <view class="hero-preference" v-if="preferenceEvidence">
+          <text class="hero-preference-text">{{ preferenceEvidence }}</text>
+        </view>
         <view class="hero-metrics">
           <view class="metric-chip">
             <text class="metric-label">{{ copy.focusLabel }}</text>
@@ -323,6 +326,13 @@ export default {
       const minute = String(date.getMinutes()).padStart(2, '0');
       return `${month}-${day} ${hour}:${minute}`;
     }
+  },
+  computed: {
+    preferenceEvidence() {
+      return Array.isArray(this.plan.evidence)
+        ? (this.plan.evidence.find(item => typeof item === 'string' && item.indexOf('\u5df2\u5e94\u7528\u504f\u597d') === 0) || '')
+        : '';
+    }
   }
 };
 </script>
@@ -399,6 +409,19 @@ export default {
   flex-wrap: wrap;
   gap: 14rpx;
   margin-top: 22rpx;
+}
+
+.hero-preference {
+  margin-top: 16rpx;
+  padding: 14rpx 18rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.hero-preference-text {
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .metric-chip {

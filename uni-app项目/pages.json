@@ -60,7 +60,7 @@
     {
       "path": "pages/agentDesk/agentDesk",
       "style": {
-        "navigationBarTitleText": "Agent Planner",
+        "navigationBarTitleText": "\u667a\u80fd\u884c\u52a8\u89c4\u5212",
         "navigationBarBackgroundColor": "#2e7d32",
         "navigationBarTextStyle": "white",
         "animationType": "slide-in-right",
