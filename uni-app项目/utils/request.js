@@ -52,6 +52,27 @@ export const getAgentPlan = (userId, userNote = '') => {
   });
 };
 
+export const startAgentAction = (userId, sessionId, actionId, resultNote = '') => {
+  return request('/ai/agent-action/start', {
+    method: 'POST',
+    data: { userId, sessionId, actionId, resultNote }
+  });
+};
+
+export const completeAgentAction = (userId, sessionId, actionId, resultNote = '') => {
+  return request('/ai/agent-action/complete', {
+    method: 'POST',
+    data: { userId, sessionId, actionId, resultNote }
+  });
+};
+
+export const skipAgentAction = (userId, sessionId, actionId, resultNote = '') => {
+  return request('/ai/agent-action/skip', {
+    method: 'POST',
+    data: { userId, sessionId, actionId, resultNote }
+  });
+};
+
 export const getStepCount = (studentId, date) => {
   return request(`/step/count?studentId=${studentId}&date=${date}`);
 };

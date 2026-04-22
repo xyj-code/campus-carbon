@@ -2,6 +2,7 @@ package com.campus.carbon.controller;
 
 import com.campus.carbon.model.AiSuggest;
 import com.campus.carbon.model.HealthData;
+import com.campus.carbon.model.dto.AgentActionRequest;
 import com.campus.carbon.model.dto.AgentBriefVO;
 import com.campus.carbon.model.dto.AgentPlanRequest;
 import com.campus.carbon.service.AiService;
@@ -47,5 +48,20 @@ public class AIController {
         String userId = request == null ? "" : request.getUserId();
         String userNote = request == null ? "" : request.getUserNote();
         return aiService.getAgentBrief(userId, userNote);
+    }
+
+    @PostMapping("/agent-action/start")
+    public AgentBriefVO startAgentAction(@RequestBody AgentActionRequest request) {
+        return aiService.startAgentAction(request);
+    }
+
+    @PostMapping("/agent-action/complete")
+    public AgentBriefVO completeAgentAction(@RequestBody AgentActionRequest request) {
+        return aiService.completeAgentAction(request);
+    }
+
+    @PostMapping("/agent-action/skip")
+    public AgentBriefVO skipAgentAction(@RequestBody AgentActionRequest request) {
+        return aiService.skipAgentAction(request);
     }
 }

@@ -104,14 +104,12 @@ var render = function () {
   var _c = _vm._self._c || _h
   var g0 = _vm.plan.actions.length
   var g1 = _vm.plan.evidence.length
-  var g2 = _vm.adoptedHistory.length
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
         g1: g1,
-        g2: g2,
       },
     }
   )
@@ -165,32 +163,40 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 var COPY = {
   heroKicker: "\u7EFF\u8272\u751F\u6D3B Agent",
   focusLabel: "\u7126\u70B9",
-  carbonLabel: "\u9884\u8BA1\u51CF\u6392",
-  pointsLabel: "\u9884\u8BA1\u79EF\u5206",
+  carbonLabel: "\u672A\u5B8C\u6210\u51CF\u6392",
+  pointsLabel: "\u672A\u7ED3\u7B97\u79EF\u5206",
   updatedLabel: "\u66F4\u65B0",
+  sessionLabel: "\u4F1A\u8BDD\u72B6\u6001",
   composerTitle: "\u8865\u5145\u4ECA\u65E5\u60C5\u51B5",
-  composerSubtitle: "\u8BA9 Agent \u6309\u4F60\u5F53\u4E0B\u7684\u8282\u594F\u91CD\u6392\u8BA1\u5212",
-  notePlaceholder: "\u4F8B\u5982\uFF1A\u4ECA\u5929\u8D76\u8BFE\u3001\u6CA1\u6709\u592A\u591A\u65F6\u95F4\uFF0C\u5E0C\u671B\u52A8\u4F5C\u66F4\u8F7B\u91CF",
-  refreshAction: "\u6062\u590D\u9ED8\u8BA4\u8BA1\u5212",
-  generateAction: "\u6309\u8865\u5145\u8BF4\u660E\u91CD\u6392",
-  loadingText: "\u751F\u6210\u4E2D...",
-  actionsTitle: "\u4ECA\u65E5\u884C\u52A8\u6E05\u5355",
-  actionsSubtitle: "\u6BCF\u6761\u5EFA\u8BAE\u90FD\u53EF\u76F4\u63A5\u91C7\u7EB3\u5E76\u8DF3\u8F6C\u6267\u884C",
-  openAction: "\u67E5\u770B\u53BB\u5B8C\u6210",
-  adoptAction: "\u91C7\u7EB3\u8FD9\u6761",
-  emptyTitle: "\u6682\u65E0\u53EF\u7528\u52A8\u4F5C",
-  emptySubtitle: "\u53EF\u4EE5\u5148\u8865\u5145\u60C5\u51B5\uFF0C\u518D\u8BA9 Agent \u91CD\u65B0\u751F\u6210",
+  composerSubtitle: "\u8BA9 Agent \u6839\u636E\u4F60\u5F53\u4E0B\u7684\u8282\u594F\u91CD\u6392\u4EFB\u52A1",
+  notePlaceholder: "\u4F8B\u5982\uFF1A\u4ECA\u5929\u8D76\u8BFE\uFF0C\u5E0C\u671B\u5148\u5B8C\u6210\u4F4E\u6469\u64E6\u7684\u884C\u52A8",
+  refreshAction: "\u5237\u65B0\u6700\u65B0\u72B6\u6001",
+  generateAction: "\u751F\u6210\u65B0\u8BA1\u5212",
+  loadingText: "\u52A0\u8F7D\u4E2D...",
+  actionsTitle: "\u4ECA\u65E5 Agent \u6267\u884C\u961F\u5217",
+  actionsSubtitle: "\u6309\u987A\u5E8F\u6267\u884C\uFF0C\u6BCF\u5B8C\u6210\u4E00\u6B65\u5C31\u4F1A\u89E6\u53D1\u91CD\u6392",
+  defaultTag: 'AGENT',
+  openAction: "\u6253\u5F00\u6267\u884C\u9875",
+  startAction: "\u5F00\u59CB\u8FD9\u4E00\u6B65",
+  finishAction: "\u6211\u5DF2\u5B8C\u6210",
+  skipAction: "\u8DF3\u8FC7\u8FD9\u4E00\u6B65",
+  resultLabel: "\u6267\u884C\u8BB0\u5F55",
+  emptyTitle: "\u6682\u65E0\u53EF\u6267\u884C\u52A8\u4F5C",
+  emptySubtitle: "\u53EF\u4EE5\u5148\u8865\u5145\u60C5\u51B5\uFF0C\u518D\u8BA9 Agent \u91CD\u65B0\u751F\u6210\u4EFB\u52A1",
   evidenceTitle: "\u51B3\u7B56\u4F9D\u636E",
-  evidenceSubtitle: "\u8BA9\u4F60\u77E5\u9053 Agent \u5728\u8BFB\u53D6\u54EA\u4E9B\u4FE1\u606F",
-  historyTitle: "\u6700\u8FD1\u91C7\u7EB3",
-  historySubtitle: "\u672C\u5730\u8BB0\u4F4F\u4F60\u6700\u8FD1\u7EB3\u5165\u8BA1\u5212\u7684\u52A8\u4F5C",
-  historyEmptyTitle: "\u8FD8\u6CA1\u6709\u91C7\u7EB3\u8BB0\u5F55",
-  historyEmptySubtitle: "\u5148\u9009\u4E00\u6761\u52A8\u4F5C\u52A0\u5165\u4ECA\u65E5\u8BA1\u5212",
-  adoptedToast: "\u5DF2\u52A0\u5165\u4ECA\u65E5\u8BA1\u5212"
+  evidenceSubtitle: "\u8BA9\u4F60\u770B\u5230 Agent \u5F53\u524D\u8BFB\u53D6\u4E86\u54EA\u4E9B\u4FE1\u606F",
+  startSuccess: "\u5DF2\u8FDB\u5165\u6267\u884C\u72B6\u6001",
+  finishSuccess: "\u5DF2\u8BB0\u5F55\u5B8C\u6210",
+  skipSuccess: "\u5DF2\u8DF3\u8FC7\u8FD9\u4E00\u6B65",
+  requestError: "\u64CD\u4F5C\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5",
+  loginHint: "\u8BF7\u5148\u767B\u5F55"
 };
-var QUICK_NOTES = ["\u4ECA\u5929\u8D76\u8BFE", "\u60F3\u5148\u505A\u6700\u7701\u529B\u7684", "\u4ECA\u5929\u60F3\u8865\u8DB3\u6B65\u6570", "\u60F3\u987A\u4FBF\u517C\u987E\u5065\u5EB7"];
+var QUICK_NOTES = ["\u4ECA\u5929\u8D76\u8BFE", "\u5148\u505A\u6700\u7701\u529B\u7684", "\u4ECA\u5929\u60F3\u8865\u6B65\u6570", "\u5E0C\u671B\u987A\u4FBF\u517C\u987E\u5065\u5EB7"];
 function createEmptyPlan() {
   return {
+    sessionId: '',
+    sessionStatus: 'idle',
+    currentActionId: '',
     summary: {
       title: "\u4ECA\u65E5\u884C\u52A8\u5DE5\u4F5C\u53F0",
       reason: "\u6B63\u5728\u8BFB\u53D6\u4F60\u7684\u4EFB\u52A1\u3001\u5065\u5EB7\u548C\u8FDB\u5EA6\u6570\u636E",
@@ -212,18 +218,35 @@ var _default = {
       userId: '',
       userNote: '',
       loading: false,
-      plan: createEmptyPlan(),
-      adoptedHistory: []
+      plan: createEmptyPlan()
     };
   },
   onLoad: function onLoad() {
     this.userId = uni.getStorageSync('username') || '';
-    this.loadHistory();
   },
   onShow: function onShow() {
     this.userId = uni.getStorageSync('username') || this.userId;
-    this.loadHistory();
     this.fetchPlan('');
+  },
+  computed: {
+    preferenceEvidence: function preferenceEvidence() {
+      return Array.isArray(this.plan.evidence) ? this.plan.evidence.find(function (item) {
+        return typeof item === 'string' && item.indexOf("\u5DF2\u5E94\u7528\u504F\u597D") === 0;
+      }) || '' : '';
+    },
+    sessionStatusLabel: function sessionStatusLabel() {
+      var status = this.plan.sessionStatus || 'idle';
+      if (status === 'in_progress') {
+        return "\u6267\u884C\u4E2D";
+      }
+      if (status === 'completed') {
+        return "\u5DF2\u5B8C\u6210";
+      }
+      if (status === 'ready') {
+        return "\u5F85\u6267\u884C";
+      }
+      return "\u672A\u5F00\u59CB";
+    }
   },
   methods: {
     fetchPlan: function fetchPlan(note) {
@@ -239,7 +262,7 @@ var _default = {
                   break;
                 }
                 uni.showToast({
-                  title: "\u8BF7\u5148\u767B\u5F55",
+                  title: COPY.loginHint,
                   icon: 'none'
                 });
                 return _context.abrupt("return");
@@ -271,7 +294,7 @@ var _default = {
                 _context.prev = 19;
                 _context.t1 = _context["catch"](4);
                 uni.showToast({
-                  title: "\u751F\u6210\u8BA1\u5212\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5",
+                  title: COPY.requestError,
                   icon: 'none'
                 });
               case 22:
@@ -291,6 +314,9 @@ var _default = {
       if (!result || (0, _typeof2.default)(result) !== 'object') {
         return nextPlan;
       }
+      nextPlan.sessionId = result.sessionId || '';
+      nextPlan.sessionStatus = result.sessionStatus || 'idle';
+      nextPlan.currentActionId = result.currentActionId || '';
       if (result.summary && (0, _typeof2.default)(result.summary) === 'object') {
         nextPlan.summary = _objectSpread(_objectSpread({}, nextPlan.summary), result.summary);
       }
@@ -326,64 +352,148 @@ var _default = {
         url: action.actionPath
       });
     },
-    adoptAction: function adoptAction(action) {
+    startAction: function startAction(action) {
       var _this2 = this;
-      if (!action) {
-        return;
-      }
-      var history = this.readHistory();
-      var entry = {
-        id: "".concat(action.id || action.taskCode || 'action', "-").concat(Date.now()),
-        title: action.title || '',
-        estimatedCarbonSaving: Number(action.estimatedCarbonSaving || 0),
-        estimatedPoints: Number(action.estimatedPoints || 0),
-        adoptedAt: this.formatNow()
-      };
-      history.unshift(entry);
-      this.adoptedHistory = history.slice(0, 8);
-      uni.setStorageSync(this.historyKey(), JSON.stringify(this.adoptedHistory));
-      uni.showToast({
-        title: COPY.adoptedToast,
-        icon: 'success'
-      });
-      if (action.actionPath) {
-        setTimeout(function () {
-          _this2.openAction(action);
-        }, 180);
-      }
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+        var result;
+        return _regenerator.default.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!(!action || !action.id || !_this2.plan.sessionId)) {
+                  _context2.next = 2;
+                  break;
+                }
+                return _context2.abrupt("return");
+              case 2:
+                _this2.loading = true;
+                _context2.prev = 3;
+                _context2.next = 6;
+                return (0, _request.startAgentAction)(_this2.userId, _this2.plan.sessionId, action.id, '');
+              case 6:
+                result = _context2.sent;
+                _this2.plan = _this2.normalizePlan(result);
+                uni.showToast({
+                  title: COPY.startSuccess,
+                  icon: 'success'
+                });
+                if (action.actionPath) {
+                  setTimeout(function () {
+                    _this2.openAction(action);
+                  }, 160);
+                }
+                _context2.next = 15;
+                break;
+              case 12:
+                _context2.prev = 12;
+                _context2.t0 = _context2["catch"](3);
+                uni.showToast({
+                  title: COPY.requestError,
+                  icon: 'none'
+                });
+              case 15:
+                _context2.prev = 15;
+                _this2.loading = false;
+                return _context2.finish(15);
+              case 18:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, null, [[3, 12, 15, 18]]);
+      }))();
     },
-    historyKey: function historyKey() {
-      return "agent_history_".concat(this.userId || 'guest');
+    completeAction: function completeAction(action) {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var result;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!(!action || !action.id || !_this3.plan.sessionId)) {
+                  _context3.next = 2;
+                  break;
+                }
+                return _context3.abrupt("return");
+              case 2:
+                _this3.loading = true;
+                _context3.prev = 3;
+                _context3.next = 6;
+                return (0, _request.completeAgentAction)(_this3.userId, _this3.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u786E\u8BA4\u5DF2\u5B8C\u6210\u8BE5\u6B65");
+              case 6:
+                result = _context3.sent;
+                _this3.plan = _this3.normalizePlan(result);
+                uni.showToast({
+                  title: COPY.finishSuccess,
+                  icon: 'success'
+                });
+                _context3.next = 14;
+                break;
+              case 11:
+                _context3.prev = 11;
+                _context3.t0 = _context3["catch"](3);
+                uni.showToast({
+                  title: COPY.requestError,
+                  icon: 'none'
+                });
+              case 14:
+                _context3.prev = 14;
+                _this3.loading = false;
+                return _context3.finish(14);
+              case 17:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[3, 11, 14, 17]]);
+      }))();
     },
-    readHistory: function readHistory() {
-      var raw = uni.getStorageSync(this.historyKey());
-      if (!raw) {
-        return [];
-      }
-      try {
-        var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (error) {
-        return [];
-      }
-    },
-    loadHistory: function loadHistory() {
-      this.adoptedHistory = this.readHistory();
-    },
-    formatNow: function formatNow() {
-      var date = new Date();
-      var month = String(date.getMonth() + 1).padStart(2, '0');
-      var day = String(date.getDate()).padStart(2, '0');
-      var hour = String(date.getHours()).padStart(2, '0');
-      var minute = String(date.getMinutes()).padStart(2, '0');
-      return "".concat(month, "-").concat(day, " ").concat(hour, ":").concat(minute);
-    }
-  },
-  computed: {
-    preferenceEvidence: function preferenceEvidence() {
-      return Array.isArray(this.plan.evidence) ? this.plan.evidence.find(function (item) {
-        return typeof item === 'string' && item.indexOf("\u5DF2\u5E94\u7528\u504F\u597D") === 0;
-      }) || '' : '';
+    skipAction: function skipAction(action) {
+      var _this4 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
+        var result;
+        return _regenerator.default.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                if (!(!action || !action.id || !_this4.plan.sessionId)) {
+                  _context4.next = 2;
+                  break;
+                }
+                return _context4.abrupt("return");
+              case 2:
+                _this4.loading = true;
+                _context4.prev = 3;
+                _context4.next = 6;
+                return (0, _request.skipAgentAction)(_this4.userId, _this4.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u9009\u62E9\u8DF3\u8FC7\u8BE5\u6B65");
+              case 6:
+                result = _context4.sent;
+                _this4.plan = _this4.normalizePlan(result);
+                uni.showToast({
+                  title: COPY.skipSuccess,
+                  icon: 'success'
+                });
+                _context4.next = 14;
+                break;
+              case 11:
+                _context4.prev = 11;
+                _context4.t0 = _context4["catch"](3);
+                uni.showToast({
+                  title: COPY.requestError,
+                  icon: 'none'
+                });
+              case 14:
+                _context4.prev = 14;
+                _this4.loading = false;
+                return _context4.finish(14);
+              case 17:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, null, [[3, 11, 14, 17]]);
+      }))();
     }
   }
 };

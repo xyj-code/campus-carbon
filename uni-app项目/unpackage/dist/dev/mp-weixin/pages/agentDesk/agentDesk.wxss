@@ -23,8 +23,7 @@
 .hero-card.data-v-f033cf78,
 .composer-card.data-v-f033cf78,
 .actions-card.data-v-f033cf78,
-.evidence-card.data-v-f033cf78,
-.history-card.data-v-f033cf78 {
+.evidence-card.data-v-f033cf78 {
   margin-bottom: 24rpx;
   padding: 28rpx;
   border-radius: 34rpx;
@@ -157,12 +156,14 @@
 .composer-actions.data-v-f033cf78,
 .action-buttons.data-v-f033cf78 {
   display: flex;
+  flex-wrap: wrap;
   gap: 16rpx;
   margin-top: 20rpx;
 }
 .ghost-btn.data-v-f033cf78,
 .primary-btn.data-v-f033cf78 {
   flex: 1;
+  min-width: 200rpx;
   height: 82rpx;
   border-radius: 999rpx;
   display: flex;
@@ -172,6 +173,10 @@
 .ghost-btn.data-v-f033cf78 {
   background: rgba(65, 131, 83, 0.08);
   border: 1rpx solid rgba(65, 131, 83, 0.16);
+}
+.ghost-btn.danger.data-v-f033cf78 {
+  background: rgba(222, 92, 92, 0.08);
+  border-color: rgba(222, 92, 92, 0.16);
 }
 .primary-btn.data-v-f033cf78 {
   background: linear-gradient(135deg, #3d8c5b, #2c6f46);
@@ -189,54 +194,79 @@
   color: #2d6240;
   font-weight: 600;
 }
+.ghost-btn-text.danger-text.data-v-f033cf78 {
+  color: #c65a5a;
+}
 .primary-btn-text.data-v-f033cf78 {
   font-size: 24rpx;
   color: #ffffff;
   font-weight: 700;
 }
 .action-list.data-v-f033cf78,
-.evidence-list.data-v-f033cf78,
-.history-list.data-v-f033cf78 {
+.evidence-list.data-v-f033cf78 {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
-.action-item.data-v-f033cf78,
-.history-item.data-v-f033cf78 {
+.action-item.data-v-f033cf78 {
   padding: 22rpx;
   border-radius: 26rpx;
   background: #f8fbf8;
   border: 1rpx solid rgba(59, 121, 79, 0.08);
 }
-.action-top.data-v-f033cf78,
-.history-item.data-v-f033cf78 {
+.action-top.data-v-f033cf78 {
   display: flex;
   justify-content: space-between;
   gap: 18rpx;
 }
-.action-copy.data-v-f033cf78,
-.history-copy.data-v-f033cf78 {
+.action-step.data-v-f033cf78 {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #3d8c5b, #2c6f46);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.action-step-text.data-v-f033cf78 {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+.action-copy.data-v-f033cf78 {
   flex: 1;
 }
-.action-tag.data-v-f033cf78 {
+.action-headline.data-v-f033cf78 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+.action-tag.data-v-f033cf78,
+.action-status.data-v-f033cf78 {
   display: inline-flex;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(61, 140, 91, 0.12);
-  color: #35674a;
   font-size: 20rpx;
   font-weight: 700;
 }
-.action-title.data-v-f033cf78,
-.history-title.data-v-f033cf78 {
+.action-tag.data-v-f033cf78 {
+  background: rgba(61, 140, 91, 0.12);
+  color: #35674a;
+}
+.action-status.data-v-f033cf78 {
+  background: rgba(44, 111, 70, 0.08);
+  color: #4c6c58;
+}
+.action-title.data-v-f033cf78 {
   display: block;
   margin-top: 12rpx;
   font-size: 28rpx;
   font-weight: 700;
   color: #21462f;
 }
-.action-reason.data-v-f033cf78,
-.history-time.data-v-f033cf78 {
+.action-reason.data-v-f033cf78 {
   display: block;
   margin-top: 10rpx;
   font-size: 22rpx;
@@ -259,8 +289,7 @@
   font-size: 20rpx;
   color: #a8804a;
 }
-.action-meta.data-v-f033cf78,
-.history-meta.data-v-f033cf78 {
+.action-meta.data-v-f033cf78 {
   display: flex;
   flex-wrap: wrap;
   gap: 10rpx;
@@ -271,10 +300,34 @@
   border-radius: 999rpx;
   background: rgba(61, 140, 91, 0.08);
 }
-.meta-pill-text.data-v-f033cf78,
-.history-meta-text.data-v-f033cf78 {
+.meta-pill-text.data-v-f033cf78 {
   font-size: 20rpx;
   color: #3f6e50;
+}
+.action-hint.data-v-f033cf78,
+.result-box.data-v-f033cf78 {
+  margin-top: 16rpx;
+  padding: 18rpx;
+  border-radius: 20rpx;
+}
+.action-hint.data-v-f033cf78 {
+  background: rgba(61, 140, 91, 0.06);
+}
+.result-box.data-v-f033cf78 {
+  background: rgba(214, 171, 92, 0.08);
+}
+.action-hint-text.data-v-f033cf78,
+.result-text.data-v-f033cf78 {
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: #4d6f59;
+}
+.result-label.data-v-f033cf78 {
+  display: block;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #9b7a35;
+  margin-bottom: 8rpx;
 }
 .evidence-item.data-v-f033cf78 {
   display: flex;

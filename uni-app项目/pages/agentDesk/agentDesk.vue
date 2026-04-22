@@ -25,7 +25,7 @@
           </view>
         </view>
         <view class="hero-footer">
-          <text class="hero-status">{{ plan.summary.completionLabel }}</text>
+          <text class="hero-status">{{ copy.sessionLabel }} {{ sessionStatusLabel }}</text>
           <text class="hero-time">{{ copy.updatedLabel }} {{ plan.summary.updatedAt }}</text>
         </view>
       </view>
@@ -68,8 +68,14 @@
         <view class="action-list" v-if="plan.actions.length">
           <view class="action-item" v-for="action in plan.actions" :key="action.id">
             <view class="action-top">
+              <view class="action-step">
+                <text class="action-step-text">0{{ action.stepOrder || 0 }}</text>
+              </view>
               <view class="action-copy">
-                <text class="action-tag">{{ action.priorityTag }}</text>
+                <view class="action-headline">
+                  <text class="action-tag">{{ action.priorityTag || copy.defaultTag }}</text>
+                  <text class="action-status">{{ action.statusLabel }}</text>
+                </view>
                 <text class="action-title">{{ action.title }}</text>
                 <text class="action-reason">{{ action.reason }}</text>
               </view>
@@ -89,12 +95,25 @@
                 <text class="meta-pill-text">{{ action.actionText }}</text>
               </view>
             </view>
+            <view class="action-hint">
+              <text class="action-hint-text">{{ action.executionHint }}</text>
+            </view>
+            <view class="result-box" v-if="action.resultNote">
+              <text class="result-label">{{ copy.resultLabel }}</text>
+              <text class="result-text">{{ action.resultNote }}</text>
+            </view>
             <view class="action-buttons">
-              <view class="ghost-btn small" @click="openAction(action)">
+              <view class="ghost-btn small" v-if="action.actionPath" @click="openAction(action)">
                 <text class="ghost-btn-text">{{ copy.openAction }}</text>
               </view>
-              <view class="primary-btn small" @click="adoptAction(action)">
-                <text class="primary-btn-text">{{ copy.adoptAction }}</text>
+              <view class="primary-btn small" v-if="action.canStart" @click="startAction(action)">
+                <text class="primary-btn-text">{{ copy.startAction }}</text>
+              </view>
+              <view class="primary-btn small" v-if="action.canFinish" @click="completeAction(action)">
+                <text class="primary-btn-text">{{ copy.finishAction }}</text>
+              </view>
+              <view class="ghost-btn small danger" v-if="action.canSkip" @click="skipAction(action)">
+                <text class="ghost-btn-text danger-text">{{ copy.skipAction }}</text>
               </view>
             </view>
           </view>
@@ -118,73 +137,64 @@
         </view>
       </view>
 
-      <view class="history-card">
-        <view class="section-head">
-          <text class="section-title">{{ copy.historyTitle }}</text>
-          <text class="section-subtitle">{{ copy.historySubtitle }}</text>
-        </view>
-        <view class="history-list" v-if="adoptedHistory.length">
-          <view class="history-item" v-for="item in adoptedHistory" :key="item.id">
-            <view class="history-copy">
-              <text class="history-title">{{ item.title }}</text>
-              <text class="history-time">{{ item.adoptedAt }}</text>
-            </view>
-            <view class="history-meta">
-              <text class="history-meta-text">{{ item.estimatedCarbonSaving }}g</text>
-              <text class="history-meta-text">+{{ item.estimatedPoints }} pts</text>
-            </view>
-          </view>
-        </view>
-        <view class="empty-card" v-else>
-          <text class="empty-title">{{ copy.historyEmptyTitle }}</text>
-          <text class="empty-subtitle">{{ copy.historyEmptySubtitle }}</text>
-        </view>
-      </view>
-
       <view class="spacer"></view>
     </scroll-view>
   </view>
 </template>
 
 <script>
-import { getAgentBrief, getAgentPlan } from '../../utils/request';
+import {
+  getAgentBrief,
+  getAgentPlan,
+  startAgentAction,
+  completeAgentAction,
+  skipAgentAction
+} from '../../utils/request';
 
 const COPY = {
   heroKicker: '\u7eff\u8272\u751f\u6d3b Agent',
   focusLabel: '\u7126\u70b9',
-  carbonLabel: '\u9884\u8ba1\u51cf\u6392',
-  pointsLabel: '\u9884\u8ba1\u79ef\u5206',
+  carbonLabel: '\u672a\u5b8c\u6210\u51cf\u6392',
+  pointsLabel: '\u672a\u7ed3\u7b97\u79ef\u5206',
   updatedLabel: '\u66f4\u65b0',
+  sessionLabel: '\u4f1a\u8bdd\u72b6\u6001',
   composerTitle: '\u8865\u5145\u4eca\u65e5\u60c5\u51b5',
-  composerSubtitle: '\u8ba9 Agent \u6309\u4f60\u5f53\u4e0b\u7684\u8282\u594f\u91cd\u6392\u8ba1\u5212',
-  notePlaceholder: '\u4f8b\u5982\uff1a\u4eca\u5929\u8d76\u8bfe\u3001\u6ca1\u6709\u592a\u591a\u65f6\u95f4\uff0c\u5e0c\u671b\u52a8\u4f5c\u66f4\u8f7b\u91cf',
-  refreshAction: '\u6062\u590d\u9ed8\u8ba4\u8ba1\u5212',
-  generateAction: '\u6309\u8865\u5145\u8bf4\u660e\u91cd\u6392',
-  loadingText: '\u751f\u6210\u4e2d...',
-  actionsTitle: '\u4eca\u65e5\u884c\u52a8\u6e05\u5355',
-  actionsSubtitle: '\u6bcf\u6761\u5efa\u8bae\u90fd\u53ef\u76f4\u63a5\u91c7\u7eb3\u5e76\u8df3\u8f6c\u6267\u884c',
-  openAction: '\u67e5\u770b\u53bb\u5b8c\u6210',
-  adoptAction: '\u91c7\u7eb3\u8fd9\u6761',
-  emptyTitle: '\u6682\u65e0\u53ef\u7528\u52a8\u4f5c',
-  emptySubtitle: '\u53ef\u4ee5\u5148\u8865\u5145\u60c5\u51b5\uff0c\u518d\u8ba9 Agent \u91cd\u65b0\u751f\u6210',
+  composerSubtitle: '\u8ba9 Agent \u6839\u636e\u4f60\u5f53\u4e0b\u7684\u8282\u594f\u91cd\u6392\u4efb\u52a1',
+  notePlaceholder: '\u4f8b\u5982\uff1a\u4eca\u5929\u8d76\u8bfe\uff0c\u5e0c\u671b\u5148\u5b8c\u6210\u4f4e\u6469\u64e6\u7684\u884c\u52a8',
+  refreshAction: '\u5237\u65b0\u6700\u65b0\u72b6\u6001',
+  generateAction: '\u751f\u6210\u65b0\u8ba1\u5212',
+  loadingText: '\u52a0\u8f7d\u4e2d...',
+  actionsTitle: '\u4eca\u65e5 Agent \u6267\u884c\u961f\u5217',
+  actionsSubtitle: '\u6309\u987a\u5e8f\u6267\u884c\uff0c\u6bcf\u5b8c\u6210\u4e00\u6b65\u5c31\u4f1a\u89e6\u53d1\u91cd\u6392',
+  defaultTag: 'AGENT',
+  openAction: '\u6253\u5f00\u6267\u884c\u9875',
+  startAction: '\u5f00\u59cb\u8fd9\u4e00\u6b65',
+  finishAction: '\u6211\u5df2\u5b8c\u6210',
+  skipAction: '\u8df3\u8fc7\u8fd9\u4e00\u6b65',
+  resultLabel: '\u6267\u884c\u8bb0\u5f55',
+  emptyTitle: '\u6682\u65e0\u53ef\u6267\u884c\u52a8\u4f5c',
+  emptySubtitle: '\u53ef\u4ee5\u5148\u8865\u5145\u60c5\u51b5\uff0c\u518d\u8ba9 Agent \u91cd\u65b0\u751f\u6210\u4efb\u52a1',
   evidenceTitle: '\u51b3\u7b56\u4f9d\u636e',
-  evidenceSubtitle: '\u8ba9\u4f60\u77e5\u9053 Agent \u5728\u8bfb\u53d6\u54ea\u4e9b\u4fe1\u606f',
-  historyTitle: '\u6700\u8fd1\u91c7\u7eb3',
-  historySubtitle: '\u672c\u5730\u8bb0\u4f4f\u4f60\u6700\u8fd1\u7eb3\u5165\u8ba1\u5212\u7684\u52a8\u4f5c',
-  historyEmptyTitle: '\u8fd8\u6ca1\u6709\u91c7\u7eb3\u8bb0\u5f55',
-  historyEmptySubtitle: '\u5148\u9009\u4e00\u6761\u52a8\u4f5c\u52a0\u5165\u4eca\u65e5\u8ba1\u5212',
-  adoptedToast: '\u5df2\u52a0\u5165\u4eca\u65e5\u8ba1\u5212'
+  evidenceSubtitle: '\u8ba9\u4f60\u770b\u5230 Agent \u5f53\u524d\u8bfb\u53d6\u4e86\u54ea\u4e9b\u4fe1\u606f',
+  startSuccess: '\u5df2\u8fdb\u5165\u6267\u884c\u72b6\u6001',
+  finishSuccess: '\u5df2\u8bb0\u5f55\u5b8c\u6210',
+  skipSuccess: '\u5df2\u8df3\u8fc7\u8fd9\u4e00\u6b65',
+  requestError: '\u64cd\u4f5c\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
+  loginHint: '\u8bf7\u5148\u767b\u5f55'
 };
 
 const QUICK_NOTES = [
   '\u4eca\u5929\u8d76\u8bfe',
-  '\u60f3\u5148\u505a\u6700\u7701\u529b\u7684',
-  '\u4eca\u5929\u60f3\u8865\u8db3\u6b65\u6570',
-  '\u60f3\u987a\u4fbf\u517c\u987e\u5065\u5eb7'
+  '\u5148\u505a\u6700\u7701\u529b\u7684',
+  '\u4eca\u5929\u60f3\u8865\u6b65\u6570',
+  '\u5e0c\u671b\u987a\u4fbf\u517c\u987e\u5065\u5eb7'
 ];
 
 function createEmptyPlan() {
   return {
+    sessionId: '',
+    sessionStatus: 'idle',
+    currentActionId: '',
     summary: {
       title: '\u4eca\u65e5\u884c\u52a8\u5de5\u4f5c\u53f0',
       reason: '\u6b63\u5728\u8bfb\u53d6\u4f60\u7684\u4efb\u52a1\u3001\u5065\u5eb7\u548c\u8fdb\u5ea6\u6570\u636e',
@@ -207,23 +217,40 @@ export default {
       userId: '',
       userNote: '',
       loading: false,
-      plan: createEmptyPlan(),
-      adoptedHistory: []
+      plan: createEmptyPlan()
     };
   },
   onLoad() {
     this.userId = uni.getStorageSync('username') || '';
-    this.loadHistory();
   },
   onShow() {
     this.userId = uni.getStorageSync('username') || this.userId;
-    this.loadHistory();
     this.fetchPlan('');
+  },
+  computed: {
+    preferenceEvidence() {
+      return Array.isArray(this.plan.evidence)
+        ? (this.plan.evidence.find(item => typeof item === 'string' && item.indexOf('\u5df2\u5e94\u7528\u504f\u597d') === 0) || '')
+        : '';
+    },
+    sessionStatusLabel() {
+      const status = this.plan.sessionStatus || 'idle';
+      if (status === 'in_progress') {
+        return '\u6267\u884c\u4e2d';
+      }
+      if (status === 'completed') {
+        return '\u5df2\u5b8c\u6210';
+      }
+      if (status === 'ready') {
+        return '\u5f85\u6267\u884c';
+      }
+      return '\u672a\u5f00\u59cb';
+    }
   },
   methods: {
     async fetchPlan(note) {
       if (!this.userId) {
-        uni.showToast({ title: '\u8bf7\u5148\u767b\u5f55', icon: 'none' });
+        uni.showToast({ title: COPY.loginHint, icon: 'none' });
         return;
       }
       this.loading = true;
@@ -234,7 +261,7 @@ export default {
           : await getAgentBrief(this.userId);
         this.plan = this.normalizePlan(result);
       } catch (error) {
-        uni.showToast({ title: '\u751f\u6210\u8ba1\u5212\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5', icon: 'none' });
+        uni.showToast({ title: COPY.requestError, icon: 'none' });
       } finally {
         this.loading = false;
       }
@@ -244,6 +271,9 @@ export default {
       if (!result || typeof result !== 'object') {
         return nextPlan;
       }
+      nextPlan.sessionId = result.sessionId || '';
+      nextPlan.sessionStatus = result.sessionStatus || 'idle';
+      nextPlan.currentActionId = result.currentActionId || '';
       if (result.summary && typeof result.summary === 'object') {
         nextPlan.summary = {
           ...nextPlan.summary,
@@ -278,60 +308,65 @@ export default {
       }
       uni.navigateTo({ url: action.actionPath });
     },
-    adoptAction(action) {
-      if (!action) {
+    async startAction(action) {
+      if (!action || !action.id || !this.plan.sessionId) {
         return;
       }
-      const history = this.readHistory();
-      const entry = {
-        id: `${action.id || action.taskCode || 'action'}-${Date.now()}`,
-        title: action.title || '',
-        estimatedCarbonSaving: Number(action.estimatedCarbonSaving || 0),
-        estimatedPoints: Number(action.estimatedPoints || 0),
-        adoptedAt: this.formatNow()
-      };
-      history.unshift(entry);
-      this.adoptedHistory = history.slice(0, 8);
-      uni.setStorageSync(this.historyKey(), JSON.stringify(this.adoptedHistory));
-      uni.showToast({ title: COPY.adoptedToast, icon: 'success' });
-      if (action.actionPath) {
-        setTimeout(() => {
-          this.openAction(action);
-        }, 180);
-      }
-    },
-    historyKey() {
-      return `agent_history_${this.userId || 'guest'}`;
-    },
-    readHistory() {
-      const raw = uni.getStorageSync(this.historyKey());
-      if (!raw) {
-        return [];
-      }
+      this.loading = true;
       try {
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        return Array.isArray(parsed) ? parsed : [];
+        const result = await startAgentAction(this.userId, this.plan.sessionId, action.id, '');
+        this.plan = this.normalizePlan(result);
+        uni.showToast({ title: COPY.startSuccess, icon: 'success' });
+        if (action.actionPath) {
+          setTimeout(() => {
+            this.openAction(action);
+          }, 160);
+        }
       } catch (error) {
-        return [];
+        uni.showToast({ title: COPY.requestError, icon: 'none' });
+      } finally {
+        this.loading = false;
       }
     },
-    loadHistory() {
-      this.adoptedHistory = this.readHistory();
+    async completeAction(action) {
+      if (!action || !action.id || !this.plan.sessionId) {
+        return;
+      }
+      this.loading = true;
+      try {
+        const result = await completeAgentAction(
+          this.userId,
+          this.plan.sessionId,
+          action.id,
+          '\u7528\u6237\u5728\u524d\u7aef\u786e\u8ba4\u5df2\u5b8c\u6210\u8be5\u6b65'
+        );
+        this.plan = this.normalizePlan(result);
+        uni.showToast({ title: COPY.finishSuccess, icon: 'success' });
+      } catch (error) {
+        uni.showToast({ title: COPY.requestError, icon: 'none' });
+      } finally {
+        this.loading = false;
+      }
     },
-    formatNow() {
-      const date = new Date();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hour = String(date.getHours()).padStart(2, '0');
-      const minute = String(date.getMinutes()).padStart(2, '0');
-      return `${month}-${day} ${hour}:${minute}`;
-    }
-  },
-  computed: {
-    preferenceEvidence() {
-      return Array.isArray(this.plan.evidence)
-        ? (this.plan.evidence.find(item => typeof item === 'string' && item.indexOf('\u5df2\u5e94\u7528\u504f\u597d') === 0) || '')
-        : '';
+    async skipAction(action) {
+      if (!action || !action.id || !this.plan.sessionId) {
+        return;
+      }
+      this.loading = true;
+      try {
+        const result = await skipAgentAction(
+          this.userId,
+          this.plan.sessionId,
+          action.id,
+          '\u7528\u6237\u5728\u524d\u7aef\u9009\u62e9\u8df3\u8fc7\u8be5\u6b65'
+        );
+        this.plan = this.normalizePlan(result);
+        uni.showToast({ title: COPY.skipSuccess, icon: 'success' });
+      } catch (error) {
+        uni.showToast({ title: COPY.requestError, icon: 'none' });
+      } finally {
+        this.loading = false;
+      }
     }
   }
 };
@@ -365,8 +400,7 @@ export default {
 .hero-card,
 .composer-card,
 .actions-card,
-.evidence-card,
-.history-card {
+.evidence-card {
   margin-bottom: 24rpx;
   padding: 28rpx;
   border-radius: 34rpx;
@@ -519,6 +553,7 @@ export default {
 .composer-actions,
 .action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 16rpx;
   margin-top: 20rpx;
 }
@@ -526,6 +561,7 @@ export default {
 .ghost-btn,
 .primary-btn {
   flex: 1;
+  min-width: 200rpx;
   height: 82rpx;
   border-radius: 999rpx;
   display: flex;
@@ -536,6 +572,11 @@ export default {
 .ghost-btn {
   background: rgba(65, 131, 83, 0.08);
   border: 1rpx solid rgba(65, 131, 83, 0.16);
+}
+
+.ghost-btn.danger {
+  background: rgba(222, 92, 92, 0.08);
+  border-color: rgba(222, 92, 92, 0.16);
 }
 
 .primary-btn {
@@ -558,6 +599,10 @@ export default {
   font-weight: 600;
 }
 
+.ghost-btn-text.danger-text {
+  color: #c65a5a;
+}
+
 .primary-btn-text {
   font-size: 24rpx;
   color: #ffffff;
@@ -565,45 +610,73 @@ export default {
 }
 
 .action-list,
-.evidence-list,
-.history-list {
+.evidence-list {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 
-.action-item,
-.history-item {
+.action-item {
   padding: 22rpx;
   border-radius: 26rpx;
   background: #f8fbf8;
   border: 1rpx solid rgba(59, 121, 79, 0.08);
 }
 
-.action-top,
-.history-item {
+.action-top {
   display: flex;
   justify-content: space-between;
   gap: 18rpx;
 }
 
-.action-copy,
-.history-copy {
+.action-step {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #3d8c5b, #2c6f46);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.action-step-text {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.action-copy {
   flex: 1;
 }
 
-.action-tag {
+.action-headline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.action-tag,
+.action-status {
   display: inline-flex;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(61, 140, 91, 0.12);
-  color: #35674a;
   font-size: 20rpx;
   font-weight: 700;
 }
 
-.action-title,
-.history-title {
+.action-tag {
+  background: rgba(61, 140, 91, 0.12);
+  color: #35674a;
+}
+
+.action-status {
+  background: rgba(44, 111, 70, 0.08);
+  color: #4c6c58;
+}
+
+.action-title {
   display: block;
   margin-top: 12rpx;
   font-size: 28rpx;
@@ -611,8 +684,7 @@ export default {
   color: #21462f;
 }
 
-.action-reason,
-.history-time {
+.action-reason {
   display: block;
   margin-top: 10rpx;
   font-size: 22rpx;
@@ -639,8 +711,7 @@ export default {
   color: #a8804a;
 }
 
-.action-meta,
-.history-meta {
+.action-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 10rpx;
@@ -653,10 +724,39 @@ export default {
   background: rgba(61, 140, 91, 0.08);
 }
 
-.meta-pill-text,
-.history-meta-text {
+.meta-pill-text {
   font-size: 20rpx;
   color: #3f6e50;
+}
+
+.action-hint,
+.result-box {
+  margin-top: 16rpx;
+  padding: 18rpx;
+  border-radius: 20rpx;
+}
+
+.action-hint {
+  background: rgba(61, 140, 91, 0.06);
+}
+
+.result-box {
+  background: rgba(214, 171, 92, 0.08);
+}
+
+.action-hint-text,
+.result-text {
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: #4d6f59;
+}
+
+.result-label {
+  display: block;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #9b7a35;
+  margin-bottom: 8rpx;
 }
 
 .evidence-item {

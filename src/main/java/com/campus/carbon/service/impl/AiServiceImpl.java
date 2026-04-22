@@ -2,6 +2,7 @@ package com.campus.carbon.service.impl;
 
 import com.campus.carbon.model.AiSuggest;
 import com.campus.carbon.model.HealthData;
+import com.campus.carbon.model.dto.AgentActionRequest;
 import com.campus.carbon.model.dto.AgentActionVO;
 import com.campus.carbon.model.dto.AgentBriefVO;
 import com.campus.carbon.model.dto.AgentSummaryVO;
@@ -30,9 +31,14 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AiServiceImpl implements AiService {
@@ -70,6 +76,11 @@ public class AiServiceImpl implements AiService {
             "\u0041\u0049\u5065\u5eb7\u5efa\u8bae\u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002";
     private static final String HEALTH_SERVICE_ERROR =
             "\u83b7\u53d6\u0041\u0049\u5065\u5eb7\u5efa\u8bae\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u540e\u91cd\u8bd5\u3002";
+    private static final String AGENT_STATUS_PENDING = "pending";
+    private static final String AGENT_STATUS_IN_PROGRESS = "in_progress";
+    private static final String AGENT_STATUS_COMPLETED = "completed";
+    private static final String AGENT_STATUS_SKIPPED = "skipped";
+    private static final int MAX_AGENT_ACTIONS = 4;
 
     @Value("${carbon.ai.api-key}")
     private String apiKey;
@@ -85,6 +96,7 @@ public class AiServiceImpl implements AiService {
 
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
+    private final Map<String, AgentRuntimeSession> agentSessions = new ConcurrentHashMap<>();
 
     @Override
     public AiSuggest getCarbonSuggestion(String carbonFootprint) {
@@ -129,23 +141,500 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public AgentBriefVO getAgentBrief(String userId, String userNote) {
+        return buildAgentBrief(userId, userNote, true);
+    }
+
+    @Override
+    public AgentBriefVO startAgentAction(AgentActionRequest request) {
+        return changeAgentActionState(request, AGENT_STATUS_IN_PROGRESS);
+    }
+
+    @Override
+    public AgentBriefVO completeAgentAction(AgentActionRequest request) {
+        return changeAgentActionState(request, AGENT_STATUS_COMPLETED);
+    }
+
+    @Override
+    public AgentBriefVO skipAgentAction(AgentActionRequest request) {
+        return changeAgentActionState(request, AGENT_STATUS_SKIPPED);
+    }
+
+    private AgentBriefVO buildAgentBrief(String userId, String userNote, boolean allowRefresh) {
         AgentBriefVO brief = new AgentBriefVO();
-        if (userId == null || userId.trim().isEmpty()) {
+        String normalizedUserId = safeText(userId);
+        if (normalizedUserId.isEmpty()) {
             brief.setSummary(createEmptySummary());
             brief.getEvidence().add("\u8bf7\u5148\u767b\u5f55\u540e\u518d\u751f\u6210\u4eca\u65e5\u884c\u52a8\u8ba1\u5212");
+            brief.setSessionStatus("idle");
             return brief;
         }
 
-        Map<String, Object> taskBoard = taskService.getTaskBoard(userId.trim());
-        List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
-        List<HealthData> healthDataList = healthDataService.getByUserId(userId.trim());
-        AgentPreferenceProfile preferences = parsePreferences(userNote);
-        List<AgentActionVO> actions = buildActionPlan(allTasks, healthDataList, preferences);
+        String normalizedNote = safeText(userNote);
+        AgentRuntimeSession session = getOrCreateSession(normalizedUserId, normalizedNote);
+        if (allowRefresh && !normalizedNote.isEmpty() && !normalizedNote.equals(session.userNote)) {
+            session.userNote = normalizedNote;
+            session.actions = new ArrayList<>();
+        }
+        boolean rebuilt = false;
+        if (allowRefresh && session.actions.isEmpty()) {
+            rebuildSessionPlan(session, true);
+            rebuilt = true;
+        }
+        return createAgentBrief(session, !rebuilt);
+    }
 
+    private AgentBriefVO changeAgentActionState(AgentActionRequest request, String targetStatus) {
+        String userId = request == null ? "" : safeText(request.getUserId());
+        if (userId.isEmpty()) {
+            AgentBriefVO brief = new AgentBriefVO();
+            brief.setSummary(createEmptySummary());
+            brief.getEvidence().add("\u8bf7\u5148\u767b\u5f55\u540e\u518d\u6267\u884c Agent \u52a8\u4f5c");
+            brief.setSessionStatus("idle");
+            return brief;
+        }
+
+        AgentRuntimeSession session = agentSessions.get(userId);
+        if (session == null) {
+            return buildAgentBrief(userId, "", true);
+        }
+
+        if (!safeText(request.getSessionId()).isEmpty() && !Objects.equals(session.sessionId, safeText(request.getSessionId()))) {
+            return createAgentBrief(session, false);
+        }
+
+        AgentActionVO action = findAction(session.actions, safeText(request.getActionId()));
+        if (action == null) {
+            return createAgentBrief(session, false);
+        }
+
+        String resultNote = safeText(request.getResultNote());
+        if (AGENT_STATUS_IN_PROGRESS.equals(targetStatus)) {
+            if (AGENT_STATUS_COMPLETED.equals(action.getStatus()) || AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
+                return createAgentBrief(session, false);
+            }
+            clearInProgressState(session.actions, action.getId());
+            action.setStatus(AGENT_STATUS_IN_PROGRESS);
+            action.setResultNote("\u5df2\u8fdb\u5165\u6267\u884c\u72b6\u6001");
+            session.currentActionId = action.getId();
+            session.sessionStatus = AGENT_STATUS_IN_PROGRESS;
+            session.updatedAt = LocalDateTime.now(CHINA_ZONE);
+            return createAgentBrief(session, false);
+        }
+
+        if (AGENT_STATUS_COMPLETED.equals(action.getStatus()) || AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
+            return createAgentBrief(session, false);
+        }
+
+        action.setStatus(targetStatus);
+        action.setResultNote(resultNote.isEmpty() ? defaultResultNote(targetStatus) : resultNote);
+        session.currentActionId = "";
+        session.updatedAt = LocalDateTime.now(CHINA_ZONE);
+        rebuildSessionPlan(session, false);
+        return createAgentBrief(session, true);
+    }
+
+    private AgentRuntimeSession getOrCreateSession(String userId, String userNote) {
+        AgentRuntimeSession current = agentSessions.get(userId);
+        if (current == null) {
+            current = new AgentRuntimeSession();
+            current.userId = userId;
+            current.sessionId = UUID.randomUUID().toString().replace("-", "");
+            current.sessionStatus = "ready";
+            current.createdAt = LocalDateTime.now(CHINA_ZONE);
+            current.updatedAt = current.createdAt;
+            current.userNote = userNote;
+            agentSessions.put(userId, current);
+            return current;
+        }
+        if (!userNote.isEmpty() && !userNote.equals(current.userNote)) {
+            current.userNote = userNote;
+            current.sessionId = UUID.randomUUID().toString().replace("-", "");
+            current.sessionStatus = "ready";
+            current.currentActionId = "";
+            current.actions = new ArrayList<>();
+            current.createdAt = LocalDateTime.now(CHINA_ZONE);
+            current.updatedAt = current.createdAt;
+        }
+        return current;
+    }
+
+    private void rebuildSessionPlan(AgentRuntimeSession session, boolean resetExisting) {
+        Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId);
+        List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
+        List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
+        AgentPreferenceProfile preferences = parsePreferences(session.userNote);
+        List<AgentActionVO> baseActions = buildActionPlan(allTasks, healthDataList, preferences);
+        syncTaskCompletionState(session.actions, allTasks);
+
+        if (resetExisting || session.actions == null || session.actions.isEmpty()) {
+            session.actions = initializeSessionActions(baseActions);
+        } else {
+            session.actions = mergeSessionActions(session.actions, baseActions);
+        }
+
+        session.sessionStatus = resolveSessionStatus(session.actions);
+        session.currentActionId = findCurrentActionId(session.actions);
+        session.updatedAt = LocalDateTime.now(CHINA_ZONE);
+    }
+
+    private AgentBriefVO createAgentBrief(AgentRuntimeSession session, boolean allowRefresh) {
+        if (session == null) {
+            AgentBriefVO brief = new AgentBriefVO();
+            brief.setSummary(createEmptySummary());
+            brief.setSessionStatus("idle");
+            return brief;
+        }
+
+        if (allowRefresh) {
+            rebuildSessionPlan(session, false);
+        } else {
+            session.sessionStatus = resolveSessionStatus(session.actions);
+            session.currentActionId = findCurrentActionId(session.actions);
+        }
+
+        Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId);
+        List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
+        AgentPreferenceProfile preferences = parsePreferences(session.userNote);
+        List<AgentActionVO> actions = prepareActionsForView(session.actions);
+        AgentSummaryVO summary = buildSummary(taskBoard, healthDataList, preferences, actions);
+        decorateSummary(summary, session, actions);
+
+        AgentBriefVO brief = new AgentBriefVO();
+        brief.setSessionId(session.sessionId);
+        brief.setSessionStatus(session.sessionStatus);
+        brief.setCurrentActionId(session.currentActionId);
+        brief.setSummary(summary);
         brief.setActions(actions);
-        brief.setSummary(buildSummary(taskBoard, healthDataList, preferences, actions));
-        brief.setEvidence(buildEvidence(taskBoard, healthDataList, preferences, actions));
+        brief.setEvidence(buildAgentEvidence(taskBoard, healthDataList, preferences, actions, session));
         return brief;
+    }
+
+    private List<AgentActionVO> initializeSessionActions(List<AgentActionVO> baseActions) {
+        List<AgentActionVO> initialized = new ArrayList<>();
+        int order = 1;
+        for (AgentActionVO action : baseActions) {
+            AgentActionVO copy = copyAction(action);
+            copy.setStepOrder(order++);
+            copy.setStatus(AGENT_STATUS_PENDING);
+            copy.setResultNote("");
+            initialized.add(copy);
+            if (initialized.size() >= MAX_AGENT_ACTIONS) {
+                break;
+            }
+        }
+        return initialized;
+    }
+
+    private List<AgentActionVO> mergeSessionActions(List<AgentActionVO> existingActions, List<AgentActionVO> baseActions) {
+        List<AgentActionVO> merged = new ArrayList<>();
+        Set<String> usedIds = new LinkedHashSet<>();
+
+        for (AgentActionVO existing : existingActions) {
+            if (existing == null) {
+                continue;
+            }
+            if (AGENT_STATUS_COMPLETED.equals(existing.getStatus())
+                    || AGENT_STATUS_SKIPPED.equals(existing.getStatus())
+                    || AGENT_STATUS_IN_PROGRESS.equals(existing.getStatus())) {
+                AgentActionVO copy = copyAction(existing);
+                merged.add(copy);
+                usedIds.add(copy.getId());
+            }
+        }
+
+        for (AgentActionVO candidate : baseActions) {
+            if (candidate == null || usedIds.contains(candidate.getId())) {
+                continue;
+            }
+            AgentActionVO copy = copyAction(candidate);
+            copy.setStatus(AGENT_STATUS_PENDING);
+            copy.setResultNote("");
+            merged.add(copy);
+            usedIds.add(copy.getId());
+            if (merged.size() >= MAX_AGENT_ACTIONS) {
+                break;
+            }
+        }
+
+        if (merged.isEmpty()) {
+            return initializeSessionActions(baseActions);
+        }
+
+        reindexActions(merged);
+        return merged;
+    }
+
+    private List<AgentActionVO> prepareActionsForView(List<AgentActionVO> source) {
+        List<AgentActionVO> actions = new ArrayList<>();
+        if (source == null || source.isEmpty()) {
+            return actions;
+        }
+        boolean hasInProgress = false;
+        for (AgentActionVO action : source) {
+            if (action != null && AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+                hasInProgress = true;
+                break;
+            }
+        }
+
+        boolean startAssigned = false;
+        for (AgentActionVO action : source) {
+            if (action == null) {
+                continue;
+            }
+            AgentActionVO copy = copyAction(action);
+            copy.setStatusLabel(resolveActionStatusLabel(copy.getStatus()));
+            copy.setExecutionHint(resolveExecutionHint(copy));
+            boolean pending = AGENT_STATUS_PENDING.equals(copy.getStatus());
+            boolean inProgress = AGENT_STATUS_IN_PROGRESS.equals(copy.getStatus());
+            boolean canStart = pending && !hasInProgress && !startAssigned;
+            copy.setCanStart(canStart);
+            copy.setCanFinish(inProgress);
+            copy.setCanSkip(inProgress || canStart);
+            if (canStart) {
+                startAssigned = true;
+            }
+            actions.add(copy);
+        }
+        return actions;
+    }
+
+    private void decorateSummary(AgentSummaryVO summary, AgentRuntimeSession session, List<AgentActionVO> actions) {
+        int total = actions.size();
+        int completed = 0;
+        int activeCount = 0;
+        AgentActionVO currentAction = null;
+        int pendingCarbon = 0;
+        int pendingPoints = 0;
+
+        for (AgentActionVO action : actions) {
+            if (action == null) {
+                continue;
+            }
+            if (AGENT_STATUS_COMPLETED.equals(action.getStatus())) {
+                completed++;
+            } else if (AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+                currentAction = action;
+                activeCount++;
+            }
+
+            if (!AGENT_STATUS_COMPLETED.equals(action.getStatus()) && !AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
+                pendingCarbon += action.getEstimatedCarbonSaving() == null ? 0 : action.getEstimatedCarbonSaving();
+                pendingPoints += action.getEstimatedPoints() == null ? 0 : action.getEstimatedPoints();
+            }
+        }
+
+        summary.setCompletionLabel(completed + "/" + total);
+        summary.setEstimatedCarbonSaving(pendingCarbon);
+        summary.setEstimatedPoints(pendingPoints);
+        summary.setUpdatedAt(session.updatedAt == null ? LocalDateTime.now(CHINA_ZONE).format(TIME_FORMATTER)
+                : session.updatedAt.format(TIME_FORMATTER));
+
+        if (currentAction != null) {
+            summary.setTitle("\u6b63\u5728\u6267\u884c\uff1a" + currentAction.getTitle());
+            summary.setStatus(AGENT_STATUS_IN_PROGRESS);
+            summary.setReason("\u5148\u5b8c\u6210\u5f53\u524d\u8fd9\u4e00\u6b65\uff0cAgent \u4f1a\u5728\u4f60\u56de\u6765\u540e\u7acb\u5373\u91cd\u6392\u540e\u7eed\u52a8\u4f5c\u3002");
+            summary.setFocusLabel("\u6267\u884c\u4e2d");
+            return;
+        }
+
+        if (total > 0 && completed == total) {
+            summary.setTitle("\u4eca\u65e5 Agent \u95ed\u73af\u5df2\u5b8c\u6210");
+            summary.setStatus(AGENT_STATUS_COMPLETED);
+            summary.setReason("\u672c\u8f6e\u52a8\u4f5c\u5df2\u5168\u90e8\u5904\u7406\uff0c\u53ef\u4ee5\u518d\u8865\u5145\u65b0\u60c5\u51b5\u8ba9 Agent \u751f\u6210\u4e0b\u4e00\u8f6e\u8ba1\u5212\u3002");
+            summary.setFocusLabel("\u5df2\u6536\u5b98");
+            return;
+        }
+
+        AgentActionVO nextAction = findNextPendingAction(actions);
+        if (nextAction != null) {
+            summary.setTitle("\u4e0b\u4e00\u6b65\uff1a" + nextAction.getTitle());
+            summary.setStatus("ready");
+            summary.setReason("\u5148\u6267\u884c\u7b2c " + nextAction.getStepOrder() + " \u6b65\uff0c\u6267\u884c\u540e Agent \u4f1a\u7ed3\u5408\u6700\u65b0\u72b6\u6001\u91cd\u65b0\u6392\u5217\u540e\u7eed\u8ba1\u5212\u3002");
+            summary.setFocusLabel("\u5f85\u6267\u884c");
+        }
+    }
+
+    private List<String> buildAgentEvidence(Map<String, Object> taskBoard, List<HealthData> healthDataList,
+                                            AgentPreferenceProfile preferences, List<AgentActionVO> actions,
+                                            AgentRuntimeSession session) {
+        List<String> evidence = buildEvidence(taskBoard, healthDataList, preferences, actions);
+        int completed = 0;
+        int skipped = 0;
+        int inProgress = 0;
+        for (AgentActionVO action : actions) {
+            if (action == null) {
+                continue;
+            }
+            if (AGENT_STATUS_COMPLETED.equals(action.getStatus())) {
+                completed++;
+            } else if (AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
+                skipped++;
+            } else if (AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+                inProgress++;
+            }
+        }
+        evidence.add("\u4f1a\u8bdd\u7f16\u53f7\uff1a" + session.sessionId);
+        evidence.add("\u52a8\u4f5c\u72b6\u6001\uff1a\u5b8c\u6210 " + completed + "\u9879\uff0c\u6267\u884c\u4e2d " + inProgress + "\u9879\uff0c\u8df3\u8fc7 " + skipped + "\u9879");
+        if (!safeText(session.userNote).isEmpty()) {
+            evidence.add("\u7528\u6237\u8865\u5145\uff1a" + session.userNote);
+        }
+        return evidence;
+    }
+
+    private void syncTaskCompletionState(List<AgentActionVO> actions, List<TaskBoardItemVO> allTasks) {
+        if (actions == null || actions.isEmpty() || allTasks == null || allTasks.isEmpty()) {
+            return;
+        }
+        Map<String, Boolean> completionMap = new LinkedHashMap<>();
+        for (TaskBoardItemVO item : allTasks) {
+            completionMap.put(item.getTaskCode(), Boolean.TRUE.equals(item.getCompleted()));
+        }
+        for (AgentActionVO action : actions) {
+            if (action == null || safeText(action.getTaskCode()).isEmpty()) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(completionMap.get(action.getTaskCode()))
+                    && AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+                action.setStatus(AGENT_STATUS_COMPLETED);
+                if (safeText(action.getResultNote()).isEmpty()) {
+                    action.setResultNote("\u5df2\u6839\u636e\u6700\u65b0\u4efb\u52a1\u8fdb\u5ea6\u81ea\u52a8\u5b8c\u6210");
+                }
+            }
+        }
+    }
+
+    private String resolveSessionStatus(List<AgentActionVO> actions) {
+        boolean hasInProgress = false;
+        boolean hasPending = false;
+        for (AgentActionVO action : actions) {
+            if (action == null) {
+                continue;
+            }
+            if (AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+                hasInProgress = true;
+            } else if (AGENT_STATUS_PENDING.equals(action.getStatus())) {
+                hasPending = true;
+            }
+        }
+        if (hasInProgress) {
+            return AGENT_STATUS_IN_PROGRESS;
+        }
+        if (hasPending) {
+            return "ready";
+        }
+        return AGENT_STATUS_COMPLETED;
+    }
+
+    private String findCurrentActionId(List<AgentActionVO> actions) {
+        for (AgentActionVO action : actions) {
+            if (action != null && AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+                return action.getId();
+            }
+        }
+        return "";
+    }
+
+    private void clearInProgressState(List<AgentActionVO> actions, String exceptActionId) {
+        for (AgentActionVO action : actions) {
+            if (action == null) {
+                continue;
+            }
+            if (AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())
+                    && !Objects.equals(action.getId(), exceptActionId)) {
+                action.setStatus(AGENT_STATUS_PENDING);
+                if ("\u5df2\u8fdb\u5165\u6267\u884c\u72b6\u6001".equals(action.getResultNote())) {
+                    action.setResultNote("");
+                }
+            }
+        }
+    }
+
+    private AgentActionVO findAction(List<AgentActionVO> actions, String actionId) {
+        for (AgentActionVO action : actions) {
+            if (action != null && Objects.equals(action.getId(), actionId)) {
+                return action;
+            }
+        }
+        return null;
+    }
+
+    private AgentActionVO findNextPendingAction(List<AgentActionVO> actions) {
+        for (AgentActionVO action : actions) {
+            if (action != null && AGENT_STATUS_PENDING.equals(action.getStatus())) {
+                return action;
+            }
+        }
+        return null;
+    }
+
+    private AgentActionVO copyAction(AgentActionVO source) {
+        AgentActionVO target = new AgentActionVO();
+        target.setId(source.getId());
+        target.setTitle(source.getTitle());
+        target.setReason(source.getReason());
+        target.setTaskCode(source.getTaskCode());
+        target.setPriorityTag(source.getPriorityTag());
+        target.setDurationMinutes(source.getDurationMinutes());
+        target.setEstimatedCarbonSaving(source.getEstimatedCarbonSaving());
+        target.setEstimatedPoints(source.getEstimatedPoints());
+        target.setActionText(source.getActionText());
+        target.setActionPath(source.getActionPath());
+        target.setActionType(source.getActionType());
+        target.setStepOrder(source.getStepOrder());
+        target.setStatus(source.getStatus());
+        target.setStatusLabel(source.getStatusLabel());
+        target.setExecutionHint(source.getExecutionHint());
+        target.setResultNote(source.getResultNote());
+        target.setCanStart(source.getCanStart());
+        target.setCanFinish(source.getCanFinish());
+        target.setCanSkip(source.getCanSkip());
+        return target;
+    }
+
+    private void reindexActions(List<AgentActionVO> actions) {
+        int order = 1;
+        for (AgentActionVO action : actions) {
+            if (action != null) {
+                action.setStepOrder(order++);
+            }
+        }
+    }
+
+    private String resolveActionStatusLabel(String status) {
+        if (AGENT_STATUS_IN_PROGRESS.equals(status)) {
+            return "\u6267\u884c\u4e2d";
+        }
+        if (AGENT_STATUS_COMPLETED.equals(status)) {
+            return "\u5df2\u5b8c\u6210";
+        }
+        if (AGENT_STATUS_SKIPPED.equals(status)) {
+            return "\u5df2\u8df3\u8fc7";
+        }
+        return "\u5f85\u6267\u884c";
+    }
+
+    private String resolveExecutionHint(AgentActionVO action) {
+        if (AGENT_STATUS_COMPLETED.equals(action.getStatus())) {
+            return safeText(action.getResultNote()).isEmpty() ? "\u8fd9\u4e00\u6b65\u5df2\u8bb0\u5f55\u5b8c\u6210" : action.getResultNote();
+        }
+        if (AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
+            return safeText(action.getResultNote()).isEmpty() ? "\u8fd9\u4e00\u6b65\u5df2\u8df3\u8fc7\uff0cAgent \u4f1a\u4fdd\u7559\u540e\u7eed\u8c03\u6574\u7a7a\u95f4" : action.getResultNote();
+        }
+        if (AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+            return "\u5148\u53bb\u5b8c\u6210\u9875\u9762\u64cd\u4f5c\uff0c\u56de\u6765\u540e\u70b9\u51fb\u201c\u5df2\u5b8c\u6210\u201d";
+        }
+        return "\u5efa\u8bae\u6309\u987a\u5e8f\u6267\u884c\uff0c\u8fd9\u6837 Agent \u80fd\u66f4\u51c6\u786e\u5730\u8ffd\u8e2a\u8fdb\u5ea6";
+    }
+
+    private String defaultResultNote(String status) {
+        if (AGENT_STATUS_COMPLETED.equals(status)) {
+            return "\u7528\u6237\u5df2\u786e\u8ba4\u5b8c\u6210\u8be5\u6b65";
+        }
+        if (AGENT_STATUS_SKIPPED.equals(status)) {
+            return "\u7528\u6237\u4e3b\u52a8\u8df3\u8fc7\u8be5\u6b65";
+        }
+        return "";
     }
 
     private ArrayNode createMessages(String systemPrompt, String userPrompt) {
@@ -788,6 +1277,17 @@ public class AiServiceImpl implements AiService {
             this.action = action;
             this.score = score;
         }
+    }
+
+    private static class AgentRuntimeSession {
+        private String sessionId;
+        private String userId;
+        private String userNote = "";
+        private String sessionStatus = "ready";
+        private String currentActionId = "";
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+        private List<AgentActionVO> actions = new ArrayList<>();
     }
 
     private static class AgentPreferenceProfile {

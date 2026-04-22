@@ -12381,7 +12381,7 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.getAgentPlan = exports.getAgentBrief = exports.getActivityHub = exports.exchangeProduct = exports.deleteHealthData = void 0;
+exports.startAgentAction = exports.skipAgentAction = exports.saveStepCount = exports.saveSportRecord = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.getAgentPlan = exports.getAgentBrief = exports.getActivityHub = exports.exchangeProduct = exports.deleteHealthData = exports.completeAgentAction = void 0;
 var baseUrl = 'http://localhost:8080/api';
 var request = function request(url) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -12446,6 +12446,45 @@ var getAgentPlan = function getAgentPlan(userId) {
   });
 };
 exports.getAgentPlan = getAgentPlan;
+var startAgentAction = function startAgentAction(userId, sessionId, actionId) {
+  var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  return request('/ai/agent-action/start', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      sessionId: sessionId,
+      actionId: actionId,
+      resultNote: resultNote
+    }
+  });
+};
+exports.startAgentAction = startAgentAction;
+var completeAgentAction = function completeAgentAction(userId, sessionId, actionId) {
+  var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  return request('/ai/agent-action/complete', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      sessionId: sessionId,
+      actionId: actionId,
+      resultNote: resultNote
+    }
+  });
+};
+exports.completeAgentAction = completeAgentAction;
+var skipAgentAction = function skipAgentAction(userId, sessionId, actionId) {
+  var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  return request('/ai/agent-action/skip', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      sessionId: sessionId,
+      actionId: actionId,
+      resultNote: resultNote
+    }
+  });
+};
+exports.skipAgentAction = skipAgentAction;
 var getStepCount = function getStepCount(studentId, date) {
   return request("/step/count?studentId=".concat(studentId, "&date=").concat(date));
 };

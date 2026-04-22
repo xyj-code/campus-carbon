@@ -12,6 +12,14 @@ public class AgentActionVO {
     private String actionText;
     private String actionPath;
     private String actionType;
+    private Integer stepOrder;
+    private String status;
+    private String statusLabel;
+    private String executionHint;
+    private String resultNote;
+    private Boolean canStart;
+    private Boolean canFinish;
+    private Boolean canSkip;
 
     public String getId() {
         return id;
@@ -99,5 +107,69 @@ public class AgentActionVO {
 
     public void setActionType(String actionType) {
         this.actionType = actionType;
+    }
+
+    public Integer getStepOrder() {
+        return stepOrder;
+    }
+
+    public void setStepOrder(Integer stepOrder) {
+        this.stepOrder = stepOrder;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatusLabel() {
+        return statusLabel;
+    }
+
+    public void setStatusLabel(String statusLabel) {
+        this.statusLabel = statusLabel;
+    }
+
+    public String getExecutionHint() {
+        return executionHint;
+    }
+
+    public void setExecutionHint(String executionHint) {
+        this.executionHint = executionHint;
+    }
+
+    public String getResultNote() {
+        return resultNote;
+    }
+
+    public void setResultNote(String resultNote) {
+        this.resultNote = resultNote;
+    }
+
+    public Boolean getCanStart() {
+        return canStart;
+    }
+
+    public void setCanStart(Boolean canStart) {
+        this.canStart = canStart;
+    }
+
+    public Boolean getCanFinish() {
+        return canFinish;
+    }
+
+    public void setCanFinish(Boolean canFinish) {
+        this.canFinish = canFinish;
+    }
+
+    public Boolean getCanSkip() {
+        return canSkip;
+    }
+
+    public void setCanSkip(Boolean canSkip) {
+        this.canSkip = canSkip;
     }
 }
