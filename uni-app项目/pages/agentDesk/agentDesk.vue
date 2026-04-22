@@ -30,6 +30,35 @@
         </view>
       </view>
 
+      <view class="progress-card">
+        <view class="progress-head">
+          <view class="progress-copy">
+            <text class="progress-title">{{ copy.progressTitle }}</text>
+            <text class="progress-subtitle">{{ progressSubtitle }}</text>
+          </view>
+          <view class="progress-ring">
+            <text class="progress-ring-text">{{ progressPercent }}%</text>
+          </view>
+        </view>
+        <view class="progress-track">
+          <view class="progress-fill" :style="{ width: progressPercent + '%' }"></view>
+        </view>
+        <view class="progress-stats">
+          <view class="progress-stat">
+            <text class="progress-stat-value">{{ completedCount }}</text>
+            <text class="progress-stat-label">{{ copy.progressDone }}</text>
+          </view>
+          <view class="progress-stat active">
+            <text class="progress-stat-value">{{ inProgressCount }}</text>
+            <text class="progress-stat-label">{{ copy.progressActive }}</text>
+          </view>
+          <view class="progress-stat">
+            <text class="progress-stat-value">{{ pendingCount }}</text>
+            <text class="progress-stat-label">{{ copy.progressPending }}</text>
+          </view>
+        </view>
+      </view>
+
       <view class="composer-card">
         <view class="section-head">
           <text class="section-title">{{ copy.composerTitle }}</text>
@@ -65,12 +94,22 @@
           <text class="section-title">{{ copy.actionsTitle }}</text>
           <text class="section-subtitle">{{ copy.actionsSubtitle }}</text>
         </view>
-        <view class="action-list" v-if="plan.actions.length">
+        <view class="timeline-list" v-if="plan.actions.length">
           <view class="action-item" v-for="action in plan.actions" :key="action.id">
-            <view class="action-top">
-              <view class="action-step">
-                <text class="action-step-text">0{{ action.stepOrder || 0 }}</text>
+            <view class="timeline-rail">
+              <view
+                class="timeline-node"
+                :class="{
+                  done: action.status === 'completed',
+                  active: action.status === 'in_progress',
+                  skipped: action.status === 'skipped'
+                }"
+              >
+                <text class="timeline-node-text">{{ action.stepOrder || 0 }}</text>
               </view>
+              <view class="timeline-line" v-if="(action.stepOrder || 0) < plan.actions.length"></view>
+            </view>
+            <view class="action-top">
               <view class="action-copy">
                 <view class="action-headline">
                   <text class="action-tag">{{ action.priorityTag || copy.defaultTag }}</text>
@@ -176,8 +215,14 @@ const COPY = {
   emptySubtitle: '\u53ef\u4ee5\u5148\u8865\u5145\u60c5\u51b5\uff0c\u518d\u8ba9 Agent \u91cd\u65b0\u751f\u6210\u4efb\u52a1',
   evidenceTitle: '\u51b3\u7b56\u4f9d\u636e',
   evidenceSubtitle: '\u8ba9\u4f60\u770b\u5230 Agent \u5f53\u524d\u8bfb\u53d6\u4e86\u54ea\u4e9b\u4fe1\u606f',
+  progressTitle: '\u6267\u884c\u8fdb\u5ea6',
+  progressDone: '\u5df2\u5b8c\u6210',
+  progressActive: '\u6267\u884c\u4e2d',
+  progressPending: '\u5f85\u5904\u7406',
   startSuccess: '\u5df2\u8fdb\u5165\u6267\u884c\u72b6\u6001',
   finishSuccess: '\u5df2\u8bb0\u5f55\u5b8c\u6210',
+  finishClaimed: '\u5df2\u6309\u7533\u62a5\u8bb0\u5f55\u5b8c\u6210',
+  finishRejected: '\u6682\u672a\u68c0\u6d4b\u5230\u5b8c\u6210\u7ed3\u679c',
   skipSuccess: '\u5df2\u8df3\u8fc7\u8fd9\u4e00\u6b65',
   requestError: '\u64cd\u4f5c\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
   loginHint: '\u8bf7\u5148\u767b\u5f55'
@@ -245,6 +290,36 @@ export default {
         return '\u5f85\u6267\u884c';
       }
       return '\u672a\u5f00\u59cb';
+    },
+    totalCount() {
+      return Array.isArray(this.plan.actions) ? this.plan.actions.length : 0;
+    },
+    completedCount() {
+      return this.plan.actions.filter(item => item && item.status === 'completed').length;
+    },
+    inProgressCount() {
+      return this.plan.actions.filter(item => item && item.status === 'in_progress').length;
+    },
+    pendingCount() {
+      return this.plan.actions.filter(item => item && item.status === 'pending').length;
+    },
+    progressPercent() {
+      if (!this.totalCount) {
+        return 0;
+      }
+      return Math.min(100, Math.round((this.completedCount / this.totalCount) * 100));
+    },
+    progressSubtitle() {
+      if (!this.totalCount) {
+        return '\u7b49\u5f85 Agent \u751f\u6210\u7b2c\u4e00\u8f6e\u52a8\u4f5c';
+      }
+      if (this.completedCount === this.totalCount) {
+        return '\u672c\u8f6e\u52a8\u4f5c\u5df2\u5168\u90e8\u5b8c\u6210';
+      }
+      if (this.inProgressCount > 0) {
+        return '\u5148\u5b8c\u6210\u5f53\u524d\u6b63\u5728\u6267\u884c\u7684\u8fd9\u4e00\u6b65';
+      }
+      return '\u6309\u65f6\u95f4\u8f74\u81ea\u4e0a\u800c\u4e0b\u6267\u884c\uff0c\u5b8c\u6210\u540e Agent \u4f1a\u91cd\u6392';
     }
   },
   methods: {
@@ -341,7 +416,13 @@ export default {
           '\u7528\u6237\u5728\u524d\u7aef\u786e\u8ba4\u5df2\u5b8c\u6210\u8be5\u6b65'
         );
         this.plan = this.normalizePlan(result);
-        uni.showToast({ title: COPY.finishSuccess, icon: 'success' });
+        const nextAction = this.findActionById(this.plan.actions, action.id);
+        if (nextAction && nextAction.status === 'completed') {
+          const toastTitle = this.isClaimAction(nextAction) ? COPY.finishClaimed : COPY.finishSuccess;
+          uni.showToast({ title: toastTitle, icon: 'success' });
+        } else {
+          uni.showToast({ title: COPY.finishRejected, icon: 'none' });
+        }
       } catch (error) {
         uni.showToast({ title: COPY.requestError, icon: 'none' });
       } finally {
@@ -367,6 +448,16 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    findActionById(actions, actionId) {
+      if (!Array.isArray(actions)) {
+        return null;
+      }
+      return actions.find(item => item && item.id === actionId) || null;
+    },
+    isClaimAction(action) {
+      const taskCode = action && action.taskCode ? action.taskCode : '';
+      return taskCode === 'MAINTAIN_WALK' || taskCode === 'MAINTAIN_INDOOR' || !taskCode;
     }
   }
 };
@@ -398,6 +489,7 @@ export default {
 }
 
 .hero-card,
+.progress-card,
 .composer-card,
 .actions-card,
 .evidence-card {
@@ -490,6 +582,101 @@ export default {
 .hero-time {
   font-size: 22rpx;
   color: rgba(255, 255, 255, 0.86);
+}
+
+.progress-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 251, 246, 0.94));
+}
+
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  align-items: center;
+}
+
+.progress-copy {
+  flex: 1;
+}
+
+.progress-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #21462f;
+}
+
+.progress-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #688474;
+}
+
+.progress-ring {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 55rpx;
+  background: radial-gradient(circle at center, #ffffff 0%, #ffffff 56%, rgba(61, 140, 91, 0.12) 57%, rgba(61, 140, 91, 0.18) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 6rpx rgba(61, 140, 91, 0.12);
+}
+
+.progress-ring-text {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #2e6b44;
+}
+
+.progress-track {
+  width: 100%;
+  height: 20rpx;
+  margin-top: 22rpx;
+  border-radius: 999rpx;
+  overflow: hidden;
+  background: rgba(61, 140, 91, 0.12);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #3d8c5b, #86c59a);
+  box-shadow: 0 8rpx 14rpx rgba(61, 140, 91, 0.18);
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.progress-stat {
+  padding: 18rpx 16rpx;
+  border-radius: 22rpx;
+  background: rgba(61, 140, 91, 0.06);
+  text-align: center;
+}
+
+.progress-stat.active {
+  background: rgba(213, 139, 40, 0.10);
+}
+
+.progress-stat-value {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #21462f;
+}
+
+.progress-stat-label {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #708879;
 }
 
 .section-head {
@@ -609,7 +796,7 @@ export default {
   font-weight: 700;
 }
 
-.action-list,
+.timeline-list,
 .evidence-list {
   display: flex;
   flex-direction: column;
@@ -617,33 +804,65 @@ export default {
 }
 
 .action-item {
-  padding: 22rpx;
+  position: relative;
+  padding: 22rpx 22rpx 22rpx 106rpx;
   border-radius: 26rpx;
   background: #f8fbf8;
   border: 1rpx solid rgba(59, 121, 79, 0.08);
+}
+
+.timeline-rail {
+  position: absolute;
+  left: 24rpx;
+  top: 22rpx;
+  bottom: 22rpx;
+  width: 56rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline-node {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, #d4e7d8, #bcd8c4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 2rpx rgba(61, 140, 91, 0.10);
+}
+
+.timeline-node.done {
+  background: linear-gradient(135deg, #3d8c5b, #2c6f46);
+}
+
+.timeline-node.active {
+  background: linear-gradient(135deg, #d58b28, #c67416);
+}
+
+.timeline-node.skipped {
+  background: linear-gradient(135deg, #d7dfe0, #b9c3c4);
+}
+
+.timeline-node-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.timeline-line {
+  flex: 1;
+  width: 4rpx;
+  margin-top: 10rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, rgba(61, 140, 91, 0.28), rgba(61, 140, 91, 0.08));
 }
 
 .action-top {
   display: flex;
   justify-content: space-between;
   gap: 18rpx;
-}
-
-.action-step {
-  width: 68rpx;
-  height: 68rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, #3d8c5b, #2c6f46);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.action-step-text {
-  font-size: 24rpx;
-  font-weight: 700;
-  color: #ffffff;
 }
 
 .action-copy {

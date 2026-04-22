@@ -103,13 +103,24 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   var g0 = _vm.plan.actions.length
-  var g1 = _vm.plan.evidence.length
+  var l0 = g0
+    ? _vm.__map(_vm.plan.actions, function (action, __i1__) {
+        var $orig = _vm.__get_orig(action)
+        var g1 = _vm.plan.actions.length
+        return {
+          $orig: $orig,
+          g1: g1,
+        }
+      })
+    : null
+  var g2 = _vm.plan.evidence.length
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
-        g1: g1,
+        l0: l0,
+        g2: g2,
       },
     }
   )
@@ -185,8 +196,14 @@ var COPY = {
   emptySubtitle: "\u53EF\u4EE5\u5148\u8865\u5145\u60C5\u51B5\uFF0C\u518D\u8BA9 Agent \u91CD\u65B0\u751F\u6210\u4EFB\u52A1",
   evidenceTitle: "\u51B3\u7B56\u4F9D\u636E",
   evidenceSubtitle: "\u8BA9\u4F60\u770B\u5230 Agent \u5F53\u524D\u8BFB\u53D6\u4E86\u54EA\u4E9B\u4FE1\u606F",
+  progressTitle: "\u6267\u884C\u8FDB\u5EA6",
+  progressDone: "\u5DF2\u5B8C\u6210",
+  progressActive: "\u6267\u884C\u4E2D",
+  progressPending: "\u5F85\u5904\u7406",
   startSuccess: "\u5DF2\u8FDB\u5165\u6267\u884C\u72B6\u6001",
   finishSuccess: "\u5DF2\u8BB0\u5F55\u5B8C\u6210",
+  finishClaimed: "\u5DF2\u6309\u7533\u62A5\u8BB0\u5F55\u5B8C\u6210",
+  finishRejected: "\u6682\u672A\u68C0\u6D4B\u5230\u5B8C\u6210\u7ED3\u679C",
   skipSuccess: "\u5DF2\u8DF3\u8FC7\u8FD9\u4E00\u6B65",
   requestError: "\u64CD\u4F5C\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5",
   loginHint: "\u8BF7\u5148\u767B\u5F55"
@@ -246,6 +263,42 @@ var _default = {
         return "\u5F85\u6267\u884C";
       }
       return "\u672A\u5F00\u59CB";
+    },
+    totalCount: function totalCount() {
+      return Array.isArray(this.plan.actions) ? this.plan.actions.length : 0;
+    },
+    completedCount: function completedCount() {
+      return this.plan.actions.filter(function (item) {
+        return item && item.status === 'completed';
+      }).length;
+    },
+    inProgressCount: function inProgressCount() {
+      return this.plan.actions.filter(function (item) {
+        return item && item.status === 'in_progress';
+      }).length;
+    },
+    pendingCount: function pendingCount() {
+      return this.plan.actions.filter(function (item) {
+        return item && item.status === 'pending';
+      }).length;
+    },
+    progressPercent: function progressPercent() {
+      if (!this.totalCount) {
+        return 0;
+      }
+      return Math.min(100, Math.round(this.completedCount / this.totalCount * 100));
+    },
+    progressSubtitle: function progressSubtitle() {
+      if (!this.totalCount) {
+        return "\u7B49\u5F85 Agent \u751F\u6210\u7B2C\u4E00\u8F6E\u52A8\u4F5C";
+      }
+      if (this.completedCount === this.totalCount) {
+        return "\u672C\u8F6E\u52A8\u4F5C\u5DF2\u5168\u90E8\u5B8C\u6210";
+      }
+      if (this.inProgressCount > 0) {
+        return "\u5148\u5B8C\u6210\u5F53\u524D\u6B63\u5728\u6267\u884C\u7684\u8FD9\u4E00\u6B65";
+      }
+      return "\u6309\u65F6\u95F4\u8F74\u81EA\u4E0A\u800C\u4E0B\u6267\u884C\uFF0C\u5B8C\u6210\u540E Agent \u4F1A\u91CD\u6392";
     }
   },
   methods: {
@@ -406,7 +459,7 @@ var _default = {
     completeAction: function completeAction(action) {
       var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var result;
+        var result, nextAction, toastTitle;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -424,29 +477,38 @@ var _default = {
               case 6:
                 result = _context3.sent;
                 _this3.plan = _this3.normalizePlan(result);
-                uni.showToast({
-                  title: COPY.finishSuccess,
-                  icon: 'success'
-                });
-                _context3.next = 14;
+                nextAction = _this3.findActionById(_this3.plan.actions, action.id);
+                if (nextAction && nextAction.status === 'completed') {
+                  toastTitle = _this3.isClaimAction(nextAction) ? COPY.finishClaimed : COPY.finishSuccess;
+                  uni.showToast({
+                    title: toastTitle,
+                    icon: 'success'
+                  });
+                } else {
+                  uni.showToast({
+                    title: COPY.finishRejected,
+                    icon: 'none'
+                  });
+                }
+                _context3.next = 15;
                 break;
-              case 11:
-                _context3.prev = 11;
+              case 12:
+                _context3.prev = 12;
                 _context3.t0 = _context3["catch"](3);
                 uni.showToast({
                   title: COPY.requestError,
                   icon: 'none'
                 });
-              case 14:
-                _context3.prev = 14;
+              case 15:
+                _context3.prev = 15;
                 _this3.loading = false;
-                return _context3.finish(14);
-              case 17:
+                return _context3.finish(15);
+              case 18:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, null, [[3, 11, 14, 17]]);
+        }, _callee3, null, [[3, 12, 15, 18]]);
       }))();
     },
     skipAction: function skipAction(action) {
@@ -494,6 +556,18 @@ var _default = {
           }
         }, _callee4, null, [[3, 11, 14, 17]]);
       }))();
+    },
+    findActionById: function findActionById(actions, actionId) {
+      if (!Array.isArray(actions)) {
+        return null;
+      }
+      return actions.find(function (item) {
+        return item && item.id === actionId;
+      }) || null;
+    },
+    isClaimAction: function isClaimAction(action) {
+      var taskCode = action && action.taskCode ? action.taskCode : '';
+      return taskCode === 'MAINTAIN_WALK' || taskCode === 'MAINTAIN_INDOOR' || !taskCode;
     }
   }
 };

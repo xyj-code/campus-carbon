@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -80,6 +81,9 @@ public class AiServiceImpl implements AiService {
     private static final String AGENT_STATUS_IN_PROGRESS = "in_progress";
     private static final String AGENT_STATUS_COMPLETED = "completed";
     private static final String AGENT_STATUS_SKIPPED = "skipped";
+    private static final String AGENT_COMPLETION_VERIFIED = "verified";
+    private static final String AGENT_COMPLETION_CLAIMED = "claimed";
+    private static final String AGENT_COMPLETION_REJECTED = "rejected";
     private static final int MAX_AGENT_ACTIONS = 4;
 
     @Value("${carbon.ai.api-key}")
@@ -222,6 +226,24 @@ public class AiServiceImpl implements AiService {
         }
 
         if (AGENT_STATUS_COMPLETED.equals(action.getStatus()) || AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
+            return createAgentBrief(session, false);
+        }
+
+        if (AGENT_STATUS_COMPLETED.equals(targetStatus)) {
+            CompletionDecision decision = verifyActionCompletion(session, action, resultNote);
+            action.setResultNote(decision.message);
+            session.updatedAt = LocalDateTime.now(CHINA_ZONE);
+
+            if (decision.accepted) {
+                action.setStatus(AGENT_STATUS_COMPLETED);
+                session.currentActionId = "";
+                rebuildSessionPlan(session, false);
+                return createAgentBrief(session, true);
+            }
+
+            action.setStatus(AGENT_STATUS_IN_PROGRESS);
+            session.currentActionId = action.getId();
+            session.sessionStatus = AGENT_STATUS_IN_PROGRESS;
             return createAgentBrief(session, false);
         }
 
@@ -495,11 +517,9 @@ public class AiServiceImpl implements AiService {
                 continue;
             }
             if (Boolean.TRUE.equals(completionMap.get(action.getTaskCode()))
-                    && AGENT_STATUS_IN_PROGRESS.equals(action.getStatus())) {
+                    && !AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
                 action.setStatus(AGENT_STATUS_COMPLETED);
-                if (safeText(action.getResultNote()).isEmpty()) {
-                    action.setResultNote("\u5df2\u6839\u636e\u6700\u65b0\u4efb\u52a1\u8fdb\u5ea6\u81ea\u52a8\u5b8c\u6210");
-                }
+                action.setResultNote("\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u5bf9\u5e94\u4efb\u52a1\u5df2\u8fbe\u6807\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7");
             }
         }
     }
@@ -566,6 +586,78 @@ public class AiServiceImpl implements AiService {
             }
         }
         return null;
+    }
+
+    private CompletionDecision verifyActionCompletion(AgentRuntimeSession session, AgentActionVO action, String resultNote) {
+        String taskCode = safeText(action.getTaskCode());
+        if (requiresClaimCompletion(taskCode)) {
+            return new CompletionDecision(
+                    true,
+                    AGENT_COMPLETION_CLAIMED,
+                    resultNote.isEmpty()
+                            ? "\u8fd9\u4e00\u6b65\u6682\u65f6\u65e0\u6cd5\u81ea\u52a8\u9a8c\u8bc1\uff0c\u5df2\u6309\u7528\u6237\u7533\u62a5\u8bb0\u4e3a\u5b8c\u6210"
+                            : resultNote
+            );
+        }
+
+        if ("HEALTH_PROFILE".equals(taskCode)) {
+            List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
+            boolean verified = healthDataList != null && !healthDataList.isEmpty();
+            if (verified) {
+                return new CompletionDecision(
+                        true,
+                        AGENT_COMPLETION_VERIFIED,
+                        "\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u5065\u5eb7\u6863\u6848\u8bb0\u5f55\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7"
+                );
+            }
+            return new CompletionDecision(
+                    false,
+                    AGENT_COMPLETION_REJECTED,
+                    "\u6682\u672a\u68c0\u6d4b\u5230\u65b0\u7684\u5065\u5eb7\u6863\u6848\u8bb0\u5f55\uff0c\u8bf7\u4fdd\u5b58\u540e\u518d\u70b9\u51fb\u201c\u6211\u5df2\u5b8c\u6210\u201d"
+            );
+        }
+
+        if (isTaskBoardVerifiable(taskCode)) {
+            Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId, Collections.singletonList(taskCode));
+            List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
+            for (TaskBoardItemVO item : allTasks) {
+                if (item != null && Objects.equals(taskCode, item.getTaskCode()) && Boolean.TRUE.equals(item.getCompleted())) {
+                    return new CompletionDecision(
+                            true,
+                            AGENT_COMPLETION_VERIFIED,
+                            "\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u5bf9\u5e94\u4efb\u52a1\u5df2\u8fbe\u6807\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7"
+                    );
+                }
+            }
+            return new CompletionDecision(
+                    false,
+                    AGENT_COMPLETION_REJECTED,
+                    "\u6682\u672a\u68c0\u6d4b\u5230\u8fd9\u4e00\u6b65\u7684\u5b8c\u6210\u8bb0\u5f55\uff0c\u8bf7\u5148\u5728\u5bf9\u5e94\u9875\u9762\u5b8c\u6210\u64cd\u4f5c"
+            );
+        }
+
+        return new CompletionDecision(
+                true,
+                AGENT_COMPLETION_CLAIMED,
+                resultNote.isEmpty()
+                        ? "\u8fd9\u4e00\u6b65\u672a\u63a5\u5165\u81ea\u52a8\u6821\u9a8c\uff0c\u5df2\u6309\u7528\u6237\u7533\u62a5\u8bb0\u5f55\u5b8c\u6210"
+                        : resultNote
+        );
+    }
+
+    private boolean isTaskBoardVerifiable(String taskCode) {
+        return "DAILY_STEP_6000".equals(taskCode)
+                || "DAILY_SPORT_2KM".equals(taskCode)
+                || "DAILY_CHECKIN_1".equals(taskCode)
+                || "WEEKLY_STEP_50000".equals(taskCode)
+                || "WEEKLY_SPORT_3_TIMES".equals(taskCode)
+                || "WEEKLY_REDEEM_1".equals(taskCode);
+    }
+
+    private boolean requiresClaimCompletion(String taskCode) {
+        return "MAINTAIN_WALK".equals(taskCode)
+                || "MAINTAIN_INDOOR".equals(taskCode)
+                || taskCode.isEmpty();
     }
 
     private AgentActionVO copyAction(AgentActionVO source) {
@@ -1276,6 +1368,18 @@ public class AiServiceImpl implements AiService {
         private PlannedAction(AgentActionVO action, double score) {
             this.action = action;
             this.score = score;
+        }
+    }
+
+    private static class CompletionDecision {
+        private final boolean accepted;
+        private final String mode;
+        private final String message;
+
+        private CompletionDecision(boolean accepted, String mode, String message) {
+            this.accepted = accepted;
+            this.mode = mode;
+            this.message = message;
         }
     }
 

@@ -21,6 +21,7 @@
   box-sizing: border-box;
 }
 .hero-card.data-v-f033cf78,
+.progress-card.data-v-f033cf78,
 .composer-card.data-v-f033cf78,
 .actions-card.data-v-f033cf78,
 .evidence-card.data-v-f033cf78 {
@@ -102,6 +103,87 @@
 .hero-time.data-v-f033cf78 {
   font-size: 22rpx;
   color: rgba(255, 255, 255, 0.86);
+}
+.progress-card.data-v-f033cf78 {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 251, 246, 0.94));
+}
+.progress-head.data-v-f033cf78 {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  align-items: center;
+}
+.progress-copy.data-v-f033cf78 {
+  flex: 1;
+}
+.progress-title.data-v-f033cf78 {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #21462f;
+}
+.progress-subtitle.data-v-f033cf78 {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #688474;
+}
+.progress-ring.data-v-f033cf78 {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 55rpx;
+  background: radial-gradient(circle at center, #ffffff 0%, #ffffff 56%, rgba(61, 140, 91, 0.12) 57%, rgba(61, 140, 91, 0.18) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 6rpx rgba(61, 140, 91, 0.12);
+}
+.progress-ring-text.data-v-f033cf78 {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #2e6b44;
+}
+.progress-track.data-v-f033cf78 {
+  width: 100%;
+  height: 20rpx;
+  margin-top: 22rpx;
+  border-radius: 999rpx;
+  overflow: hidden;
+  background: rgba(61, 140, 91, 0.12);
+}
+.progress-fill.data-v-f033cf78 {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #3d8c5b, #86c59a);
+  box-shadow: 0 8rpx 14rpx rgba(61, 140, 91, 0.18);
+}
+.progress-stats.data-v-f033cf78 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+.progress-stat.data-v-f033cf78 {
+  padding: 18rpx 16rpx;
+  border-radius: 22rpx;
+  background: rgba(61, 140, 91, 0.06);
+  text-align: center;
+}
+.progress-stat.active.data-v-f033cf78 {
+  background: rgba(213, 139, 40, 0.10);
+}
+.progress-stat-value.data-v-f033cf78 {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #21462f;
+}
+.progress-stat-label.data-v-f033cf78 {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #708879;
 }
 .section-head.data-v-f033cf78 {
   display: flex;
@@ -202,37 +284,64 @@
   color: #ffffff;
   font-weight: 700;
 }
-.action-list.data-v-f033cf78,
+.timeline-list.data-v-f033cf78,
 .evidence-list.data-v-f033cf78 {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 .action-item.data-v-f033cf78 {
-  padding: 22rpx;
+  position: relative;
+  padding: 22rpx 22rpx 22rpx 106rpx;
   border-radius: 26rpx;
   background: #f8fbf8;
   border: 1rpx solid rgba(59, 121, 79, 0.08);
+}
+.timeline-rail.data-v-f033cf78 {
+  position: absolute;
+  left: 24rpx;
+  top: 22rpx;
+  bottom: 22rpx;
+  width: 56rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.timeline-node.data-v-f033cf78 {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, #d4e7d8, #bcd8c4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 2rpx rgba(61, 140, 91, 0.10);
+}
+.timeline-node.done.data-v-f033cf78 {
+  background: linear-gradient(135deg, #3d8c5b, #2c6f46);
+}
+.timeline-node.active.data-v-f033cf78 {
+  background: linear-gradient(135deg, #d58b28, #c67416);
+}
+.timeline-node.skipped.data-v-f033cf78 {
+  background: linear-gradient(135deg, #d7dfe0, #b9c3c4);
+}
+.timeline-node-text.data-v-f033cf78 {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+.timeline-line.data-v-f033cf78 {
+  flex: 1;
+  width: 4rpx;
+  margin-top: 10rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, rgba(61, 140, 91, 0.28), rgba(61, 140, 91, 0.08));
 }
 .action-top.data-v-f033cf78 {
   display: flex;
   justify-content: space-between;
   gap: 18rpx;
-}
-.action-step.data-v-f033cf78 {
-  width: 68rpx;
-  height: 68rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, #3d8c5b, #2c6f46);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.action-step-text.data-v-f033cf78 {
-  font-size: 24rpx;
-  font-weight: 700;
-  color: #ffffff;
 }
 .action-copy.data-v-f033cf78 {
   flex: 1;
