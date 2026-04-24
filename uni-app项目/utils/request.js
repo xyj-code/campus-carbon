@@ -45,31 +45,31 @@ export const getAgentBrief = (userId) => {
   return request(`/ai/agent-brief?userId=${encodeURIComponent(userId)}`);
 };
 
-export const getAgentPlan = (userId, userNote = '') => {
+export const getAgentPlan = (userId, userNote = '', latitude = null, longitude = null) => {
   return request('/ai/agent-plan', {
     method: 'POST',
-    data: { userId, userNote }
+    data: { userId, userNote, latitude, longitude }
   });
 };
 
-export const startAgentAction = (userId, sessionId, actionId, resultNote = '') => {
+export const startAgentAction = (userId, sessionId, actionId, resultNote = '', latitude = null, longitude = null) => {
   return request('/ai/agent-action/start', {
     method: 'POST',
-    data: { userId, sessionId, actionId, resultNote }
+    data: { userId, sessionId, actionId, resultNote, latitude, longitude }
   });
 };
 
-export const completeAgentAction = (userId, sessionId, actionId, resultNote = '') => {
+export const completeAgentAction = (userId, sessionId, actionId, resultNote = '', latitude = null, longitude = null) => {
   return request('/ai/agent-action/complete', {
     method: 'POST',
-    data: { userId, sessionId, actionId, resultNote }
+    data: { userId, sessionId, actionId, resultNote, latitude, longitude }
   });
 };
 
-export const skipAgentAction = (userId, sessionId, actionId, resultNote = '') => {
+export const skipAgentAction = (userId, sessionId, actionId, resultNote = '', latitude = null, longitude = null) => {
   return request('/ai/agent-action/skip', {
     method: 'POST',
-    data: { userId, sessionId, actionId, resultNote }
+    data: { userId, sessionId, actionId, resultNote, latitude, longitude }
   });
 };
 

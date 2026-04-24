@@ -1,14 +1,22 @@
 package com.campus.carbon.service.impl;
 
+import com.campus.carbon.mapper.AgentActionLogMapper;
+import com.campus.carbon.mapper.AgentMemoryMapper;
+import com.campus.carbon.mapper.AgentSessionMapper;
+import com.campus.carbon.model.AgentActionLog;
+import com.campus.carbon.model.AgentMemory;
+import com.campus.carbon.model.AgentSession;
 import com.campus.carbon.model.AiSuggest;
 import com.campus.carbon.model.HealthData;
 import com.campus.carbon.model.dto.AgentActionRequest;
 import com.campus.carbon.model.dto.AgentActionVO;
 import com.campus.carbon.model.dto.AgentBriefVO;
+import com.campus.carbon.model.dto.AgentSportPlanVO;
 import com.campus.carbon.model.dto.AgentSummaryVO;
 import com.campus.carbon.model.dto.TaskBoardItemVO;
 import com.campus.carbon.service.AiService;
 import com.campus.carbon.service.HealthDataService;
+import com.campus.carbon.service.MapVenueService;
 import com.campus.carbon.service.TaskService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -39,7 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Date;
 
 @Service
 public class AiServiceImpl implements AiService {
@@ -98,9 +107,20 @@ public class AiServiceImpl implements AiService {
     @Autowired
     private HealthDataService healthDataService;
 
+    @Autowired
+    private AgentSessionMapper agentSessionMapper;
+
+    @Autowired
+    private AgentActionLogMapper agentActionLogMapper;
+
+    @Autowired
+    private AgentMemoryMapper agentMemoryMapper;
+
+    @Autowired
+    private MapVenueService mapVenueService;
+
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Map<String, AgentRuntimeSession> agentSessions = new ConcurrentHashMap<>();
 
     @Override
     public AiSuggest getCarbonSuggestion(String carbonFootprint) {
@@ -145,7 +165,12 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public AgentBriefVO getAgentBrief(String userId, String userNote) {
-        return buildAgentBrief(userId, userNote, true);
+        return getAgentBrief(userId, userNote, null, null);
+    }
+
+    @Override
+    public AgentBriefVO getAgentBrief(String userId, String userNote, Double latitude, Double longitude) {
+        return buildAgentBrief(userId, userNote, latitude, longitude, true);
     }
 
     @Override
@@ -163,13 +188,14 @@ public class AiServiceImpl implements AiService {
         return changeAgentActionState(request, AGENT_STATUS_SKIPPED);
     }
 
-    private AgentBriefVO buildAgentBrief(String userId, String userNote, boolean allowRefresh) {
+    private AgentBriefVO buildAgentBrief(String userId, String userNote, Double latitude, Double longitude, boolean allowRefresh) {
         AgentBriefVO brief = new AgentBriefVO();
         String normalizedUserId = safeText(userId);
         if (normalizedUserId.isEmpty()) {
             brief.setSummary(createEmptySummary());
             brief.getEvidence().add("\u8bf7\u5148\u767b\u5f55\u540e\u518d\u751f\u6210\u4eca\u65e5\u884c\u52a8\u8ba1\u5212");
             brief.setSessionStatus("idle");
+            brief.setSportPlan(mapVenueService.buildSportPlan(userNote, latitude, longitude));
             return brief;
         }
 
@@ -184,98 +210,111 @@ public class AiServiceImpl implements AiService {
             rebuildSessionPlan(session, true);
             rebuilt = true;
         }
-        return createAgentBrief(session, !rebuilt);
+        return createAgentBrief(session, !rebuilt, latitude, longitude);
     }
 
     private AgentBriefVO changeAgentActionState(AgentActionRequest request, String targetStatus) {
         String userId = request == null ? "" : safeText(request.getUserId());
+        Double latitude = request == null ? null : request.getLatitude();
+        Double longitude = request == null ? null : request.getLongitude();
         if (userId.isEmpty()) {
             AgentBriefVO brief = new AgentBriefVO();
             brief.setSummary(createEmptySummary());
             brief.getEvidence().add("\u8bf7\u5148\u767b\u5f55\u540e\u518d\u6267\u884c Agent \u52a8\u4f5c");
             brief.setSessionStatus("idle");
+            brief.setSportPlan(mapVenueService.buildSportPlan("", latitude, longitude));
             return brief;
         }
 
-        AgentRuntimeSession session = agentSessions.get(userId);
+        AgentRuntimeSession session = loadLatestSession(userId);
         if (session == null) {
-            return buildAgentBrief(userId, "", true);
+            return buildAgentBrief(userId, "", latitude, longitude, true);
         }
 
         if (!safeText(request.getSessionId()).isEmpty() && !Objects.equals(session.sessionId, safeText(request.getSessionId()))) {
-            return createAgentBrief(session, false);
+            return createAgentBrief(session, false, latitude, longitude);
         }
 
         AgentActionVO action = findAction(session.actions, safeText(request.getActionId()));
         if (action == null) {
-            return createAgentBrief(session, false);
+            return createAgentBrief(session, false, latitude, longitude);
         }
 
         String resultNote = safeText(request.getResultNote());
         if (AGENT_STATUS_IN_PROGRESS.equals(targetStatus)) {
             if (AGENT_STATUS_COMPLETED.equals(action.getStatus()) || AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
-                return createAgentBrief(session, false);
+                return createAgentBrief(session, false, latitude, longitude);
             }
             clearInProgressState(session.actions, action.getId());
             action.setStatus(AGENT_STATUS_IN_PROGRESS);
             action.setResultNote("\u5df2\u8fdb\u5165\u6267\u884c\u72b6\u6001");
+            action.setCompletionMode("");
+            action.setVerificationStatus("");
             session.currentActionId = action.getId();
             session.sessionStatus = AGENT_STATUS_IN_PROGRESS;
             session.updatedAt = LocalDateTime.now(CHINA_ZONE);
-            return createAgentBrief(session, false);
+            persistSession(session);
+            return createAgentBrief(session, false, latitude, longitude);
         }
 
         if (AGENT_STATUS_COMPLETED.equals(action.getStatus()) || AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
-            return createAgentBrief(session, false);
+            return createAgentBrief(session, false, latitude, longitude);
         }
 
         if (AGENT_STATUS_COMPLETED.equals(targetStatus)) {
             CompletionDecision decision = verifyActionCompletion(session, action, resultNote);
             action.setResultNote(decision.message);
+            action.setCompletionMode(decision.mode);
+            action.setVerificationStatus(decision.accepted ? "passed" : "failed");
             session.updatedAt = LocalDateTime.now(CHINA_ZONE);
 
             if (decision.accepted) {
                 action.setStatus(AGENT_STATUS_COMPLETED);
                 session.currentActionId = "";
                 rebuildSessionPlan(session, false);
-                return createAgentBrief(session, true);
+                updateAgentMemory(session, decision.mode);
+                persistSession(session);
+                return createAgentBrief(session, true, latitude, longitude);
             }
 
             action.setStatus(AGENT_STATUS_IN_PROGRESS);
             session.currentActionId = action.getId();
             session.sessionStatus = AGENT_STATUS_IN_PROGRESS;
-            return createAgentBrief(session, false);
+            persistSession(session);
+            return createAgentBrief(session, false, latitude, longitude);
         }
 
         action.setStatus(targetStatus);
         action.setResultNote(resultNote.isEmpty() ? defaultResultNote(targetStatus) : resultNote);
+        action.setCompletionMode(AGENT_STATUS_SKIPPED.equals(targetStatus) ? "skipped" : "");
+        action.setVerificationStatus(AGENT_STATUS_SKIPPED.equals(targetStatus) ? "not_applicable" : "");
         session.currentActionId = "";
         session.updatedAt = LocalDateTime.now(CHINA_ZONE);
         rebuildSessionPlan(session, false);
-        return createAgentBrief(session, true);
+        if (AGENT_STATUS_SKIPPED.equals(targetStatus)) {
+            updateAgentMemory(session, "skipped");
+        }
+        persistSession(session);
+        return createAgentBrief(session, true, latitude, longitude);
     }
 
     private AgentRuntimeSession getOrCreateSession(String userId, String userNote) {
-        AgentRuntimeSession current = agentSessions.get(userId);
+        AgentRuntimeSession current = loadLatestSession(userId);
         if (current == null) {
-            current = new AgentRuntimeSession();
-            current.userId = userId;
-            current.sessionId = UUID.randomUUID().toString().replace("-", "");
-            current.sessionStatus = "ready";
-            current.createdAt = LocalDateTime.now(CHINA_ZONE);
-            current.updatedAt = current.createdAt;
-            current.userNote = userNote;
-            agentSessions.put(userId, current);
-            return current;
+            AgentRuntimeSession created = createNewSession(userId, userNote);
+            persistSession(created);
+            updateAgentMemory(created, "");
+            return created;
         }
         if (!userNote.isEmpty() && !userNote.equals(current.userNote)) {
+            AgentRuntimeSession created = createNewSession(userId, userNote);
+            persistSession(created);
+            updateAgentMemory(created, "");
+            return created;
+        }
+        current.updatedAt = LocalDateTime.now(CHINA_ZONE);
+        if (!userNote.isEmpty()) {
             current.userNote = userNote;
-            current.sessionId = UUID.randomUUID().toString().replace("-", "");
-            current.sessionStatus = "ready";
-            current.currentActionId = "";
-            current.actions = new ArrayList<>();
-            current.createdAt = LocalDateTime.now(CHINA_ZONE);
-            current.updatedAt = current.createdAt;
         }
         return current;
     }
@@ -284,8 +323,9 @@ public class AiServiceImpl implements AiService {
         Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId);
         List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
         List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
-        AgentPreferenceProfile preferences = parsePreferences(session.userNote);
-        List<AgentActionVO> baseActions = buildActionPlan(allTasks, healthDataList, preferences);
+        AgentMemoryProfile memoryProfile = loadAgentMemoryProfile(session.userId, session.userNote);
+        AgentPreferenceProfile preferences = buildPlanningPreferences(session.userNote, memoryProfile);
+        List<AgentActionVO> baseActions = buildActionPlan(allTasks, healthDataList, preferences, memoryProfile);
         syncTaskCompletionState(session.actions, allTasks);
 
         if (resetExisting || session.actions == null || session.actions.isEmpty()) {
@@ -297,13 +337,15 @@ public class AiServiceImpl implements AiService {
         session.sessionStatus = resolveSessionStatus(session.actions);
         session.currentActionId = findCurrentActionId(session.actions);
         session.updatedAt = LocalDateTime.now(CHINA_ZONE);
+        session.planVersion = session.planVersion == null ? 1 : session.planVersion + 1;
     }
 
-    private AgentBriefVO createAgentBrief(AgentRuntimeSession session, boolean allowRefresh) {
+    private AgentBriefVO createAgentBrief(AgentRuntimeSession session, boolean allowRefresh, Double latitude, Double longitude) {
         if (session == null) {
             AgentBriefVO brief = new AgentBriefVO();
             brief.setSummary(createEmptySummary());
             brief.setSessionStatus("idle");
+            brief.setSportPlan(mapVenueService.buildSportPlan("", latitude, longitude));
             return brief;
         }
 
@@ -316,7 +358,8 @@ public class AiServiceImpl implements AiService {
 
         Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId);
         List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
-        AgentPreferenceProfile preferences = parsePreferences(session.userNote);
+        AgentMemoryProfile memoryProfile = loadAgentMemoryProfile(session.userId, session.userNote);
+        AgentPreferenceProfile preferences = buildPlanningPreferences(session.userNote, memoryProfile);
         List<AgentActionVO> actions = prepareActionsForView(session.actions);
         AgentSummaryVO summary = buildSummary(taskBoard, healthDataList, preferences, actions);
         decorateSummary(summary, session, actions);
@@ -327,7 +370,13 @@ public class AiServiceImpl implements AiService {
         brief.setCurrentActionId(session.currentActionId);
         brief.setSummary(summary);
         brief.setActions(actions);
-        brief.setEvidence(buildAgentEvidence(taskBoard, healthDataList, preferences, actions, session));
+        AgentSportPlanVO sportPlan = mapVenueService.buildSportPlan(session.userNote, latitude, longitude);
+        brief.setSportPlan(sportPlan);
+        brief.setEvidence(buildAgentEvidence(taskBoard, healthDataList, preferences, memoryProfile, actions, session));
+        if (sportPlan != null && !safeText(sportPlan.getRecommendationReason()).isEmpty()) {
+            brief.getEvidence().add("\u8fd0\u52a8\u573a\u5730\uff1a" + sportPlan.getRecommendationReason());
+        }
+        persistSession(session);
         return brief;
     }
 
@@ -478,9 +527,10 @@ public class AiServiceImpl implements AiService {
     }
 
     private List<String> buildAgentEvidence(Map<String, Object> taskBoard, List<HealthData> healthDataList,
-                                            AgentPreferenceProfile preferences, List<AgentActionVO> actions,
+                                            AgentPreferenceProfile preferences, AgentMemoryProfile memoryProfile,
+                                            List<AgentActionVO> actions,
                                             AgentRuntimeSession session) {
-        List<String> evidence = buildEvidence(taskBoard, healthDataList, preferences, actions);
+        List<String> evidence = buildEvidence(taskBoard, healthDataList, preferences, memoryProfile, actions);
         int completed = 0;
         int skipped = 0;
         int inProgress = 0;
@@ -520,6 +570,8 @@ public class AiServiceImpl implements AiService {
                     && !AGENT_STATUS_SKIPPED.equals(action.getStatus())) {
                 action.setStatus(AGENT_STATUS_COMPLETED);
                 action.setResultNote("\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u5bf9\u5e94\u4efb\u52a1\u5df2\u8fbe\u6807\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7");
+                action.setCompletionMode(AGENT_COMPLETION_VERIFIED);
+                action.setVerificationStatus("passed");
             }
         }
     }
@@ -591,61 +643,110 @@ public class AiServiceImpl implements AiService {
     private CompletionDecision verifyActionCompletion(AgentRuntimeSession session, AgentActionVO action, String resultNote) {
         String taskCode = safeText(action.getTaskCode());
         if (requiresClaimCompletion(taskCode)) {
-            return new CompletionDecision(
-                    true,
-                    AGENT_COMPLETION_CLAIMED,
-                    resultNote.isEmpty()
-                            ? "\u8fd9\u4e00\u6b65\u6682\u65f6\u65e0\u6cd5\u81ea\u52a8\u9a8c\u8bc1\uff0c\u5df2\u6309\u7528\u6237\u7533\u62a5\u8bb0\u4e3a\u5b8c\u6210"
-                            : resultNote
-            );
+            return createClaimDecision(resultNote,
+                    "\u8fd9\u4e00\u6b65\u6682\u65f6\u65e0\u6cd5\u81ea\u52a8\u9a8c\u8bc1\uff0c\u5df2\u6309\u7528\u6237\u7533\u62a5\u8bb0\u4e3a\u5b8c\u6210");
         }
 
-        if ("HEALTH_PROFILE".equals(taskCode)) {
-            List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
-            boolean verified = healthDataList != null && !healthDataList.isEmpty();
-            if (verified) {
-                return new CompletionDecision(
-                        true,
-                        AGENT_COMPLETION_VERIFIED,
-                        "\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u5065\u5eb7\u6863\u6848\u8bb0\u5f55\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7"
-                );
-            }
+        String verifierRoute = resolveVerifierRoute(action);
+        if ("health_profile".equals(verifierRoute)) {
+            return verifyHealthProfileCompletion(session);
+        }
+
+        if ("task_board".equals(verifierRoute)) {
+            return verifyTaskBoardActionCompletion(session, action);
+        }
+
+        return createClaimDecision(resultNote,
+                "\u8fd9\u4e00\u6b65\u672a\u63a5\u5165\u81ea\u52a8\u6821\u9a8c\uff0c\u5df2\u6309\u7528\u6237\u7533\u62a5\u8bb0\u5f55\u5b8c\u6210");
+    }
+
+    private String resolveVerifierRoute(AgentActionVO action) {
+        String taskCode = safeText(action.getTaskCode());
+        String actionPath = safeText(action.getActionPath());
+        if ("HEALTH_PROFILE".equals(taskCode) || "/pages/healthData/healthData".equals(actionPath)) {
+            return "health_profile";
+        }
+        if (hasTaskBoardMetric(taskCode)) {
+            return "task_board";
+        }
+        if (("navigate".equalsIgnoreCase(safeText(action.getActionType()))
+                || "tab".equalsIgnoreCase(safeText(action.getActionType())))
+                && ("/pages/stepCount/stepCount".equals(actionPath)
+                || "/pages/sportRecord/sportRecord".equals(actionPath)
+                || "/pages/mall/mall".equals(actionPath))) {
+            return "task_board";
+        }
+        return "claim";
+    }
+
+    private CompletionDecision verifyHealthProfileCompletion(AgentRuntimeSession session) {
+        List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
+        if (healthDataList == null || healthDataList.isEmpty()) {
             return new CompletionDecision(
                     false,
                     AGENT_COMPLETION_REJECTED,
                     "\u6682\u672a\u68c0\u6d4b\u5230\u65b0\u7684\u5065\u5eb7\u6863\u6848\u8bb0\u5f55\uff0c\u8bf7\u4fdd\u5b58\u540e\u518d\u70b9\u51fb\u201c\u6211\u5df2\u5b8c\u6210\u201d"
             );
         }
-
-        if (isTaskBoardVerifiable(taskCode)) {
-            Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId, Collections.singletonList(taskCode));
-            List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
-            for (TaskBoardItemVO item : allTasks) {
-                if (item != null && Objects.equals(taskCode, item.getTaskCode()) && Boolean.TRUE.equals(item.getCompleted())) {
-                    return new CompletionDecision(
-                            true,
-                            AGENT_COMPLETION_VERIFIED,
-                            "\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u5bf9\u5e94\u4efb\u52a1\u5df2\u8fbe\u6807\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7"
-                    );
-                }
+        LocalDateTime sessionTime = session.createdAt == null ? LocalDateTime.now(CHINA_ZONE).minusDays(1) : session.createdAt.minusMinutes(1);
+        for (HealthData data : healthDataList) {
+            LocalDateTime recordTime = resolveHealthRecordTime(data);
+            if (recordTime != null && !recordTime.isBefore(sessionTime)) {
+                return new CompletionDecision(
+                        true,
+                        AGENT_COMPLETION_VERIFIED,
+                        "\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u65b0\u7684\u5065\u5eb7\u6863\u6848\u8bb0\u5f55\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7"
+                );
             }
-            return new CompletionDecision(
-                    false,
-                    AGENT_COMPLETION_REJECTED,
-                    "\u6682\u672a\u68c0\u6d4b\u5230\u8fd9\u4e00\u6b65\u7684\u5b8c\u6210\u8bb0\u5f55\uff0c\u8bf7\u5148\u5728\u5bf9\u5e94\u9875\u9762\u5b8c\u6210\u64cd\u4f5c"
-            );
         }
-
         return new CompletionDecision(
-                true,
-                AGENT_COMPLETION_CLAIMED,
-                resultNote.isEmpty()
-                        ? "\u8fd9\u4e00\u6b65\u672a\u63a5\u5165\u81ea\u52a8\u6821\u9a8c\uff0c\u5df2\u6309\u7528\u6237\u7533\u62a5\u8bb0\u5f55\u5b8c\u6210"
-                        : resultNote
+                false,
+                AGENT_COMPLETION_REJECTED,
+                "\u68c0\u6d4b\u5230\u4f60\u6709\u5386\u53f2\u5065\u5eb7\u6570\u636e\uff0c\u4f46\u672c\u6b21\u4f1a\u8bdd\u540e\u8fd8\u6ca1\u6709\u65b0\u7684\u4fdd\u5b58\u8bb0\u5f55"
         );
     }
 
-    private boolean isTaskBoardVerifiable(String taskCode) {
+    private CompletionDecision verifyTaskBoardActionCompletion(AgentRuntimeSession session, AgentActionVO action) {
+        String taskCode = safeText(action.getTaskCode());
+        if (taskCode.isEmpty()) {
+            return new CompletionDecision(
+                    false,
+                    AGENT_COMPLETION_REJECTED,
+                    "\u6682\u65e0\u53ef\u6821\u9a8c\u7684\u4efb\u52a1\u6807\u8bc6\uff0c\u8bf7\u5148\u5728\u5bf9\u5e94\u9875\u9762\u5b8c\u6210\u64cd\u4f5c"
+            );
+        }
+        Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId, Collections.singletonList(taskCode));
+        TaskBoardItemVO item = findTaskBoardItem(castTaskItems(taskBoard.get("allTasks")), taskCode);
+        if (item == null) {
+            return new CompletionDecision(
+                    false,
+                    AGENT_COMPLETION_REJECTED,
+                    "\u6682\u672a\u627e\u5230\u5bf9\u5e94\u4efb\u52a1\u7684\u5b9e\u65f6\u8fdb\u5ea6\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5"
+            );
+        }
+        if (Boolean.TRUE.equals(item.getCompleted())) {
+            return new CompletionDecision(
+                    true,
+                    AGENT_COMPLETION_VERIFIED,
+                    "\u7cfb\u7edf\u5df2\u68c0\u6d4b\u5230\u5bf9\u5e94\u4efb\u52a1\u5df2\u8fbe\u6807\uff0c\u8be5\u6b65\u9a8c\u8bc1\u901a\u8fc7"
+            );
+        }
+        return new CompletionDecision(
+                false,
+                AGENT_COMPLETION_REJECTED,
+                buildPendingTaskMessage(action, item)
+        );
+    }
+
+    private CompletionDecision createClaimDecision(String resultNote, String fallbackMessage) {
+        return new CompletionDecision(
+                true,
+                AGENT_COMPLETION_CLAIMED,
+                resultNote.isEmpty() ? fallbackMessage : resultNote
+        );
+    }
+
+    private boolean hasTaskBoardMetric(String taskCode) {
         return "DAILY_STEP_6000".equals(taskCode)
                 || "DAILY_SPORT_2KM".equals(taskCode)
                 || "DAILY_CHECKIN_1".equals(taskCode)
@@ -658,6 +759,228 @@ public class AiServiceImpl implements AiService {
         return "MAINTAIN_WALK".equals(taskCode)
                 || "MAINTAIN_INDOOR".equals(taskCode)
                 || taskCode.isEmpty();
+    }
+
+    private TaskBoardItemVO findTaskBoardItem(List<TaskBoardItemVO> items, String taskCode) {
+        for (TaskBoardItemVO item : items) {
+            if (item != null && Objects.equals(taskCode, item.getTaskCode())) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private String buildPendingTaskMessage(AgentActionVO action, TaskBoardItemVO item) {
+        String taskCode = safeText(item.getTaskCode());
+        double currentValue = item.getCurrentValue() == null ? 0D : item.getCurrentValue();
+        double targetValue = item.getTargetValue() == null ? 0D : item.getTargetValue();
+        double remaining = Math.max(targetValue - currentValue, 0D);
+
+        if ("DAILY_STEP_6000".equals(taskCode) || "WEEKLY_STEP_50000".equals(taskCode)) {
+            return "\u5df2\u68c0\u6d4b\u5230\u5f53\u524d\u6b65\u6570\u8fdb\u5ea6 " + formatInt(currentValue) + " / "
+                    + formatInt(targetValue) + "\u6b65\uff0c\u8fd8\u5dee " + formatInt(remaining)
+                    + "\u6b65\u624d\u80fd\u901a\u8fc7\u8fd9\u4e00\u6b65\u9a8c\u8bc1";
+        }
+        if ("DAILY_SPORT_2KM".equals(taskCode)) {
+            return "\u5df2\u68c0\u6d4b\u5230\u8fd0\u52a8\u8fdb\u5ea6 " + formatDecimal(currentValue) + " / "
+                    + formatDecimal(targetValue) + "km\uff0c\u8fd8\u5dee " + formatDecimal(remaining)
+                    + "km \u624d\u80fd\u5b8c\u6210\u8fd9\u4e00\u6b65";
+        }
+        if ("WEEKLY_SPORT_3_TIMES".equals(taskCode) || "WEEKLY_REDEEM_1".equals(taskCode) || "DAILY_CHECKIN_1".equals(taskCode)) {
+            return "\u5df2\u68c0\u6d4b\u5230\u5f53\u524d\u8fdb\u5ea6 " + formatInt(currentValue) + " / "
+                    + formatInt(targetValue) + "\u6b21\uff0c\u8fd8\u5dee " + formatInt(remaining)
+                    + "\u6b21\u624d\u80fd\u901a\u8fc7\u6821\u9a8c";
+        }
+        if (!safeText(action.getActionPath()).isEmpty()) {
+            return "\u6682\u672a\u68c0\u6d4b\u5230\u8fd9\u4e00\u6b65\u7684\u5b8c\u6210\u8bb0\u5f55\uff0c\u8bf7\u5148\u5728\u5bf9\u5e94\u9875\u9762\u5b8c\u6210\u64cd\u4f5c";
+        }
+        return "\u6682\u672a\u68c0\u6d4b\u5230\u8fd9\u4e00\u6b65\u7684\u5b8c\u6210\u8bb0\u5f55";
+    }
+
+    private LocalDateTime resolveHealthRecordTime(HealthData data) {
+        if (data == null) {
+            return null;
+        }
+        if (data.getUpdatedAt() != null) {
+            return toLocalDateTime(data.getUpdatedAt());
+        }
+        if (data.getCreatedAt() != null) {
+            return toLocalDateTime(data.getCreatedAt());
+        }
+        if (data.getRecordDate() != null) {
+            LocalDateTime value = toLocalDateTime(data.getRecordDate());
+            return value == null ? null : value.plusHours(23).plusMinutes(59).plusSeconds(59);
+        }
+        return null;
+    }
+
+    private AgentRuntimeSession loadLatestSession(String userId) {
+        AgentSession entity = agentSessionMapper.selectLatestByUsername(userId);
+        if (entity == null) {
+            return null;
+        }
+        List<AgentActionLog> logs = agentActionLogMapper.selectBySessionId(entity.getSessionId());
+        AgentRuntimeSession session = new AgentRuntimeSession();
+        session.sessionId = entity.getSessionId();
+        session.userId = entity.getUsername();
+        session.userNote = safeText(entity.getUserNote());
+        session.sessionStatus = safeText(entity.getSessionStatus()).isEmpty() ? "ready" : entity.getSessionStatus();
+        session.currentActionId = safeText(entity.getCurrentActionId());
+        session.planVersion = entity.getPlanVersion() == null ? 1 : entity.getPlanVersion();
+        session.createdAt = toLocalDateTime(entity.getCreateTime());
+        session.updatedAt = toLocalDateTime(entity.getUpdateTime());
+        session.actions = new ArrayList<>();
+        for (AgentActionLog log : logs) {
+            session.actions.add(toActionVO(log));
+        }
+        if (session.createdAt == null) {
+            session.createdAt = LocalDateTime.now(CHINA_ZONE);
+        }
+        if (session.updatedAt == null) {
+            session.updatedAt = LocalDateTime.now(CHINA_ZONE);
+        }
+        return session;
+    }
+
+    private AgentRuntimeSession createNewSession(String userId, String userNote) {
+        AgentRuntimeSession session = new AgentRuntimeSession();
+        LocalDateTime now = LocalDateTime.now(CHINA_ZONE);
+        session.sessionId = UUID.randomUUID().toString().replace("-", "");
+        session.userId = userId;
+        session.userNote = safeText(userNote);
+        session.sessionStatus = "ready";
+        session.currentActionId = "";
+        session.createdAt = now;
+        session.updatedAt = now;
+        session.planVersion = 0;
+        session.actions = new ArrayList<>();
+        return session;
+    }
+
+    private void persistSession(AgentRuntimeSession session) {
+        if (session == null || safeText(session.sessionId).isEmpty() || safeText(session.userId).isEmpty()) {
+            return;
+        }
+        AgentSession entity = new AgentSession();
+        entity.setSessionId(session.sessionId);
+        entity.setUsername(session.userId);
+        entity.setSessionStatus(safeText(session.sessionStatus).isEmpty() ? "ready" : session.sessionStatus);
+        entity.setCurrentActionId(safeText(session.currentActionId));
+        entity.setUserNote(safeText(session.userNote));
+        entity.setPlanVersion(session.planVersion == null || session.planVersion < 1 ? 1 : session.planVersion);
+        entity.setLastActiveTime(toDate(session.updatedAt));
+
+        AgentSession existing = agentSessionMapper.selectBySessionId(session.sessionId);
+        if (existing == null) {
+            agentSessionMapper.insert(entity);
+        } else {
+            agentSessionMapper.updateBySessionId(entity);
+        }
+
+        agentActionLogMapper.deleteBySessionId(session.sessionId);
+        if (session.actions == null) {
+            return;
+        }
+        for (AgentActionVO action : session.actions) {
+            if (action == null) {
+                continue;
+            }
+            agentActionLogMapper.insert(toActionLog(session, action));
+        }
+    }
+
+    private void updateAgentMemory(AgentRuntimeSession session, String mode) {
+        if (session == null || safeText(session.userId).isEmpty()) {
+            return;
+        }
+        AgentMemory memory = agentMemoryMapper.selectByUsername(session.userId);
+        if (memory == null) {
+            memory = new AgentMemory();
+            memory.setUsername(session.userId);
+            memory.setVerifiedCompletionCount(0);
+            memory.setClaimedCompletionCount(0);
+            memory.setSkippedCount(0);
+        }
+        memory.setLastSessionId(session.sessionId);
+        memory.setLastUserNote(safeText(session.userNote));
+        memory.setLastActiveTime(toDate(session.updatedAt));
+
+        if (AGENT_COMPLETION_VERIFIED.equals(mode)) {
+            memory.setVerifiedCompletionCount(safeInt(memory.getVerifiedCompletionCount()) + 1);
+        } else if (AGENT_COMPLETION_CLAIMED.equals(mode)) {
+            memory.setClaimedCompletionCount(safeInt(memory.getClaimedCompletionCount()) + 1);
+        } else if (AGENT_STATUS_SKIPPED.equals(mode)) {
+            memory.setSkippedCount(safeInt(memory.getSkippedCount()) + 1);
+        }
+
+        if (memory.getId() == null) {
+            agentMemoryMapper.insert(memory);
+        } else {
+            agentMemoryMapper.updateByUsername(memory);
+        }
+    }
+
+    private AgentActionVO toActionVO(AgentActionLog log) {
+        AgentActionVO action = new AgentActionVO();
+        action.setId(log.getActionId());
+        action.setTaskCode(log.getTaskCode());
+        action.setStepOrder(log.getStepOrder());
+        action.setTitle(log.getTitle());
+        action.setReason(log.getReason());
+        action.setPriorityTag(log.getPriorityTag());
+        action.setDurationMinutes(log.getDurationMinutes());
+        action.setEstimatedCarbonSaving(log.getEstimatedCarbonSaving());
+        action.setEstimatedPoints(log.getEstimatedPoints());
+        action.setActionText(log.getActionText());
+        action.setActionPath(log.getActionPath());
+        action.setActionType(log.getActionType());
+        action.setStatus(log.getStatus());
+        action.setResultNote(safeText(log.getResultNote()));
+        action.setCompletionMode(safeText(log.getCompletionMode()));
+        action.setVerificationStatus(safeText(log.getVerificationStatus()));
+        action.setExecutionHint(safeText(log.getExecutionHint()));
+        return action;
+    }
+
+    private AgentActionLog toActionLog(AgentRuntimeSession session, AgentActionVO action) {
+        AgentActionLog log = new AgentActionLog();
+        log.setSessionId(session.sessionId);
+        log.setActionId(action.getId());
+        log.setTaskCode(safeText(action.getTaskCode()));
+        log.setStepOrder(action.getStepOrder());
+        log.setTitle(action.getTitle());
+        log.setReason(action.getReason());
+        log.setPriorityTag(action.getPriorityTag());
+        log.setDurationMinutes(action.getDurationMinutes());
+        log.setEstimatedCarbonSaving(action.getEstimatedCarbonSaving());
+        log.setEstimatedPoints(action.getEstimatedPoints());
+        log.setActionText(action.getActionText());
+        log.setActionPath(action.getActionPath());
+        log.setActionType(action.getActionType());
+        log.setStatus(action.getStatus());
+        log.setResultNote(safeText(action.getResultNote()));
+        log.setCompletionMode(safeText(action.getCompletionMode()));
+        log.setVerificationStatus(safeText(action.getVerificationStatus()));
+        log.setExecutionHint(resolveExecutionHint(action));
+        return log;
+    }
+
+    private LocalDateTime toLocalDateTime(Date value) {
+        if (value == null) {
+            return null;
+        }
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(value.getTime()), CHINA_ZONE);
+    }
+
+    private Date toDate(LocalDateTime value) {
+        if (value == null) {
+            return null;
+        }
+        return Date.from(value.atZone(CHINA_ZONE).toInstant());
+    }
+
+    private int safeInt(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private AgentActionVO copyAction(AgentActionVO source) {
@@ -678,6 +1001,8 @@ public class AiServiceImpl implements AiService {
         target.setStatusLabel(source.getStatusLabel());
         target.setExecutionHint(source.getExecutionHint());
         target.setResultNote(source.getResultNote());
+        target.setCompletionMode(source.getCompletionMode());
+        target.setVerificationStatus(source.getVerificationStatus());
         target.setCanStart(source.getCanStart());
         target.setCanFinish(source.getCanFinish());
         target.setCanSkip(source.getCanSkip());
@@ -946,18 +1271,18 @@ public class AiServiceImpl implements AiService {
     }
 
     private List<AgentActionVO> buildActionPlan(List<TaskBoardItemVO> allTasks, List<HealthData> healthDataList,
-                                                AgentPreferenceProfile preferences) {
+                                                AgentPreferenceProfile preferences, AgentMemoryProfile memoryProfile) {
         List<PlannedAction> candidates = new ArrayList<>();
         for (TaskBoardItemVO item : allTasks) {
             if (!Boolean.TRUE.equals(item.getCompleted())) {
                 AgentActionVO action = toAgentAction(item, preferences);
-                candidates.add(new PlannedAction(action, scoreAction(action, preferences)));
+                candidates.add(new PlannedAction(action, scoreAction(action, preferences, memoryProfile)));
             }
         }
 
         if ((healthDataList == null || healthDataList.isEmpty()) && (preferences.healthFirst || preferences.preferIndoor || preferences.energyLow)) {
             AgentActionVO healthProfile = createHealthProfileAction(preferences);
-            candidates.add(new PlannedAction(healthProfile, scoreAction(healthProfile, preferences) + 60D));
+            candidates.add(new PlannedAction(healthProfile, scoreAction(healthProfile, preferences, memoryProfile) + 60D));
         }
 
         candidates.sort((left, right) -> Double.compare(right.score, left.score));
@@ -988,7 +1313,8 @@ public class AiServiceImpl implements AiService {
     }
 
     private List<String> buildEvidence(Map<String, Object> taskBoard, List<HealthData> healthDataList,
-                                       AgentPreferenceProfile preferences, List<AgentActionVO> actions) {
+                                       AgentPreferenceProfile preferences, AgentMemoryProfile memoryProfile,
+                                       List<AgentActionVO> actions) {
         List<String> evidence = new ArrayList<>();
         Map<String, Object> summaryMap = castMap(taskBoard.get("summary"));
         int dailyCompleted = toInt(summaryMap.get("dailyCompleted"));
@@ -1018,6 +1344,14 @@ public class AiServiceImpl implements AiService {
 
         if (preferences.hasAnyNote()) {
             evidence.add("\u5df2\u5e94\u7528\u504f\u597d\uff1a" + preferences.describeAppliedPreferences());
+        }
+        if (memoryProfile.hasHistory()) {
+            evidence.add("\u5386\u53f2\u6267\u884c\uff1a\u9a8c\u8bc1\u901a\u8fc7 " + memoryProfile.verifiedCount
+                    + "\u6b21\uff0c\u7533\u62a5\u5b8c\u6210 " + memoryProfile.claimedCount
+                    + "\u6b21\uff0c\u8df3\u8fc7 " + memoryProfile.skippedCount + "\u6b21");
+            if (memoryProfile.usingCarryOverNote()) {
+                evidence.add("\u5ef6\u7528\u4e0a\u6b21\u504f\u597d\uff1a" + memoryProfile.lastUserNote);
+            }
         }
 
         if (!actions.isEmpty()) {
@@ -1187,7 +1521,35 @@ public class AiServiceImpl implements AiService {
         return false;
     }
 
-    private double scoreAction(AgentActionVO action, AgentPreferenceProfile preferences) {
+    private AgentMemoryProfile loadAgentMemoryProfile(String userId, String activeUserNote) {
+        AgentMemoryProfile profile = new AgentMemoryProfile();
+        AgentMemory memory = agentMemoryMapper.selectByUsername(userId);
+        if (memory == null) {
+            return profile;
+        }
+        profile.verifiedCount = safeInt(memory.getVerifiedCompletionCount());
+        profile.claimedCount = safeInt(memory.getClaimedCompletionCount());
+        profile.skippedCount = safeInt(memory.getSkippedCount());
+        profile.lastUserNote = safeText(memory.getLastUserNote());
+        profile.carryOverNote = safeText(activeUserNote).isEmpty() && !profile.lastUserNote.isEmpty();
+        profile.preferVerifiedActions = profile.claimedCount > profile.verifiedCount;
+        profile.lowFrictionPlan = profile.skippedCount >= 2 && profile.skippedCount >= profile.verifiedCount;
+        profile.stretchGoals = profile.verifiedCount >= 3 && profile.skippedCount <= profile.claimedCount;
+        return profile;
+    }
+
+    private AgentPreferenceProfile buildPlanningPreferences(String userNote, AgentMemoryProfile memoryProfile) {
+        AgentPreferenceProfile profile = parsePreferences(userNote);
+        if (!profile.hasAnyNote() && memoryProfile.usingCarryOverNote()) {
+            AgentPreferenceProfile carryOver = parsePreferences(memoryProfile.lastUserNote);
+            if (carryOver.hasAnyNote()) {
+                return carryOver;
+            }
+        }
+        return profile;
+    }
+
+    private double scoreAction(AgentActionVO action, AgentPreferenceProfile preferences, AgentMemoryProfile memoryProfile) {
         double score = action.getEstimatedPoints() == null ? 0 : action.getEstimatedPoints() * 2D;
         score += action.getEstimatedCarbonSaving() == null ? 0 : action.getEstimatedCarbonSaving() / 12D;
 
@@ -1220,6 +1582,15 @@ public class AiServiceImpl implements AiService {
         }
         if (preferences.healthFirst) {
             score += isHealthFriendlyAction(action.getTaskCode()) ? 32D : 5D;
+        }
+        if (memoryProfile.prefersVerifiedActions()) {
+            score += requiresClaimCompletion(action.getTaskCode()) ? -42D : 18D;
+        }
+        if (memoryProfile.needsLowFrictionPlan()) {
+            score += isLowEffortAction(action.getTaskCode()) ? 34D : -12D;
+        }
+        if (memoryProfile.canHandleStretchGoals()) {
+            score += isDailyTask(action.getTaskCode()) ? -6D : 16D;
         }
         return score;
     }
@@ -1361,6 +1732,14 @@ public class AiServiceImpl implements AiService {
         }
     }
 
+    private String formatInt(double value) {
+        return String.valueOf((int) Math.round(value));
+    }
+
+    private String formatDecimal(double value) {
+        return String.format("%.2f", value);
+    }
+
     private static class PlannedAction {
         private final AgentActionVO action;
         private final double score;
@@ -1383,12 +1762,44 @@ public class AiServiceImpl implements AiService {
         }
     }
 
+    private static class AgentMemoryProfile {
+        private int verifiedCount;
+        private int claimedCount;
+        private int skippedCount;
+        private String lastUserNote = "";
+        private boolean carryOverNote;
+        private boolean preferVerifiedActions;
+        private boolean lowFrictionPlan;
+        private boolean stretchGoals;
+
+        private boolean hasHistory() {
+            return verifiedCount > 0 || claimedCount > 0 || skippedCount > 0 || !lastUserNote.isEmpty();
+        }
+
+        private boolean usingCarryOverNote() {
+            return carryOverNote;
+        }
+
+        private boolean prefersVerifiedActions() {
+            return preferVerifiedActions;
+        }
+
+        private boolean needsLowFrictionPlan() {
+            return lowFrictionPlan;
+        }
+
+        private boolean canHandleStretchGoals() {
+            return stretchGoals;
+        }
+    }
+
     private static class AgentRuntimeSession {
         private String sessionId;
         private String userId;
         private String userNote = "";
         private String sessionStatus = "ready";
         private String currentActionId = "";
+        private Integer planVersion = 1;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private List<AgentActionVO> actions = new ArrayList<>();

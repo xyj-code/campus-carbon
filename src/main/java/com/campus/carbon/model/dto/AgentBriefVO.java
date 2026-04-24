@@ -8,6 +8,7 @@ public class AgentBriefVO {
     private String sessionStatus;
     private String currentActionId;
     private AgentSummaryVO summary;
+    private AgentSportPlanVO sportPlan;
     private List<AgentActionVO> actions = new ArrayList<>();
     private List<String> evidence = new ArrayList<>();
 
@@ -41,6 +42,14 @@ public class AgentBriefVO {
 
     public void setSummary(AgentSummaryVO summary) {
         this.summary = summary;
+    }
+
+    public AgentSportPlanVO getSportPlan() {
+        return sportPlan;
+    }
+
+    public void setSportPlan(AgentSportPlanVO sportPlan) {
+        this.sportPlan = sportPlan;
     }
 
     public List<AgentActionVO> getActions() {

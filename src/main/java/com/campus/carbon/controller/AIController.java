@@ -40,14 +40,16 @@ public class AIController {
 
     @GetMapping("/agent-brief")
     public AgentBriefVO getAgentBrief(@RequestParam String userId) {
-        return aiService.getAgentBrief(userId, "");
+        return aiService.getAgentBrief(userId, "", null, null);
     }
 
     @PostMapping("/agent-plan")
     public AgentBriefVO getAgentPlan(@RequestBody AgentPlanRequest request) {
         String userId = request == null ? "" : request.getUserId();
         String userNote = request == null ? "" : request.getUserNote();
-        return aiService.getAgentBrief(userId, userNote);
+        Double latitude = request == null ? null : request.getLatitude();
+        Double longitude = request == null ? null : request.getLongitude();
+        return aiService.getAgentBrief(userId, userNote, latitude, longitude);
     }
 
     @PostMapping("/agent-action/start")

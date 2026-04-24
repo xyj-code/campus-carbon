@@ -17,6 +17,8 @@ public class AgentActionVO {
     private String statusLabel;
     private String executionHint;
     private String resultNote;
+    private String completionMode;
+    private String verificationStatus;
     private Boolean canStart;
     private Boolean canFinish;
     private Boolean canSkip;
@@ -147,6 +149,22 @@ public class AgentActionVO {
 
     public void setResultNote(String resultNote) {
         this.resultNote = resultNote;
+    }
+
+    public String getCompletionMode() {
+        return completionMode;
+    }
+
+    public void setCompletionMode(String completionMode) {
+        this.completionMode = completionMode;
+    }
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
     }
 
     public Boolean getCanStart() {

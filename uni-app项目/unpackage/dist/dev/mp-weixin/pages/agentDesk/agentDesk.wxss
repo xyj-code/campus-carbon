@@ -23,6 +23,7 @@
 .hero-card.data-v-f033cf78,
 .progress-card.data-v-f033cf78,
 .composer-card.data-v-f033cf78,
+.venue-card.data-v-f033cf78,
 .actions-card.data-v-f033cf78,
 .evidence-card.data-v-f033cf78 {
   margin-bottom: 24rpx;
@@ -43,6 +44,107 @@
   font-size: 22rpx;
   letter-spacing: 2rpx;
   opacity: 0.85;
+}
+.venue-card.data-v-f033cf78 {
+  background: linear-gradient(145deg, rgba(243, 250, 244, 0.96), rgba(227, 242, 230, 0.92));
+}
+.venue-header.data-v-f033cf78 {
+  display: flex;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+.venue-copy.data-v-f033cf78 {
+  flex: 1;
+}
+.venue-tag.data-v-f033cf78 {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(63, 140, 87, 0.14);
+  color: #2f7d4c;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.venue-name.data-v-f033cf78 {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #214d33;
+  line-height: 1.35;
+}
+.venue-reason.data-v-f033cf78 {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #547064;
+}
+.venue-badge.data-v-f033cf78 {
+  align-self: flex-start;
+  padding: 16rpx 18rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.92);
+}
+.venue-badge-text.data-v-f033cf78 {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #2f7d4c;
+}
+.venue-meta.data-v-f033cf78 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+.venue-address-box.data-v-f033cf78 {
+  margin-top: 18rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.88);
+}
+.venue-address.data-v-f033cf78 {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #3c5d49;
+}
+.route-box.data-v-f033cf78 {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.88);
+}
+.route-title.data-v-f033cf78 {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #2d6d43;
+}
+.route-step.data-v-f033cf78 {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin-top: 16rpx;
+}
+.route-dot.data-v-f033cf78 {
+  width: 12rpx;
+  height: 12rpx;
+  margin-top: 12rpx;
+  border-radius: 50%;
+  background: #56a26c;
+  flex-shrink: 0;
+}
+.route-text.data-v-f033cf78 {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #496655;
+}
+.venue-actions.data-v-f033cf78 {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22rpx;
 }
 .hero-title.data-v-f033cf78 {
   display: block;
@@ -74,6 +176,18 @@
   font-size: 22rpx;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.88);
+}
+.location-bar.data-v-f033cf78 {
+  margin-top: 18rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 22rpx;
+  background: rgba(236, 244, 237, 0.9);
+}
+.location-text.data-v-f033cf78 {
+  display: block;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #547064;
 }
 .metric-chip.data-v-f033cf78 {
   min-width: 180rpx;

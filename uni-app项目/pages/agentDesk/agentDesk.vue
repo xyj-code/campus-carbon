@@ -79,12 +79,61 @@
           :show-confirm-bar="false"
           auto-height
         />
+        <view class="location-bar">
+          <text class="location-text">{{ locationLabel }}</text>
+        </view>
         <view class="composer-actions">
-          <view class="ghost-btn" @click="fetchPlan('')">
+          <view class="ghost-btn" @click="captureLocation">
+            <text class="ghost-btn-text">{{ copy.captureLocation }}</text>
+          </view>
+          <view class="ghost-btn" @click="fetchPlan(userNote.trim())">
             <text class="ghost-btn-text">{{ copy.refreshAction }}</text>
           </view>
           <view class="primary-btn" :class="{ disabled: loading }" @click="submitNotePlan">
             <text class="primary-btn-text">{{ loading ? copy.loadingText : copy.generateAction }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="venue-card" v-if="plan.sportPlan">
+        <view class="section-head">
+          <text class="section-title">{{ copy.venueTitle }}</text>
+          <text class="section-subtitle">{{ copy.venueSubtitle }}</text>
+        </view>
+        <view class="venue-header">
+          <view class="venue-copy">
+            <text class="venue-tag">{{ plan.sportPlan.sportLabel || copy.venueFallback }}</text>
+            <text class="venue-name">{{ plan.sportPlan.venueName || copy.venueWaiting }}</text>
+            <text class="venue-reason">{{ plan.sportPlan.recommendationReason }}</text>
+          </view>
+          <view class="venue-badge">
+            <text class="venue-badge-text">{{ plan.sportPlan.transportMode || copy.venueRouteLabel }}</text>
+          </view>
+        </view>
+        <view class="venue-meta" v-if="plan.sportPlan.venueName">
+          <view class="meta-pill" v-if="plan.sportPlan.venueDistanceMeters">
+            <text class="meta-pill-text">{{ plan.sportPlan.venueDistanceMeters }}m</text>
+          </view>
+          <view class="meta-pill" v-if="plan.sportPlan.routeDurationMinutes">
+            <text class="meta-pill-text">{{ plan.sportPlan.routeDurationMinutes }} min</text>
+          </view>
+          <view class="meta-pill" v-if="plan.sportPlan.routeDistanceMeters">
+            <text class="meta-pill-text">{{ plan.sportPlan.routeDistanceMeters }}m route</text>
+          </view>
+        </view>
+        <view class="venue-address-box" v-if="plan.sportPlan.venueAddress">
+          <text class="venue-address">{{ plan.sportPlan.venueAddress }}</text>
+        </view>
+        <view class="route-box" v-if="plan.sportPlan.routeSteps && plan.sportPlan.routeSteps.length">
+          <text class="route-title">{{ copy.routeTitle }}</text>
+          <view class="route-step" v-for="(step, index) in plan.sportPlan.routeSteps" :key="index">
+            <view class="route-dot"></view>
+            <text class="route-text">{{ step }}</text>
+          </view>
+        </view>
+        <view class="venue-actions">
+          <view class="ghost-btn small" v-if="plan.sportPlan.destinationLatitude && plan.sportPlan.destinationLongitude" @click="openSportVenue">
+            <text class="ghost-btn-text">{{ copy.venueOpenAction }}</text>
           </view>
         </view>
       </view>
@@ -200,6 +249,7 @@ const COPY = {
   composerTitle: '\u8865\u5145\u4eca\u65e5\u60c5\u51b5',
   composerSubtitle: '\u8ba9 Agent \u6839\u636e\u4f60\u5f53\u4e0b\u7684\u8282\u594f\u91cd\u6392\u4efb\u52a1',
   notePlaceholder: '\u4f8b\u5982\uff1a\u4eca\u5929\u8d76\u8bfe\uff0c\u5e0c\u671b\u5148\u5b8c\u6210\u4f4e\u6469\u64e6\u7684\u884c\u52a8',
+  captureLocation: '\u83b7\u53d6\u5f53\u524d\u4f4d\u7f6e',
   refreshAction: '\u5237\u65b0\u6700\u65b0\u72b6\u6001',
   generateAction: '\u751f\u6210\u65b0\u8ba1\u5212',
   loadingText: '\u52a0\u8f7d\u4e2d...',
@@ -216,6 +266,13 @@ const COPY = {
   evidenceTitle: '\u51b3\u7b56\u4f9d\u636e',
   evidenceSubtitle: '\u8ba9\u4f60\u770b\u5230 Agent \u5f53\u524d\u8bfb\u53d6\u4e86\u54ea\u4e9b\u4fe1\u606f',
   progressTitle: '\u6267\u884c\u8fdb\u5ea6',
+  venueTitle: '\u9644\u8fd1\u8fd0\u52a8\u573a\u5730',
+  venueSubtitle: '\u5982\u679c\u4f60\u60f3\u53bb\u8fd0\u52a8\uff0cAgent \u4f1a\u5e2e\u4f60\u627e\u9644\u8fd1\u5408\u9002\u7684\u573a\u5730',
+  venueFallback: '\u8fd0\u52a8\u8ba1\u5212',
+  venueWaiting: '\u6b63\u5728\u51c6\u5907\u573a\u5730\u63a8\u8350',
+  venueRouteLabel: '\u6b65\u884c',
+  venueOpenAction: '\u53bb\u8fd9\u91cc',
+  routeTitle: '\u8def\u5f84\u8981\u70b9',
   progressDone: '\u5df2\u5b8c\u6210',
   progressActive: '\u6267\u884c\u4e2d',
   progressPending: '\u5f85\u5904\u7406',
@@ -225,7 +282,15 @@ const COPY = {
   finishRejected: '\u6682\u672a\u68c0\u6d4b\u5230\u5b8c\u6210\u7ed3\u679c',
   skipSuccess: '\u5df2\u8df3\u8fc7\u8fd9\u4e00\u6b65',
   requestError: '\u64cd\u4f5c\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
-  loginHint: '\u8bf7\u5148\u767b\u5f55'
+  loginHint: '\u8bf7\u5148\u767b\u5f55',
+  locationHint: '\u672a\u83b7\u53d6\u5230\u4f4d\u7f6e\uff0c\u573a\u5730\u63a8\u8350\u53ef\u80fd\u4e0d\u51c6',
+  locationReady: '\u5df2\u83b7\u53d6\u4f4d\u7f6e',
+  locationEmpty: '\u672a\u83b7\u53d6\u4f4d\u7f6e\uff0c\u573a\u5730\u63a8\u8350\u4f1a\u53d7\u5f71\u54cd',
+  locationDeniedTitle: '\u9700\u8981\u4f4d\u7f6e\u6388\u6743',
+  locationDeniedContent: '\u8bf7\u5728\u8bbe\u7f6e\u4e2d\u5141\u8bb8\u4f4d\u7f6e\u6743\u9650\uff0cAgent \u624d\u80fd\u4e3a\u4f60\u641c\u7d22\u9644\u8fd1\u573a\u5730',
+  openSettingConfirm: '\u53bb\u8bbe\u7f6e',
+  openSettingCancel: '\u7a0d\u540e',
+  openLocationError: '\u6253\u5f00\u8def\u7ebf\u89c4\u5212\u5931\u8d25'
 };
 
 const QUICK_NOTES = [
@@ -240,6 +305,7 @@ function createEmptyPlan() {
     sessionId: '',
     sessionStatus: 'idle',
     currentActionId: '',
+    sportPlan: null,
     summary: {
       title: '\u4eca\u65e5\u884c\u52a8\u5de5\u4f5c\u53f0',
       reason: '\u6b63\u5728\u8bfb\u53d6\u4f60\u7684\u4efb\u52a1\u3001\u5065\u5eb7\u548c\u8fdb\u5ea6\u6570\u636e',
@@ -262,6 +328,7 @@ export default {
       userId: '',
       userNote: '',
       loading: false,
+      currentLocation: null,
       plan: createEmptyPlan()
     };
   },
@@ -270,7 +337,7 @@ export default {
   },
   onShow() {
     this.userId = uni.getStorageSync('username') || this.userId;
-    this.fetchPlan('');
+    this.fetchPlan(this.userNote.trim());
   },
   computed: {
     preferenceEvidence() {
@@ -320,10 +387,16 @@ export default {
         return '\u5148\u5b8c\u6210\u5f53\u524d\u6b63\u5728\u6267\u884c\u7684\u8fd9\u4e00\u6b65';
       }
       return '\u6309\u65f6\u95f4\u8f74\u81ea\u4e0a\u800c\u4e0b\u6267\u884c\uff0c\u5b8c\u6210\u540e Agent \u4f1a\u91cd\u6392';
+    },
+    locationLabel() {
+      if (this.currentLocation && typeof this.currentLocation.latitude === 'number' && typeof this.currentLocation.longitude === 'number') {
+        return `${COPY.locationReady}: ${this.currentLocation.latitude.toFixed(4)}, ${this.currentLocation.longitude.toFixed(4)}`;
+      }
+      return COPY.locationEmpty;
     }
   },
   methods: {
-    async fetchPlan(note) {
+    async fetchPlan(note, location = this.currentLocation) {
       if (!this.userId) {
         uni.showToast({ title: COPY.loginHint, icon: 'none' });
         return;
@@ -332,7 +405,12 @@ export default {
       try {
         const requestNote = typeof note === 'string' ? note : this.userNote;
         const result = requestNote
-          ? await getAgentPlan(this.userId, requestNote)
+          ? await getAgentPlan(
+            this.userId,
+            requestNote,
+            location && typeof location.latitude === 'number' ? location.latitude : null,
+            location && typeof location.longitude === 'number' ? location.longitude : null
+          )
           : await getAgentBrief(this.userId);
         this.plan = this.normalizePlan(result);
       } catch (error) {
@@ -357,6 +435,7 @@ export default {
       }
       nextPlan.actions = Array.isArray(result.actions) ? result.actions : [];
       nextPlan.evidence = Array.isArray(result.evidence) ? result.evidence : [];
+      nextPlan.sportPlan = result.sportPlan && typeof result.sportPlan === 'object' ? result.sportPlan : null;
       return nextPlan;
     },
     appendQuickNote(note) {
@@ -370,8 +449,10 @@ export default {
       }
       this.userNote = `${current}\uff0c${note}`;
     },
-    submitNotePlan() {
-      this.fetchPlan(this.userNote.trim());
+    async submitNotePlan() {
+      const note = this.userNote.trim();
+      const location = await this.ensureLocationForNote(note);
+      this.fetchPlan(note, location);
     },
     openAction(action) {
       if (!action || !action.actionPath) {
@@ -389,7 +470,14 @@ export default {
       }
       this.loading = true;
       try {
-        const result = await startAgentAction(this.userId, this.plan.sessionId, action.id, '');
+        const result = await startAgentAction(
+          this.userId,
+          this.plan.sessionId,
+          action.id,
+          '',
+          this.currentLocation && typeof this.currentLocation.latitude === 'number' ? this.currentLocation.latitude : null,
+          this.currentLocation && typeof this.currentLocation.longitude === 'number' ? this.currentLocation.longitude : null
+        );
         this.plan = this.normalizePlan(result);
         uni.showToast({ title: COPY.startSuccess, icon: 'success' });
         if (action.actionPath) {
@@ -413,7 +501,9 @@ export default {
           this.userId,
           this.plan.sessionId,
           action.id,
-          '\u7528\u6237\u5728\u524d\u7aef\u786e\u8ba4\u5df2\u5b8c\u6210\u8be5\u6b65'
+          '\u7528\u6237\u5728\u524d\u7aef\u786e\u8ba4\u5df2\u5b8c\u6210\u8be5\u6b65',
+          this.currentLocation && typeof this.currentLocation.latitude === 'number' ? this.currentLocation.latitude : null,
+          this.currentLocation && typeof this.currentLocation.longitude === 'number' ? this.currentLocation.longitude : null
         );
         this.plan = this.normalizePlan(result);
         const nextAction = this.findActionById(this.plan.actions, action.id);
@@ -439,7 +529,9 @@ export default {
           this.userId,
           this.plan.sessionId,
           action.id,
-          '\u7528\u6237\u5728\u524d\u7aef\u9009\u62e9\u8df3\u8fc7\u8be5\u6b65'
+          '\u7528\u6237\u5728\u524d\u7aef\u9009\u62e9\u8df3\u8fc7\u8be5\u6b65',
+          this.currentLocation && typeof this.currentLocation.latitude === 'number' ? this.currentLocation.latitude : null,
+          this.currentLocation && typeof this.currentLocation.longitude === 'number' ? this.currentLocation.longitude : null
         );
         this.plan = this.normalizePlan(result);
         uni.showToast({ title: COPY.skipSuccess, icon: 'success' });
@@ -458,6 +550,103 @@ export default {
     isClaimAction(action) {
       const taskCode = action && action.taskCode ? action.taskCode : '';
       return taskCode === 'MAINTAIN_WALK' || taskCode === 'MAINTAIN_INDOOR' || !taskCode;
+    },
+    shouldRequestLocation(note) {
+      if (!note) {
+        return false;
+      }
+      return /\u8dd1\u6b65|\u591c\u8dd1|\u6563\u6b65|\u7bee\u7403|\u7fbd\u6bdb\u7403|\u8db3\u7403|\u6e38\u6cf3|\u7f51\u7403|\u4e52\u4e53\u7403|\u5065\u8eab|\u9a91\u884c|\u9a91\u8f66/.test(note);
+    },
+    ensureLocationForNote(note) {
+      if (!this.shouldRequestLocation(note)) {
+        return Promise.resolve(this.currentLocation);
+      }
+      if (this.currentLocation && typeof this.currentLocation.latitude === 'number' && typeof this.currentLocation.longitude === 'number') {
+        return Promise.resolve(this.currentLocation);
+      }
+      return this.captureLocation(false);
+    },
+    captureLocation(showSuccess = true) {
+      return new Promise((resolve) => {
+        uni.getLocation({
+          type: 'gcj02',
+          success: (res) => {
+            this.currentLocation = {
+              latitude: Number(res.latitude),
+              longitude: Number(res.longitude)
+            };
+            if (showSuccess) {
+              uni.showToast({ title: COPY.locationReady, icon: 'success' });
+            }
+            resolve(this.currentLocation);
+          },
+          fail: (err) => {
+            console.error('getLocation failed', err);
+            this.currentLocation = null;
+            const message = err && err.errMsg ? String(err.errMsg) : '';
+            if (message.indexOf('auth deny') !== -1 || message.indexOf('authorize') !== -1 || message.indexOf('auth denied') !== -1) {
+              this.promptLocationPermission(resolve);
+              return;
+            }
+            uni.showToast({ title: COPY.locationHint, icon: 'none' });
+            resolve(null);
+          }
+        });
+      });
+    },
+    promptLocationPermission(resolve) {
+      uni.showModal({
+        title: COPY.locationDeniedTitle,
+        content: COPY.locationDeniedContent,
+        confirmText: COPY.openSettingConfirm,
+        cancelText: COPY.openSettingCancel,
+        success: (modalRes) => {
+          if (!modalRes.confirm) {
+            resolve(null);
+            return;
+          }
+          uni.openSetting({
+            success: (settingRes) => {
+              const authSetting = settingRes && settingRes.authSetting ? settingRes.authSetting : {};
+              if (authSetting['scope.userLocation']) {
+                this.captureLocation(false).then(resolve);
+                return;
+              }
+              uni.showToast({ title: COPY.locationHint, icon: 'none' });
+              resolve(null);
+            },
+            fail: () => {
+              uni.showToast({ title: COPY.locationHint, icon: 'none' });
+              resolve(null);
+            }
+          });
+        },
+        fail: () => {
+          resolve(null);
+        }
+      });
+    },
+    openSportVenue() {
+      const sportPlan = this.plan && this.plan.sportPlan ? this.plan.sportPlan : null;
+      if (!sportPlan || typeof sportPlan.destinationLatitude !== 'number' || typeof sportPlan.destinationLongitude !== 'number') {
+        return;
+      }
+      const routePlan = {
+        ...sportPlan,
+        originLatitude: typeof sportPlan.originLatitude === 'number'
+          ? sportPlan.originLatitude
+          : (this.currentLocation && typeof this.currentLocation.latitude === 'number' ? this.currentLocation.latitude : null),
+        originLongitude: typeof sportPlan.originLongitude === 'number'
+          ? sportPlan.originLongitude
+          : (this.currentLocation && typeof this.currentLocation.longitude === 'number' ? this.currentLocation.longitude : null)
+      };
+      uni.setStorageSync('agent_route_plan', routePlan);
+      uni.navigateTo({
+        url: '/pages/agentRoute/agentRoute',
+        fail: () => {
+          uni.showToast({ title: COPY.openLocationError, icon: 'none' });
+        }
+      });
     }
   }
 };
@@ -491,6 +680,7 @@ export default {
 .hero-card,
 .progress-card,
 .composer-card,
+.venue-card,
 .actions-card,
 .evidence-card {
   margin-bottom: 24rpx;
@@ -512,6 +702,124 @@ export default {
   font-size: 22rpx;
   letter-spacing: 2rpx;
   opacity: 0.85;
+}
+
+.venue-card {
+  background: linear-gradient(145deg, rgba(243, 250, 244, 0.96), rgba(227, 242, 230, 0.92));
+}
+
+.venue-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.venue-copy {
+  flex: 1;
+}
+
+.venue-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(63, 140, 87, 0.14);
+  color: #2f7d4c;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.venue-name {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #214d33;
+  line-height: 1.35;
+}
+
+.venue-reason {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #547064;
+}
+
+.venue-badge {
+  align-self: flex-start;
+  padding: 16rpx 18rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.venue-badge-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #2f7d4c;
+}
+
+.venue-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.venue-address-box {
+  margin-top: 18rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.venue-address {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #3c5d49;
+}
+
+.route-box {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.route-title {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #2d6d43;
+}
+
+.route-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin-top: 16rpx;
+}
+
+.route-dot {
+  width: 12rpx;
+  height: 12rpx;
+  margin-top: 12rpx;
+  border-radius: 50%;
+  background: #56a26c;
+  flex-shrink: 0;
+}
+
+.route-text {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #496655;
+}
+
+.venue-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22rpx;
 }
 
 .hero-title {
@@ -548,6 +856,20 @@ export default {
   font-size: 22rpx;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.88);
+}
+
+.location-bar {
+  margin-top: 18rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 22rpx;
+  background: rgba(236, 244, 237, 0.9);
+}
+
+.location-text {
+  display: block;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #547064;
 }
 
 .metric-chip {

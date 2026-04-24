@@ -102,25 +102,34 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.plan.actions.length
-  var l0 = g0
+  var g0 = _vm.plan.sportPlan
+    ? _vm.plan.sportPlan.routeSteps && _vm.plan.sportPlan.routeSteps.length
+    : null
+  var g1 = _vm.plan.actions.length
+  var l0 = g1
     ? _vm.__map(_vm.plan.actions, function (action, __i1__) {
         var $orig = _vm.__get_orig(action)
-        var g1 = _vm.plan.actions.length
+        var g2 = _vm.plan.actions.length
         return {
           $orig: $orig,
-          g1: g1,
+          g2: g2,
         }
       })
     : null
-  var g2 = _vm.plan.evidence.length
+  var g3 = _vm.plan.evidence.length
+  if (!_vm._isMounted) {
+    _vm.e0 = function ($event) {
+      _vm.fetchPlan(_vm.userNote.trim())
+    }
+  }
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
+        g1: g1,
         l0: l0,
-        g2: g2,
+        g3: g3,
       },
     }
   )
@@ -181,6 +190,7 @@ var COPY = {
   composerTitle: "\u8865\u5145\u4ECA\u65E5\u60C5\u51B5",
   composerSubtitle: "\u8BA9 Agent \u6839\u636E\u4F60\u5F53\u4E0B\u7684\u8282\u594F\u91CD\u6392\u4EFB\u52A1",
   notePlaceholder: "\u4F8B\u5982\uFF1A\u4ECA\u5929\u8D76\u8BFE\uFF0C\u5E0C\u671B\u5148\u5B8C\u6210\u4F4E\u6469\u64E6\u7684\u884C\u52A8",
+  captureLocation: "\u83B7\u53D6\u5F53\u524D\u4F4D\u7F6E",
   refreshAction: "\u5237\u65B0\u6700\u65B0\u72B6\u6001",
   generateAction: "\u751F\u6210\u65B0\u8BA1\u5212",
   loadingText: "\u52A0\u8F7D\u4E2D...",
@@ -197,6 +207,13 @@ var COPY = {
   evidenceTitle: "\u51B3\u7B56\u4F9D\u636E",
   evidenceSubtitle: "\u8BA9\u4F60\u770B\u5230 Agent \u5F53\u524D\u8BFB\u53D6\u4E86\u54EA\u4E9B\u4FE1\u606F",
   progressTitle: "\u6267\u884C\u8FDB\u5EA6",
+  venueTitle: "\u9644\u8FD1\u8FD0\u52A8\u573A\u5730",
+  venueSubtitle: "\u5982\u679C\u4F60\u60F3\u53BB\u8FD0\u52A8\uFF0CAgent \u4F1A\u5E2E\u4F60\u627E\u9644\u8FD1\u5408\u9002\u7684\u573A\u5730",
+  venueFallback: "\u8FD0\u52A8\u8BA1\u5212",
+  venueWaiting: "\u6B63\u5728\u51C6\u5907\u573A\u5730\u63A8\u8350",
+  venueRouteLabel: "\u6B65\u884C",
+  venueOpenAction: "\u53BB\u8FD9\u91CC",
+  routeTitle: "\u8DEF\u5F84\u8981\u70B9",
   progressDone: "\u5DF2\u5B8C\u6210",
   progressActive: "\u6267\u884C\u4E2D",
   progressPending: "\u5F85\u5904\u7406",
@@ -206,7 +223,15 @@ var COPY = {
   finishRejected: "\u6682\u672A\u68C0\u6D4B\u5230\u5B8C\u6210\u7ED3\u679C",
   skipSuccess: "\u5DF2\u8DF3\u8FC7\u8FD9\u4E00\u6B65",
   requestError: "\u64CD\u4F5C\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5",
-  loginHint: "\u8BF7\u5148\u767B\u5F55"
+  loginHint: "\u8BF7\u5148\u767B\u5F55",
+  locationHint: "\u672A\u83B7\u53D6\u5230\u4F4D\u7F6E\uFF0C\u573A\u5730\u63A8\u8350\u53EF\u80FD\u4E0D\u51C6",
+  locationReady: "\u5DF2\u83B7\u53D6\u4F4D\u7F6E",
+  locationEmpty: "\u672A\u83B7\u53D6\u4F4D\u7F6E\uFF0C\u573A\u5730\u63A8\u8350\u4F1A\u53D7\u5F71\u54CD",
+  locationDeniedTitle: "\u9700\u8981\u4F4D\u7F6E\u6388\u6743",
+  locationDeniedContent: "\u8BF7\u5728\u8BBE\u7F6E\u4E2D\u5141\u8BB8\u4F4D\u7F6E\u6743\u9650\uFF0CAgent \u624D\u80FD\u4E3A\u4F60\u641C\u7D22\u9644\u8FD1\u573A\u5730",
+  openSettingConfirm: "\u53BB\u8BBE\u7F6E",
+  openSettingCancel: "\u7A0D\u540E",
+  openLocationError: "\u6253\u5F00\u8DEF\u7EBF\u89C4\u5212\u5931\u8D25"
 };
 var QUICK_NOTES = ["\u4ECA\u5929\u8D76\u8BFE", "\u5148\u505A\u6700\u7701\u529B\u7684", "\u4ECA\u5929\u60F3\u8865\u6B65\u6570", "\u5E0C\u671B\u987A\u4FBF\u517C\u987E\u5065\u5EB7"];
 function createEmptyPlan() {
@@ -214,6 +239,7 @@ function createEmptyPlan() {
     sessionId: '',
     sessionStatus: 'idle',
     currentActionId: '',
+    sportPlan: null,
     summary: {
       title: "\u4ECA\u65E5\u884C\u52A8\u5DE5\u4F5C\u53F0",
       reason: "\u6B63\u5728\u8BFB\u53D6\u4F60\u7684\u4EFB\u52A1\u3001\u5065\u5EB7\u548C\u8FDB\u5EA6\u6570\u636E",
@@ -235,6 +261,7 @@ var _default = {
       userId: '',
       userNote: '',
       loading: false,
+      currentLocation: null,
       plan: createEmptyPlan()
     };
   },
@@ -243,7 +270,7 @@ var _default = {
   },
   onShow: function onShow() {
     this.userId = uni.getStorageSync('username') || this.userId;
-    this.fetchPlan('');
+    this.fetchPlan(this.userNote.trim());
   },
   computed: {
     preferenceEvidence: function preferenceEvidence() {
@@ -299,19 +326,27 @@ var _default = {
         return "\u5148\u5B8C\u6210\u5F53\u524D\u6B63\u5728\u6267\u884C\u7684\u8FD9\u4E00\u6B65";
       }
       return "\u6309\u65F6\u95F4\u8F74\u81EA\u4E0A\u800C\u4E0B\u6267\u884C\uFF0C\u5B8C\u6210\u540E Agent \u4F1A\u91CD\u6392";
+    },
+    locationLabel: function locationLabel() {
+      if (this.currentLocation && typeof this.currentLocation.latitude === 'number' && typeof this.currentLocation.longitude === 'number') {
+        return "".concat(COPY.locationReady, ": ").concat(this.currentLocation.latitude.toFixed(4), ", ").concat(this.currentLocation.longitude.toFixed(4));
+      }
+      return COPY.locationEmpty;
     }
   },
   methods: {
     fetchPlan: function fetchPlan(note) {
-      var _this = this;
+      var _arguments = arguments,
+        _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var requestNote, result;
+        var location, requestNote, result;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
+                location = _arguments.length > 1 && _arguments[1] !== undefined ? _arguments[1] : _this.currentLocation;
                 if (_this.userId) {
-                  _context.next = 3;
+                  _context.next = 4;
                   break;
                 }
                 uni.showToast({
@@ -319,47 +354,47 @@ var _default = {
                   icon: 'none'
                 });
                 return _context.abrupt("return");
-              case 3:
+              case 4:
                 _this.loading = true;
-                _context.prev = 4;
+                _context.prev = 5;
                 requestNote = typeof note === 'string' ? note : _this.userNote;
                 if (!requestNote) {
-                  _context.next = 12;
+                  _context.next = 13;
                   break;
                 }
-                _context.next = 9;
-                return (0, _request.getAgentPlan)(_this.userId, requestNote);
-              case 9:
+                _context.next = 10;
+                return (0, _request.getAgentPlan)(_this.userId, requestNote, location && typeof location.latitude === 'number' ? location.latitude : null, location && typeof location.longitude === 'number' ? location.longitude : null);
+              case 10:
                 _context.t0 = _context.sent;
-                _context.next = 15;
+                _context.next = 16;
                 break;
-              case 12:
-                _context.next = 14;
+              case 13:
+                _context.next = 15;
                 return (0, _request.getAgentBrief)(_this.userId);
-              case 14:
-                _context.t0 = _context.sent;
               case 15:
+                _context.t0 = _context.sent;
+              case 16:
                 result = _context.t0;
                 _this.plan = _this.normalizePlan(result);
-                _context.next = 22;
+                _context.next = 23;
                 break;
-              case 19:
-                _context.prev = 19;
-                _context.t1 = _context["catch"](4);
+              case 20:
+                _context.prev = 20;
+                _context.t1 = _context["catch"](5);
                 uni.showToast({
                   title: COPY.requestError,
                   icon: 'none'
                 });
-              case 22:
-                _context.prev = 22;
+              case 23:
+                _context.prev = 23;
                 _this.loading = false;
-                return _context.finish(22);
-              case 25:
+                return _context.finish(23);
+              case 26:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[4, 19, 22, 25]]);
+        }, _callee, null, [[5, 20, 23, 26]]);
       }))();
     },
     normalizePlan: function normalizePlan(result) {
@@ -375,6 +410,7 @@ var _default = {
       }
       nextPlan.actions = Array.isArray(result.actions) ? result.actions : [];
       nextPlan.evidence = Array.isArray(result.evidence) ? result.evidence : [];
+      nextPlan.sportPlan = result.sportPlan && (0, _typeof2.default)(result.sportPlan) === 'object' ? result.sportPlan : null;
       return nextPlan;
     },
     appendQuickNote: function appendQuickNote(note) {
@@ -389,7 +425,26 @@ var _default = {
       this.userNote = "".concat(current, "\uFF0C").concat(note);
     },
     submitNotePlan: function submitNotePlan() {
-      this.fetchPlan(this.userNote.trim());
+      var _this2 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+        var note, location;
+        return _regenerator.default.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                note = _this2.userNote.trim();
+                _context2.next = 3;
+                return _this2.ensureLocationForNote(note);
+              case 3:
+                location = _context2.sent;
+                _this2.fetchPlan(note, location);
+              case 5:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2);
+      }))();
     },
     openAction: function openAction(action) {
       if (!action || !action.actionPath) {
@@ -406,60 +461,9 @@ var _default = {
       });
     },
     startAction: function startAction(action) {
-      var _this2 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
-        var result;
-        return _regenerator.default.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                if (!(!action || !action.id || !_this2.plan.sessionId)) {
-                  _context2.next = 2;
-                  break;
-                }
-                return _context2.abrupt("return");
-              case 2:
-                _this2.loading = true;
-                _context2.prev = 3;
-                _context2.next = 6;
-                return (0, _request.startAgentAction)(_this2.userId, _this2.plan.sessionId, action.id, '');
-              case 6:
-                result = _context2.sent;
-                _this2.plan = _this2.normalizePlan(result);
-                uni.showToast({
-                  title: COPY.startSuccess,
-                  icon: 'success'
-                });
-                if (action.actionPath) {
-                  setTimeout(function () {
-                    _this2.openAction(action);
-                  }, 160);
-                }
-                _context2.next = 15;
-                break;
-              case 12:
-                _context2.prev = 12;
-                _context2.t0 = _context2["catch"](3);
-                uni.showToast({
-                  title: COPY.requestError,
-                  icon: 'none'
-                });
-              case 15:
-                _context2.prev = 15;
-                _this2.loading = false;
-                return _context2.finish(15);
-              case 18:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, null, [[3, 12, 15, 18]]);
-      }))();
-    },
-    completeAction: function completeAction(action) {
       var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var result, nextAction, toastTitle;
+        var result;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -473,22 +477,18 @@ var _default = {
                 _this3.loading = true;
                 _context3.prev = 3;
                 _context3.next = 6;
-                return (0, _request.completeAgentAction)(_this3.userId, _this3.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u786E\u8BA4\u5DF2\u5B8C\u6210\u8BE5\u6B65");
+                return (0, _request.startAgentAction)(_this3.userId, _this3.plan.sessionId, action.id, '', _this3.currentLocation && typeof _this3.currentLocation.latitude === 'number' ? _this3.currentLocation.latitude : null, _this3.currentLocation && typeof _this3.currentLocation.longitude === 'number' ? _this3.currentLocation.longitude : null);
               case 6:
                 result = _context3.sent;
                 _this3.plan = _this3.normalizePlan(result);
-                nextAction = _this3.findActionById(_this3.plan.actions, action.id);
-                if (nextAction && nextAction.status === 'completed') {
-                  toastTitle = _this3.isClaimAction(nextAction) ? COPY.finishClaimed : COPY.finishSuccess;
-                  uni.showToast({
-                    title: toastTitle,
-                    icon: 'success'
-                  });
-                } else {
-                  uni.showToast({
-                    title: COPY.finishRejected,
-                    icon: 'none'
-                  });
+                uni.showToast({
+                  title: COPY.startSuccess,
+                  icon: 'success'
+                });
+                if (action.actionPath) {
+                  setTimeout(function () {
+                    _this3.openAction(action);
+                  }, 160);
                 }
                 _context3.next = 15;
                 break;
@@ -511,10 +511,10 @@ var _default = {
         }, _callee3, null, [[3, 12, 15, 18]]);
       }))();
     },
-    skipAction: function skipAction(action) {
+    completeAction: function completeAction(action) {
       var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-        var result;
+        var result, nextAction, toastTitle;
         return _regenerator.default.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -528,33 +528,88 @@ var _default = {
                 _this4.loading = true;
                 _context4.prev = 3;
                 _context4.next = 6;
-                return (0, _request.skipAgentAction)(_this4.userId, _this4.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u9009\u62E9\u8DF3\u8FC7\u8BE5\u6B65");
+                return (0, _request.completeAgentAction)(_this4.userId, _this4.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u786E\u8BA4\u5DF2\u5B8C\u6210\u8BE5\u6B65", _this4.currentLocation && typeof _this4.currentLocation.latitude === 'number' ? _this4.currentLocation.latitude : null, _this4.currentLocation && typeof _this4.currentLocation.longitude === 'number' ? _this4.currentLocation.longitude : null);
               case 6:
                 result = _context4.sent;
                 _this4.plan = _this4.normalizePlan(result);
-                uni.showToast({
-                  title: COPY.skipSuccess,
-                  icon: 'success'
-                });
-                _context4.next = 14;
+                nextAction = _this4.findActionById(_this4.plan.actions, action.id);
+                if (nextAction && nextAction.status === 'completed') {
+                  toastTitle = _this4.isClaimAction(nextAction) ? COPY.finishClaimed : COPY.finishSuccess;
+                  uni.showToast({
+                    title: toastTitle,
+                    icon: 'success'
+                  });
+                } else {
+                  uni.showToast({
+                    title: COPY.finishRejected,
+                    icon: 'none'
+                  });
+                }
+                _context4.next = 15;
                 break;
-              case 11:
-                _context4.prev = 11;
+              case 12:
+                _context4.prev = 12;
                 _context4.t0 = _context4["catch"](3);
                 uni.showToast({
                   title: COPY.requestError,
                   icon: 'none'
                 });
-              case 14:
-                _context4.prev = 14;
+              case 15:
+                _context4.prev = 15;
                 _this4.loading = false;
-                return _context4.finish(14);
-              case 17:
+                return _context4.finish(15);
+              case 18:
               case "end":
                 return _context4.stop();
             }
           }
-        }, _callee4, null, [[3, 11, 14, 17]]);
+        }, _callee4, null, [[3, 12, 15, 18]]);
+      }))();
+    },
+    skipAction: function skipAction(action) {
+      var _this5 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
+        var result;
+        return _regenerator.default.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                if (!(!action || !action.id || !_this5.plan.sessionId)) {
+                  _context5.next = 2;
+                  break;
+                }
+                return _context5.abrupt("return");
+              case 2:
+                _this5.loading = true;
+                _context5.prev = 3;
+                _context5.next = 6;
+                return (0, _request.skipAgentAction)(_this5.userId, _this5.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u9009\u62E9\u8DF3\u8FC7\u8BE5\u6B65", _this5.currentLocation && typeof _this5.currentLocation.latitude === 'number' ? _this5.currentLocation.latitude : null, _this5.currentLocation && typeof _this5.currentLocation.longitude === 'number' ? _this5.currentLocation.longitude : null);
+              case 6:
+                result = _context5.sent;
+                _this5.plan = _this5.normalizePlan(result);
+                uni.showToast({
+                  title: COPY.skipSuccess,
+                  icon: 'success'
+                });
+                _context5.next = 14;
+                break;
+              case 11:
+                _context5.prev = 11;
+                _context5.t0 = _context5["catch"](3);
+                uni.showToast({
+                  title: COPY.requestError,
+                  icon: 'none'
+                });
+              case 14:
+                _context5.prev = 14;
+                _this5.loading = false;
+                return _context5.finish(14);
+              case 17:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, null, [[3, 11, 14, 17]]);
       }))();
     },
     findActionById: function findActionById(actions, actionId) {
@@ -568,6 +623,116 @@ var _default = {
     isClaimAction: function isClaimAction(action) {
       var taskCode = action && action.taskCode ? action.taskCode : '';
       return taskCode === 'MAINTAIN_WALK' || taskCode === 'MAINTAIN_INDOOR' || !taskCode;
+    },
+    shouldRequestLocation: function shouldRequestLocation(note) {
+      if (!note) {
+        return false;
+      }
+      return /\u8dd1\u6b65|\u591c\u8dd1|\u6563\u6b65|\u7bee\u7403|\u7fbd\u6bdb\u7403|\u8db3\u7403|\u6e38\u6cf3|\u7f51\u7403|\u4e52\u4e53\u7403|\u5065\u8eab|\u9a91\u884c|\u9a91\u8f66/.test(note);
+    },
+    ensureLocationForNote: function ensureLocationForNote(note) {
+      if (!this.shouldRequestLocation(note)) {
+        return Promise.resolve(this.currentLocation);
+      }
+      if (this.currentLocation && typeof this.currentLocation.latitude === 'number' && typeof this.currentLocation.longitude === 'number') {
+        return Promise.resolve(this.currentLocation);
+      }
+      return this.captureLocation(false);
+    },
+    captureLocation: function captureLocation() {
+      var _this6 = this;
+      var showSuccess = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+      return new Promise(function (resolve) {
+        uni.getLocation({
+          type: 'gcj02',
+          success: function success(res) {
+            _this6.currentLocation = {
+              latitude: Number(res.latitude),
+              longitude: Number(res.longitude)
+            };
+            if (showSuccess) {
+              uni.showToast({
+                title: COPY.locationReady,
+                icon: 'success'
+              });
+            }
+            resolve(_this6.currentLocation);
+          },
+          fail: function fail(err) {
+            console.error('getLocation failed', err);
+            _this6.currentLocation = null;
+            var message = err && err.errMsg ? String(err.errMsg) : '';
+            if (message.indexOf('auth deny') !== -1 || message.indexOf('authorize') !== -1 || message.indexOf('auth denied') !== -1) {
+              _this6.promptLocationPermission(resolve);
+              return;
+            }
+            uni.showToast({
+              title: COPY.locationHint,
+              icon: 'none'
+            });
+            resolve(null);
+          }
+        });
+      });
+    },
+    promptLocationPermission: function promptLocationPermission(resolve) {
+      var _this7 = this;
+      uni.showModal({
+        title: COPY.locationDeniedTitle,
+        content: COPY.locationDeniedContent,
+        confirmText: COPY.openSettingConfirm,
+        cancelText: COPY.openSettingCancel,
+        success: function success(modalRes) {
+          if (!modalRes.confirm) {
+            resolve(null);
+            return;
+          }
+          uni.openSetting({
+            success: function success(settingRes) {
+              var authSetting = settingRes && settingRes.authSetting ? settingRes.authSetting : {};
+              if (authSetting['scope.userLocation']) {
+                _this7.captureLocation(false).then(resolve);
+                return;
+              }
+              uni.showToast({
+                title: COPY.locationHint,
+                icon: 'none'
+              });
+              resolve(null);
+            },
+            fail: function fail() {
+              uni.showToast({
+                title: COPY.locationHint,
+                icon: 'none'
+              });
+              resolve(null);
+            }
+          });
+        },
+        fail: function fail() {
+          resolve(null);
+        }
+      });
+    },
+    openSportVenue: function openSportVenue() {
+      var sportPlan = this.plan && this.plan.sportPlan ? this.plan.sportPlan : null;
+      if (!sportPlan || typeof sportPlan.destinationLatitude !== 'number' || typeof sportPlan.destinationLongitude !== 'number') {
+        return;
+      }
+      var routePlan = _objectSpread(_objectSpread({}, sportPlan), {}, {
+        originLatitude: typeof sportPlan.originLatitude === 'number' ? sportPlan.originLatitude : this.currentLocation && typeof this.currentLocation.latitude === 'number' ? this.currentLocation.latitude : null,
+        originLongitude: typeof sportPlan.originLongitude === 'number' ? sportPlan.originLongitude : this.currentLocation && typeof this.currentLocation.longitude === 'number' ? this.currentLocation.longitude : null
+      });
+      uni.setStorageSync('agent_route_plan', routePlan);
+      uni.navigateTo({
+        url: '/pages/agentRoute/agentRoute',
+        fail: function fail() {
+          uni.showToast({
+            title: COPY.openLocationError,
+            icon: 'none'
+          });
+        }
+      });
     }
   }
 };

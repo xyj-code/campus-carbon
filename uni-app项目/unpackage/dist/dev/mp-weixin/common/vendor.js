@@ -12437,50 +12437,66 @@ var getAgentBrief = function getAgentBrief(userId) {
 exports.getAgentBrief = getAgentBrief;
 var getAgentPlan = function getAgentPlan(userId) {
   var userNote = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  var latitude = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+  var longitude = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
   return request('/ai/agent-plan', {
     method: 'POST',
     data: {
       userId: userId,
-      userNote: userNote
+      userNote: userNote,
+      latitude: latitude,
+      longitude: longitude
     }
   });
 };
 exports.getAgentPlan = getAgentPlan;
 var startAgentAction = function startAgentAction(userId, sessionId, actionId) {
   var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  var latitude = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  var longitude = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
   return request('/ai/agent-action/start', {
     method: 'POST',
     data: {
       userId: userId,
       sessionId: sessionId,
       actionId: actionId,
-      resultNote: resultNote
+      resultNote: resultNote,
+      latitude: latitude,
+      longitude: longitude
     }
   });
 };
 exports.startAgentAction = startAgentAction;
 var completeAgentAction = function completeAgentAction(userId, sessionId, actionId) {
   var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  var latitude = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  var longitude = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
   return request('/ai/agent-action/complete', {
     method: 'POST',
     data: {
       userId: userId,
       sessionId: sessionId,
       actionId: actionId,
-      resultNote: resultNote
+      resultNote: resultNote,
+      latitude: latitude,
+      longitude: longitude
     }
   });
 };
 exports.completeAgentAction = completeAgentAction;
 var skipAgentAction = function skipAgentAction(userId, sessionId, actionId) {
   var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  var latitude = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  var longitude = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
   return request('/ai/agent-action/skip', {
     method: 'POST',
     data: {
       userId: userId,
       sessionId: sessionId,
       actionId: actionId,
-      resultNote: resultNote
+      resultNote: resultNote,
+      latitude: latitude,
+      longitude: longitude
     }
   });
 };
@@ -12656,7 +12672,15 @@ exports.deleteHealthData = deleteHealthData;
 /* 122 */,
 /* 123 */,
 /* 124 */,
-/* 125 */
+/* 125 */,
+/* 126 */,
+/* 127 */,
+/* 128 */,
+/* 129 */,
+/* 130 */,
+/* 131 */,
+/* 132 */,
+/* 133 */
 /*!*******************************************************************!*\
   !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/carbonProject.js ***!
   \*******************************************************************/

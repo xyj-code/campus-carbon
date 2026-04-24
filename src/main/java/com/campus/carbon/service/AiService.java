@@ -14,6 +14,8 @@ public interface AiService {
 
     AgentBriefVO getAgentBrief(String userId, String userNote);
 
+    AgentBriefVO getAgentBrief(String userId, String userNote, Double latitude, Double longitude);
+
     AgentBriefVO startAgentAction(AgentActionRequest request);
 
     AgentBriefVO completeAgentAction(AgentActionRequest request);

@@ -18,6 +18,15 @@
     "setting": {
       "urlCheck": false
     },
+    "requiredPrivateInfos": [
+      "getLocation",
+      "chooseLocation"
+    ],
+    "permission": {
+      "scope.userLocation": {
+        "desc": "\u7528\u4e8e\u641c\u7d22\u9644\u8fd1\u8fd0\u52a8\u573a\u5730\u548c\u89c4\u5212\u8def\u7ebf"
+      }
+    },
     "usingComponents": true
   }
 }
