@@ -8,6 +8,7 @@
     "pages/aiSuggest/aiSuggest",
     "pages/agentDesk/agentDesk",
     "pages/agentRoute/agentRoute",
+    "pages/schedule/schedule",
     "pages/stepCount/stepCount",
     "pages/sportRecord/sportRecord",
     "pages/rank/rank",

@@ -23,6 +23,8 @@
 .hero-card.data-v-f033cf78,
 .progress-card.data-v-f033cf78,
 .composer-card.data-v-f033cf78,
+.schedule-card.data-v-f033cf78,
+.weather-card.data-v-f033cf78,
 .venue-card.data-v-f033cf78,
 .actions-card.data-v-f033cf78,
 .evidence-card.data-v-f033cf78 {
@@ -47,6 +49,131 @@
 }
 .venue-card.data-v-f033cf78 {
   background: linear-gradient(145deg, rgba(243, 250, 244, 0.96), rgba(227, 242, 230, 0.92));
+}
+.weather-card.data-v-f033cf78 {
+  background: linear-gradient(145deg, rgba(255, 252, 243, 0.96), rgba(235, 246, 238, 0.94));
+}
+.weather-card.weather-pending.data-v-f033cf78 {
+  background: linear-gradient(145deg, rgba(255, 250, 239, 0.96), rgba(246, 238, 224, 0.94));
+}
+.schedule-card.data-v-f033cf78 {
+  background: linear-gradient(145deg, rgba(245, 250, 255, 0.96), rgba(230, 243, 236, 0.94));
+}
+.schedule-main.data-v-f033cf78 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+.schedule-copy.data-v-f033cf78 {
+  flex: 1;
+}
+.schedule-tag.data-v-f033cf78 {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(46, 125, 50, 0.12);
+  color: #2f7d4c;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.schedule-title.data-v-f033cf78 {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #214d33;
+  line-height: 1.35;
+}
+.schedule-reason.data-v-f033cf78 {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #607263;
+}
+.schedule-count.data-v-f033cf78 {
+  min-width: 118rpx;
+  min-height: 102rpx;
+  padding: 16rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.schedule-count-value.data-v-f033cf78 {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #2f7d4c;
+}
+.schedule-count-label.data-v-f033cf78 {
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: #6f8778;
+}
+.schedule-meta.data-v-f033cf78 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+.weather-main.data-v-f033cf78 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+.weather-copy.data-v-f033cf78 {
+  flex: 1;
+}
+.weather-tag.data-v-f033cf78 {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(213, 139, 40, 0.12);
+  color: #a0641e;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.weather-title.data-v-f033cf78 {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #214d33;
+  line-height: 1.35;
+}
+.weather-reason.data-v-f033cf78 {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #607263;
+}
+.weather-temp.data-v-f033cf78 {
+  min-width: 118rpx;
+  min-height: 102rpx;
+  padding: 16rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.weather-temp-value.data-v-f033cf78 {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #2f7d4c;
+}
+.weather-meta.data-v-f033cf78 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
 }
 .venue-header.data-v-f033cf78 {
   display: flex;

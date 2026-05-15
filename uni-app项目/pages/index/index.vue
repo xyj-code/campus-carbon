@@ -142,7 +142,7 @@
           </view>
           <view class="agent-brief-points">
             <text class="agent-brief-points-value">+{{ agentBrief.summary.estimatedPoints }}</text>
-            <text class="agent-brief-points-label">pts</text>
+            <text class="agent-brief-points-label">积分</text>
           </view>
         </view>
         <view class="agent-brief-metrics">
@@ -164,7 +164,7 @@
             <view class="agent-action-copy">
               <text class="agent-action-tag">{{ action.priorityTag }}</text>
               <text class="agent-action-title">{{ action.title }}</text>
-              <text class="agent-action-meta">{{ action.durationMinutes }} min | {{ action.estimatedCarbonSaving }}g CO2</text>
+              <text class="agent-action-meta">{{ action.durationMinutes }} 分钟 | {{ action.estimatedCarbonSaving }}g CO2</text>
             </view>
             <text class="agent-action-arrow">{{ agentBrief.actionText }}</text>
           </view>
@@ -790,7 +790,12 @@ export default {
     async loadAgentBrief() {
       if (!this.stuNo) return;
       try {
-        const res = await getAgentBrief(this.stuNo);
+        const location = await this.resolveAuthorizedLocation();
+        const res = await getAgentBrief(
+          this.stuNo,
+          location && typeof location.latitude === 'number' ? location.latitude : null,
+          location && typeof location.longitude === 'number' ? location.longitude : null
+        );
         if (!res || typeof res !== 'object') {
           return;
         }
@@ -805,6 +810,30 @@ export default {
       } catch (error) {
         console.error('load agent brief failed', error);
       }
+    },
+    resolveAuthorizedLocation() {
+      return new Promise((resolve) => {
+        uni.getSetting({
+          success: (settingRes) => {
+            const authSetting = settingRes && settingRes.authSetting ? settingRes.authSetting : {};
+            if (!authSetting['scope.userLocation']) {
+              resolve(null);
+              return;
+            }
+            uni.getLocation({
+              type: 'gcj02',
+              success: (locationRes) => {
+                resolve({
+                  latitude: Number(locationRes.latitude),
+                  longitude: Number(locationRes.longitude)
+                });
+              },
+              fail: () => resolve(null)
+            });
+          },
+          fail: () => resolve(null)
+        });
+      });
     },
     async loadActivityPreview() {
       if (!this.stuNo) return;

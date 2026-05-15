@@ -11,13 +11,17 @@ import com.campus.carbon.model.HealthData;
 import com.campus.carbon.model.dto.AgentActionRequest;
 import com.campus.carbon.model.dto.AgentActionVO;
 import com.campus.carbon.model.dto.AgentBriefVO;
+import com.campus.carbon.model.dto.AgentScheduleVO;
 import com.campus.carbon.model.dto.AgentSportPlanVO;
 import com.campus.carbon.model.dto.AgentSummaryVO;
+import com.campus.carbon.model.dto.AgentWeatherVO;
 import com.campus.carbon.model.dto.TaskBoardItemVO;
 import com.campus.carbon.service.AiService;
 import com.campus.carbon.service.HealthDataService;
 import com.campus.carbon.service.MapVenueService;
+import com.campus.carbon.service.StudentScheduleService;
 import com.campus.carbon.service.TaskService;
+import com.campus.carbon.service.WeatherService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -119,6 +123,12 @@ public class AiServiceImpl implements AiService {
     @Autowired
     private MapVenueService mapVenueService;
 
+    @Autowired
+    private WeatherService weatherService;
+
+    @Autowired
+    private StudentScheduleService studentScheduleService;
+
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -190,11 +200,14 @@ public class AiServiceImpl implements AiService {
 
     private AgentBriefVO buildAgentBrief(String userId, String userNote, Double latitude, Double longitude, boolean allowRefresh) {
         AgentBriefVO brief = new AgentBriefVO();
+        AgentWeatherVO weather = weatherService.getCurrentWeather(latitude, longitude);
         String normalizedUserId = safeText(userId);
         if (normalizedUserId.isEmpty()) {
             brief.setSummary(createEmptySummary());
             brief.getEvidence().add("\u8bf7\u5148\u767b\u5f55\u540e\u518d\u751f\u6210\u4eca\u65e5\u884c\u52a8\u8ba1\u5212");
             brief.setSessionStatus("idle");
+            brief.setWeather(weather);
+            brief.setSchedule(studentScheduleService.getTodayContext(normalizedUserId));
             brief.setSportPlan(mapVenueService.buildSportPlan(userNote, latitude, longitude));
             return brief;
         }
@@ -207,10 +220,10 @@ public class AiServiceImpl implements AiService {
         }
         boolean rebuilt = false;
         if (allowRefresh && session.actions.isEmpty()) {
-            rebuildSessionPlan(session, true);
+            rebuildSessionPlan(session, true, weather);
             rebuilt = true;
         }
-        return createAgentBrief(session, !rebuilt, latitude, longitude);
+        return createAgentBrief(session, !rebuilt, latitude, longitude, weather);
     }
 
     private AgentBriefVO changeAgentActionState(AgentActionRequest request, String targetStatus) {
@@ -320,11 +333,16 @@ public class AiServiceImpl implements AiService {
     }
 
     private void rebuildSessionPlan(AgentRuntimeSession session, boolean resetExisting) {
+        rebuildSessionPlan(session, resetExisting, null);
+    }
+
+    private void rebuildSessionPlan(AgentRuntimeSession session, boolean resetExisting, AgentWeatherVO weather) {
         Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId);
         List<TaskBoardItemVO> allTasks = castTaskItems(taskBoard.get("allTasks"));
         List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
         AgentMemoryProfile memoryProfile = loadAgentMemoryProfile(session.userId, session.userNote);
-        AgentPreferenceProfile preferences = buildPlanningPreferences(session.userNote, memoryProfile);
+        AgentScheduleVO schedule = studentScheduleService.getTodayContext(session.userId);
+        AgentPreferenceProfile preferences = buildPlanningPreferences(session.userNote, memoryProfile, weather, schedule);
         List<AgentActionVO> baseActions = buildActionPlan(allTasks, healthDataList, preferences, memoryProfile);
         syncTaskCompletionState(session.actions, allTasks);
 
@@ -341,16 +359,22 @@ public class AiServiceImpl implements AiService {
     }
 
     private AgentBriefVO createAgentBrief(AgentRuntimeSession session, boolean allowRefresh, Double latitude, Double longitude) {
+        return createAgentBrief(session, allowRefresh, latitude, longitude, weatherService.getCurrentWeather(latitude, longitude));
+    }
+
+    private AgentBriefVO createAgentBrief(AgentRuntimeSession session, boolean allowRefresh, Double latitude, Double longitude, AgentWeatherVO weather) {
         if (session == null) {
             AgentBriefVO brief = new AgentBriefVO();
             brief.setSummary(createEmptySummary());
             brief.setSessionStatus("idle");
+            brief.setWeather(weather);
+            brief.setSchedule(null);
             brief.setSportPlan(mapVenueService.buildSportPlan("", latitude, longitude));
             return brief;
         }
 
         if (allowRefresh) {
-            rebuildSessionPlan(session, false);
+            rebuildSessionPlan(session, false, weather);
         } else {
             session.sessionStatus = resolveSessionStatus(session.actions);
             session.currentActionId = findCurrentActionId(session.actions);
@@ -359,7 +383,8 @@ public class AiServiceImpl implements AiService {
         Map<String, Object> taskBoard = taskService.getTaskBoard(session.userId);
         List<HealthData> healthDataList = healthDataService.getByUserId(session.userId);
         AgentMemoryProfile memoryProfile = loadAgentMemoryProfile(session.userId, session.userNote);
-        AgentPreferenceProfile preferences = buildPlanningPreferences(session.userNote, memoryProfile);
+        AgentScheduleVO schedule = studentScheduleService.getTodayContext(session.userId);
+        AgentPreferenceProfile preferences = buildPlanningPreferences(session.userNote, memoryProfile, weather, schedule);
         List<AgentActionVO> actions = prepareActionsForView(session.actions);
         AgentSummaryVO summary = buildSummary(taskBoard, healthDataList, preferences, actions);
         decorateSummary(summary, session, actions);
@@ -370,9 +395,17 @@ public class AiServiceImpl implements AiService {
         brief.setCurrentActionId(session.currentActionId);
         brief.setSummary(summary);
         brief.setActions(actions);
+        brief.setWeather(weather);
+        brief.setSchedule(schedule);
         AgentSportPlanVO sportPlan = mapVenueService.buildSportPlan(session.userNote, latitude, longitude);
         brief.setSportPlan(sportPlan);
         brief.setEvidence(buildAgentEvidence(taskBoard, healthDataList, preferences, memoryProfile, actions, session));
+        if (weather != null && !safeText(weather.getRecommendation()).isEmpty()) {
+            brief.getEvidence().add("\u5929\u6c14\u7ea6\u675f\uff1a" + weather.getRecommendation());
+        }
+        if (schedule != null && !safeText(schedule.getRecommendation()).isEmpty()) {
+            brief.getEvidence().add("\u8bfe\u8868\u8282\u594f\uff1a" + schedule.getRecommendation());
+        }
         if (sportPlan != null && !safeText(sportPlan.getRecommendationReason()).isEmpty()) {
             brief.getEvidence().add("\u8fd0\u52a8\u573a\u5730\uff1a" + sportPlan.getRecommendationReason());
         }
@@ -1539,14 +1572,79 @@ public class AiServiceImpl implements AiService {
     }
 
     private AgentPreferenceProfile buildPlanningPreferences(String userNote, AgentMemoryProfile memoryProfile) {
+        return buildPlanningPreferences(userNote, memoryProfile, null, null);
+    }
+
+    private AgentPreferenceProfile buildPlanningPreferences(String userNote, AgentMemoryProfile memoryProfile, AgentWeatherVO weather) {
+        return buildPlanningPreferences(userNote, memoryProfile, weather, null);
+    }
+
+    private AgentPreferenceProfile buildPlanningPreferences(String userNote, AgentMemoryProfile memoryProfile,
+                                                            AgentWeatherVO weather, AgentScheduleVO schedule) {
         AgentPreferenceProfile profile = parsePreferences(userNote);
         if (!profile.hasAnyNote() && memoryProfile.usingCarryOverNote()) {
             AgentPreferenceProfile carryOver = parsePreferences(memoryProfile.lastUserNote);
             if (carryOver.hasAnyNote()) {
+                applyWeatherContext(carryOver, weather);
+                applyScheduleContext(carryOver, schedule);
                 return carryOver;
             }
         }
+        applyWeatherContext(profile, weather);
+        applyScheduleContext(profile, schedule);
         return profile;
+    }
+
+    private void applyWeatherContext(AgentPreferenceProfile profile, AgentWeatherVO weather) {
+        if (profile == null || weather == null || !"ready".equals(safeText(weather.getStatus()))) {
+            return;
+        }
+        if (Boolean.TRUE.equals(weather.getIndoorPreferred())) {
+            profile.weatherIndoorPreferred = true;
+            profile.preferIndoor = true;
+            if (!profile.hasNote) {
+                profile.focusLabel = "\u5929\u6c14\u8c03\u6574";
+            }
+            return;
+        }
+        if (Boolean.TRUE.equals(weather.getOutdoorFriendly())) {
+            profile.weatherOutdoorFriendly = true;
+            if (!profile.hasNote) {
+                profile.focusLabel = "\u9002\u5408\u6237\u5916";
+            }
+        }
+    }
+
+    private void applyScheduleContext(AgentPreferenceProfile profile, AgentScheduleVO schedule) {
+        if (profile == null || schedule == null || !"ready".equals(safeText(schedule.getStatus()))) {
+            return;
+        }
+        String state = safeText(schedule.getState());
+        if ("in_class".equals(state) || "before_class".equals(state)) {
+            profile.scheduleTight = true;
+            profile.timeSensitive = true;
+            profile.preferEasy = true;
+            profile.avoidExercise = true;
+            if (!profile.hasNote) {
+                profile.focusLabel = "\u8bfe\u8868\u7d27\u51d1";
+            }
+            return;
+        }
+        if ("short_break".equals(state)) {
+            profile.scheduleShortBreak = true;
+            profile.timeSensitive = true;
+            profile.preferEasy = true;
+            if (!profile.hasNote) {
+                profile.focusLabel = "\u8bfe\u95f4\u77ed\u4efb\u52a1";
+            }
+            return;
+        }
+        if ("long_free".equals(state) || "after_class".equals(state) || "no_course".equals(state)) {
+            profile.scheduleLongFree = true;
+            if (!profile.hasNote) {
+                profile.focusLabel = "\u7a7a\u95f2\u53ef\u8fd0\u52a8";
+            }
+        }
     }
 
     private double scoreAction(AgentActionVO action, AgentPreferenceProfile preferences, AgentMemoryProfile memoryProfile) {
@@ -1562,11 +1660,27 @@ public class AiServiceImpl implements AiService {
         if (preferences.timeSensitive) {
             score += shortDurationBonus(action.getDurationMinutes());
         }
+        if (preferences.scheduleTight) {
+            score += isLowEffortAction(action.getTaskCode()) ? 70D : -45D;
+        }
+        if (preferences.scheduleShortBreak) {
+            score += shortDurationBonus(action.getDurationMinutes());
+            score += isWalkingAction(action.getTaskCode()) ? 12D : 0D;
+        }
+        if (preferences.scheduleLongFree && (preferences.wantExercise || preferences.wantSteps || preferences.weatherOutdoorFriendly)) {
+            score += isExerciseAction(action.getTaskCode()) ? 26D : 0D;
+        }
         if (preferences.preferEasy || preferences.energyLow) {
             score += isLowEffortAction(action.getTaskCode()) ? 45D : -18D;
         }
         if (preferences.preferIndoor) {
             score += isIndoorFriendlyAction(action.getTaskCode()) ? 48D : -26D;
+        }
+        if (preferences.weatherIndoorPreferred) {
+            score += isIndoorFriendlyAction(action.getTaskCode()) ? 64D : -34D;
+        }
+        if (preferences.weatherOutdoorFriendly && (preferences.wantExercise || preferences.wantSteps)) {
+            score += isExerciseAction(action.getTaskCode()) ? 18D : 0D;
         }
         if (preferences.preferPoints) {
             score += (action.getEstimatedPoints() == null ? 0 : action.getEstimatedPoints()) * 3D;
@@ -1647,6 +1761,27 @@ public class AiServiceImpl implements AiService {
 
     private String buildActionReason(TaskBoardItemVO item, AgentPreferenceProfile preferences) {
         String taskCode = item.getTaskCode();
+        if (preferences.scheduleTight && isLowEffortAction(taskCode)) {
+            return "\u8bfe\u8868\u663e\u793a\u4f60\u73b0\u5728\u6b63\u5728\u4e0a\u8bfe\u6216\u5373\u5c06\u4e0a\u8bfe\uff0cAgent \u4f18\u5148\u628a\u8fd9\u79cd\u77ed\u3001\u4e0d\u9700\u8fdc\u8ddd\u79bb\u79fb\u52a8\u7684\u52a8\u4f5c\u653e\u5230\u524d\u9762\u3002";
+        }
+        if (preferences.scheduleTight) {
+            return "\u8bfe\u8868\u65f6\u95f4\u8f83\u7d27\uff0cAgent \u4f1a\u964d\u4f4e\u8fdc\u8ddd\u79bb\u8fd0\u52a8\u4f18\u5148\u7ea7\uff0c\u8fd9\u4e00\u6b65\u4f5c\u4e3a\u540e\u7eed\u5019\u9009\u4fdd\u7559\u3002";
+        }
+        if (preferences.scheduleShortBreak && (isLowEffortAction(taskCode) || isWalkingAction(taskCode))) {
+            return "\u4eca\u5929\u8bfe\u95f4\u7a7a\u6863\u6709\u9650\uff0cAgent \u4f18\u5148\u9009\u4e86\u80fd\u5728\u6821\u56ed\u5185\u8f83\u5feb\u5b8c\u6210\u7684\u77ed\u52a8\u4f5c\u3002";
+        }
+        if (preferences.scheduleLongFree && isExerciseAction(taskCode)) {
+            return "\u4eca\u5929\u6709\u8f83\u5b8c\u6574\u7684\u7a7a\u95f2\u65f6\u95f4\uff0cAgent \u624d\u628a\u9700\u8981\u8f83\u591a\u884c\u8d70\u6216\u8fd0\u52a8\u6295\u5165\u7684\u52a8\u4f5c\u5f80\u524d\u63d0\u3002";
+        }
+        if (preferences.weatherIndoorPreferred && isIndoorFriendlyAction(taskCode)) {
+            return "\u5f53\u524d\u5929\u6c14\u66f4\u9002\u5408\u5ba4\u5185\u6216\u77ed\u65f6\u4efb\u52a1\uff0cAgent \u628a\u4e0d\u4f9d\u8d56\u6237\u5916\u8def\u7ebf\u7684\u52a8\u4f5c\u6392\u5728\u524d\u9762\u3002";
+        }
+        if (preferences.weatherIndoorPreferred && isExerciseAction(taskCode)) {
+            return "\u56e0\u4e3a\u5f53\u524d\u5929\u6c14\u5bf9\u6237\u5916\u8fd0\u52a8\u4e0d\u7406\u60f3\uff0cAgent \u4f1a\u5c06\u8fd9\u7c7b\u9ad8\u4f53\u529b\u6216\u6237\u5916\u52a8\u4f5c\u653e\u5230\u66f4\u9760\u540e\u7684\u987a\u4f4d\u3002";
+        }
+        if (preferences.weatherOutdoorFriendly && isExerciseAction(taskCode)) {
+            return "\u5f53\u524d\u5929\u6c14\u9002\u5408\u6237\u5916\u6d3b\u52a8\uff0cAgent \u628a\u80fd\u5e26\u6765\u5b9e\u9645\u6b65\u884c\u6216\u8fd0\u52a8\u91cf\u7684\u52a8\u4f5c\u5f80\u524d\u6392\u3002";
+        }
         if (preferences.preferPoints) {
             return "\u4f60\u8fd9\u6b21\u66f4\u60f3\u4f18\u5148\u62ff\u79ef\u5206\uff0c\u8fd9\u6761\u52a8\u4f5c\u5728\u5f53\u524d\u5019\u9009\u91cc\u5956\u52b1\u6bd4\u8f83\u9ad8\uff0c\u5b8c\u6210\u540e\u53cd\u9988\u6700\u76f4\u63a5\u3002";
         }
@@ -1678,6 +1813,21 @@ public class AiServiceImpl implements AiService {
         if (preferences.preferPoints) {
             return "\u4eca\u65e5\u6309\u62ff\u5206\u6548\u7387\u91cd\u6392\u8ba1\u5212";
         }
+        if (preferences.scheduleTight) {
+            return "\u4eca\u65e5\u6309\u8bfe\u8868\u5207\u5230\u77ed\u4efb\u52a1\u8ba1\u5212";
+        }
+        if (preferences.scheduleShortBreak) {
+            return "\u4eca\u65e5\u6309\u8bfe\u95f4\u7a7a\u6863\u6392\u77ed\u52a8\u4f5c";
+        }
+        if (preferences.scheduleLongFree) {
+            return "\u4eca\u65e5\u6709\u7a7a\u95f2\uff0c\u53ef\u5b89\u6392\u5b8c\u6574\u884c\u52a8";
+        }
+        if (preferences.weatherIndoorPreferred) {
+            return "\u4eca\u65e5\u6309\u5929\u6c14\u5207\u5230\u5ba4\u5185\u4f18\u5148\u8ba1\u5212";
+        }
+        if (preferences.weatherOutdoorFriendly) {
+            return "\u4eca\u65e5\u5929\u6c14\u9002\u5408\u6237\u5916\u884c\u52a8";
+        }
         if (preferences.timeSensitive) {
             return "\u4eca\u65e5\u5148\u7ed9\u4f60\u4e00\u4e2a\u8d76\u65f6\u95f4\u7248\u8ba1\u5212";
         }
@@ -1698,6 +1848,10 @@ public class AiServiceImpl implements AiService {
 
     private String buildPreferenceReason(AgentPreferenceProfile preferences, List<AgentActionVO> actions) {
         String focus = actions.isEmpty() ? "\u5f53\u524d\u52a8\u4f5c" : actions.get(0).getTitle();
+        if (preferences.weatherIndoorPreferred || preferences.weatherOutdoorFriendly || preferences.hasScheduleContext()) {
+            return "\u7ed3\u5408\u5f53\u524d\u5929\u6c14\u548c\u8bfe\u8868\u8282\u594f\uff0cAgent \u5df2\u628a\u300c" + preferences.describeAppliedPreferences()
+                    + "\u300d\u7eb3\u5165\u6392\u5e8f\uff0c\u73b0\u5728\u6700\u4f18\u5148\u7684\u52a8\u4f5c\u662f\uff1a" + focus + "\u3002";
+        }
         return "\u8bfb\u53d6\u5230\u4f60\u7684\u504f\u597d\u540e\uff0cAgent \u5df2\u6539\u7528\u300c" + preferences.describeAppliedPreferences()
                 + "\u300d\u8fd9\u5957\u7b56\u7565\u91cd\u6392\u987a\u5e8f\uff0c\u73b0\u5728\u6700\u4f18\u5148\u7684\u52a8\u4f5c\u662f\uff1a" + focus + "\u3002";
     }
@@ -1816,6 +1970,11 @@ public class AiServiceImpl implements AiService {
         private boolean wantSteps;
         private boolean avoidExercise;
         private boolean healthFirst;
+        private boolean weatherIndoorPreferred;
+        private boolean weatherOutdoorFriendly;
+        private boolean scheduleTight;
+        private boolean scheduleShortBreak;
+        private boolean scheduleLongFree;
         private String focusLabel = "\u5df2\u91cd\u6392";
 
         private boolean hasAnyNote() {
@@ -1831,7 +1990,16 @@ public class AiServiceImpl implements AiService {
                     || wantExercise
                     || wantSteps
                     || avoidExercise
-                    || healthFirst;
+                    || healthFirst
+                    || weatherIndoorPreferred
+                    || weatherOutdoorFriendly
+                    || scheduleTight
+                    || scheduleShortBreak
+                    || scheduleLongFree;
+        }
+
+        private boolean hasScheduleContext() {
+            return scheduleTight || scheduleShortBreak || scheduleLongFree;
         }
 
         private String describeAppliedPreferences() {
@@ -1859,6 +2027,21 @@ public class AiServiceImpl implements AiService {
             }
             if (healthFirst) {
                 labels.add("\u5065\u5eb7\u4f18\u5148");
+            }
+            if (weatherIndoorPreferred) {
+                labels.add("\u5929\u6c14\u5ba4\u5185\u4f18\u5148");
+            }
+            if (weatherOutdoorFriendly) {
+                labels.add("\u5929\u6c14\u9002\u5408\u6237\u5916");
+            }
+            if (scheduleTight) {
+                labels.add("\u8bfe\u8868\u7d27\u51d1");
+            }
+            if (scheduleShortBreak) {
+                labels.add("\u8bfe\u95f4\u77ed\u4efb\u52a1");
+            }
+            if (scheduleLongFree) {
+                labels.add("\u7a7a\u95f2\u53ef\u8fd0\u52a8");
             }
             if (labels.isEmpty()) {
                 return "\u9ed8\u8ba4\u7b56\u7565";

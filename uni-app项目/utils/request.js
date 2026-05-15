@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:8080/api';
+const baseUrl = 'http://172.20.10.3:8080/api';
 
 export const request = (url, options = {}) => {
   return new Promise((resolve, reject) => {
@@ -41,8 +41,33 @@ export const getHealthSuggestion = (userId) => {
   return request(`/ai/health-suggest?userId=${userId}`);
 };
 
-export const getAgentBrief = (userId) => {
-  return request(`/ai/agent-brief?userId=${encodeURIComponent(userId)}`);
+export const getScheduleList = (username) => {
+  return request(`/schedule/list?username=${encodeURIComponent(username)}`);
+};
+
+export const getScheduleContext = (username) => {
+  return request(`/schedule/context?username=${encodeURIComponent(username)}`);
+};
+
+export const saveSchedule = (data) => {
+  return request('/schedule/save', {
+    method: 'POST',
+    data
+  });
+};
+
+export const deleteSchedule = (id, username) => {
+  return request(`/schedule/${id}?username=${encodeURIComponent(username)}`, {
+    method: 'DELETE'
+  });
+};
+
+export const getAgentBrief = (userId, latitude = null, longitude = null) => {
+  let query = `/ai/agent-brief?userId=${encodeURIComponent(userId)}`;
+  if (latitude !== null && longitude !== null) {
+    query += `&latitude=${latitude}&longitude=${longitude}`;
+  }
+  return request(query);
 };
 
 export const getAgentPlan = (userId, userNote = '', latitude = null, longitude = null) => {

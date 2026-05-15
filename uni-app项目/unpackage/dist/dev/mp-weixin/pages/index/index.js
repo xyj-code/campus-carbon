@@ -171,7 +171,7 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 192));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 200));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -604,7 +604,7 @@ var _default = {
     loadAgentBrief: function loadAgentBrief() {
       var _this7 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
-        var res;
+        var location, res;
         return _regenerator.default.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -617,32 +617,64 @@ var _default = {
               case 2:
                 _context6.prev = 2;
                 _context6.next = 5;
-                return (0, _request.getAgentBrief)(_this7.stuNo);
+                return _this7.resolveAuthorizedLocation();
               case 5:
+                location = _context6.sent;
+                _context6.next = 8;
+                return (0, _request.getAgentBrief)(_this7.stuNo, location && typeof location.latitude === 'number' ? location.latitude : null, location && typeof location.longitude === 'number' ? location.longitude : null);
+              case 8:
                 res = _context6.sent;
                 if (!(!res || (0, _typeof2.default)(res) !== 'object')) {
-                  _context6.next = 8;
+                  _context6.next = 11;
                   break;
                 }
                 return _context6.abrupt("return");
-              case 8:
+              case 11:
                 _this7.agentBrief = _objectSpread(_objectSpread({}, _this7.agentBrief), {}, {
                   summary: _objectSpread(_objectSpread({}, _this7.agentBrief.summary), res.summary || {}),
                   actions: Array.isArray(res.actions) ? res.actions : []
                 });
-                _context6.next = 14;
+                _context6.next = 17;
                 break;
-              case 11:
-                _context6.prev = 11;
+              case 14:
+                _context6.prev = 14;
                 _context6.t0 = _context6["catch"](2);
                 console.error('load agent brief failed', _context6.t0);
-              case 14:
+              case 17:
               case "end":
                 return _context6.stop();
             }
           }
-        }, _callee6, null, [[2, 11]]);
+        }, _callee6, null, [[2, 14]]);
       }))();
+    },
+    resolveAuthorizedLocation: function resolveAuthorizedLocation() {
+      return new Promise(function (resolve) {
+        uni.getSetting({
+          success: function success(settingRes) {
+            var authSetting = settingRes && settingRes.authSetting ? settingRes.authSetting : {};
+            if (!authSetting['scope.userLocation']) {
+              resolve(null);
+              return;
+            }
+            uni.getLocation({
+              type: 'gcj02',
+              success: function success(locationRes) {
+                resolve({
+                  latitude: Number(locationRes.latitude),
+                  longitude: Number(locationRes.longitude)
+                });
+              },
+              fail: function fail() {
+                return resolve(null);
+              }
+            });
+          },
+          fail: function fail() {
+            return resolve(null);
+          }
+        });
+      });
     },
     loadActivityPreview: function loadActivityPreview() {
       var _this8 = this;

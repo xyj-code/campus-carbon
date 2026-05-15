@@ -21,7 +21,7 @@
           </view>
           <view class="metric-chip">
             <text class="metric-label">{{ copy.pointsLabel }}</text>
-            <text class="metric-value">{{ plan.summary.estimatedPoints }} pts</text>
+            <text class="metric-value">{{ plan.summary.estimatedPoints }} 积分</text>
           </view>
         </view>
         <view class="hero-footer">
@@ -83,7 +83,7 @@
           <text class="location-text">{{ locationLabel }}</text>
         </view>
         <view class="composer-actions">
-          <view class="ghost-btn" @click="captureLocation">
+          <view class="ghost-btn" @click="captureLocationAndRefresh">
             <text class="ghost-btn-text">{{ copy.captureLocation }}</text>
           </view>
           <view class="ghost-btn" @click="fetchPlan(userNote.trim())">
@@ -91,6 +91,73 @@
           </view>
           <view class="primary-btn" :class="{ disabled: loading }" @click="submitNotePlan">
             <text class="primary-btn-text">{{ loading ? copy.loadingText : copy.generateAction }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="schedule-card" v-if="plan.schedule">
+        <view class="section-head">
+          <text class="section-title">{{ copy.scheduleTitle }}</text>
+          <text class="section-subtitle">{{ copy.scheduleSubtitle }}</text>
+        </view>
+        <view class="schedule-main">
+          <view class="schedule-copy">
+            <text class="schedule-tag">{{ scheduleStatusLabel }}</text>
+            <text class="schedule-title">{{ scheduleTitle }}</text>
+            <text class="schedule-reason">{{ scheduleReason }}</text>
+          </view>
+          <view class="schedule-count">
+            <text class="schedule-count-value">{{ plan.schedule.todayCourseCount || 0 }}</text>
+            <text class="schedule-count-label">{{ copy.scheduleCountLabel }}</text>
+          </view>
+        </view>
+        <view class="schedule-meta">
+          <view class="meta-pill" v-if="plan.schedule.currentCourseTime">
+            <text class="meta-pill-text">{{ plan.schedule.currentCourseTime }}</text>
+          </view>
+          <view class="meta-pill" v-if="plan.schedule.nextCourseTime">
+            <text class="meta-pill-text">{{ plan.schedule.nextCourseTime }}</text>
+          </view>
+          <view class="meta-pill" v-if="hasScheduleFreeMinutes">
+            <text class="meta-pill-text">可用 {{ plan.schedule.freeMinutes }} 分钟</text>
+          </view>
+        </view>
+        <view class="venue-actions">
+          <view class="ghost-btn small" @click="openSchedulePage">
+            <text class="ghost-btn-text">{{ scheduleManageLabel }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="weather-card" :class="{ 'weather-pending': !weatherReady }" v-if="plan.weather">
+        <view class="section-head">
+          <text class="section-title">{{ copy.weatherTitle }}</text>
+          <text class="section-subtitle">{{ copy.weatherSubtitle }}</text>
+        </view>
+        <view class="weather-main">
+          <view class="weather-copy">
+            <text class="weather-tag">{{ weatherStatusLabel }}</text>
+            <text class="weather-title">{{ weatherTitle }}</text>
+            <text class="weather-reason">{{ weatherReason }}</text>
+          </view>
+          <view class="weather-temp" v-if="plan.weather.temperature">
+            <text class="weather-temp-value">{{ plan.weather.temperature }}°</text>
+          </view>
+        </view>
+        <view class="weather-meta">
+          <view class="meta-pill" v-if="plan.weather.city">
+            <text class="meta-pill-text">{{ plan.weather.city }}</text>
+          </view>
+          <view class="meta-pill" v-if="plan.weather.windDirection || plan.weather.windPower">
+            <text class="meta-pill-text">{{ windLabel }}</text>
+          </view>
+          <view class="meta-pill" v-if="plan.weather.reportTime">
+            <text class="meta-pill-text">{{ plan.weather.reportTime }}</text>
+          </view>
+        </view>
+        <view class="venue-actions" v-if="weatherNeedsLocation || weatherCanRetry">
+          <view class="ghost-btn small" @click="captureLocationAndRefresh">
+            <text class="ghost-btn-text">{{ weatherNeedsLocation ? copy.weatherLocateAction : copy.weatherRetryAction }}</text>
           </view>
         </view>
       </view>
@@ -115,10 +182,10 @@
             <text class="meta-pill-text">{{ plan.sportPlan.venueDistanceMeters }}m</text>
           </view>
           <view class="meta-pill" v-if="plan.sportPlan.routeDurationMinutes">
-            <text class="meta-pill-text">{{ plan.sportPlan.routeDurationMinutes }} min</text>
+            <text class="meta-pill-text">{{ plan.sportPlan.routeDurationMinutes }} 分钟</text>
           </view>
           <view class="meta-pill" v-if="plan.sportPlan.routeDistanceMeters">
-            <text class="meta-pill-text">{{ plan.sportPlan.routeDistanceMeters }}m route</text>
+            <text class="meta-pill-text">{{ plan.sportPlan.routeDistanceMeters }}m 路线</text>
           </view>
         </view>
         <view class="venue-address-box" v-if="plan.sportPlan.venueAddress">
@@ -169,12 +236,12 @@
               </view>
               <view class="action-points">
                 <text class="action-points-value">+{{ action.estimatedPoints }}</text>
-                <text class="action-points-label">pts</text>
+                <text class="action-points-label">积分</text>
               </view>
             </view>
             <view class="action-meta">
               <view class="meta-pill">
-                <text class="meta-pill-text">{{ action.durationMinutes }} min</text>
+                <text class="meta-pill-text">{{ action.durationMinutes }} 分钟</text>
               </view>
               <view class="meta-pill">
                 <text class="meta-pill-text">{{ action.estimatedCarbonSaving }}g CO2</text>
@@ -266,6 +333,22 @@ const COPY = {
   evidenceTitle: '\u51b3\u7b56\u4f9d\u636e',
   evidenceSubtitle: '\u8ba9\u4f60\u770b\u5230 Agent \u5f53\u524d\u8bfb\u53d6\u4e86\u54ea\u4e9b\u4fe1\u606f',
   progressTitle: '\u6267\u884c\u8fdb\u5ea6',
+  scheduleTitle: '\u8bfe\u8868\u8282\u594f',
+  scheduleSubtitle: 'Agent \u4f1a\u6839\u636e\u8bfe\u95f4\u548c\u7a7a\u95f2\u65f6\u95f4\u8c03\u6574\u4efb\u52a1',
+  scheduleFallback: '\u6821\u56ed\u65f6\u95f4',
+  scheduleCountLabel: '\u4eca\u65e5\u8bfe\u7a0b',
+  scheduleManageAction: '\u7ba1\u7406\u8bfe\u8868',
+  scheduleAddAction: '\u8865\u5145\u8bfe\u8868',
+  scheduleLoginRequired: '\u767b\u5f55\u540e\u8bfb\u53d6',
+  weatherTitle: '\u5929\u6c14\u8054\u52a8',
+  weatherSubtitle: 'Agent \u4f1a\u6839\u636e\u5929\u6c14\u8c03\u6574\u6237\u5916\u548c\u5ba4\u5185\u4efb\u52a1',
+  weatherFallback: '\u73af\u5883\u5224\u65ad',
+  weatherLocateAction: '\u83b7\u53d6\u4f4d\u7f6e\u5e76\u91cd\u6392',
+  weatherRetryAction: '\u91cd\u65b0\u8bfb\u53d6\u5929\u6c14',
+  weatherLocationTitle: '\u5f85\u83b7\u53d6\u4f4d\u7f6e',
+  weatherConfigTitle: '\u5929\u6c14\u672a\u914d\u7f6e',
+  weatherUnavailableTitle: '\u5929\u6c14\u6682\u4e0d\u53ef\u7528',
+  weatherLocationReason: '\u6388\u6743\u4f4d\u7f6e\u540e\uff0cAgent \u4f1a\u91cd\u65b0\u8bfb\u53d6\u5f53\u5730\u5929\u6c14\u5e76\u8c03\u6574\u6237\u5916\u8fd0\u52a8\u4f18\u5148\u7ea7\u3002',
   venueTitle: '\u9644\u8fd1\u8fd0\u52a8\u573a\u5730',
   venueSubtitle: '\u5982\u679c\u4f60\u60f3\u53bb\u8fd0\u52a8\uff0cAgent \u4f1a\u5e2e\u4f60\u627e\u9644\u8fd1\u5408\u9002\u7684\u573a\u5730',
   venueFallback: '\u8fd0\u52a8\u8ba1\u5212',
@@ -286,6 +369,7 @@ const COPY = {
   locationHint: '\u672a\u83b7\u53d6\u5230\u4f4d\u7f6e\uff0c\u573a\u5730\u63a8\u8350\u53ef\u80fd\u4e0d\u51c6',
   locationReady: '\u5df2\u83b7\u53d6\u4f4d\u7f6e',
   locationEmpty: '\u672a\u83b7\u53d6\u4f4d\u7f6e\uff0c\u573a\u5730\u63a8\u8350\u4f1a\u53d7\u5f71\u54cd',
+  locationRefreshing: '\u5df2\u83b7\u53d6\u4f4d\u7f6e\uff0c\u6b63\u5728\u7ed3\u5408\u5929\u6c14\u91cd\u6392',
   locationDeniedTitle: '\u9700\u8981\u4f4d\u7f6e\u6388\u6743',
   locationDeniedContent: '\u8bf7\u5728\u8bbe\u7f6e\u4e2d\u5141\u8bb8\u4f4d\u7f6e\u6743\u9650\uff0cAgent \u624d\u80fd\u4e3a\u4f60\u641c\u7d22\u9644\u8fd1\u573a\u5730',
   openSettingConfirm: '\u53bb\u8bbe\u7f6e',
@@ -306,6 +390,8 @@ function createEmptyPlan() {
     sessionStatus: 'idle',
     currentActionId: '',
     sportPlan: null,
+    weather: null,
+    schedule: null,
     summary: {
       title: '\u4eca\u65e5\u884c\u52a8\u5de5\u4f5c\u53f0',
       reason: '\u6b63\u5728\u8bfb\u53d6\u4f60\u7684\u4efb\u52a1\u3001\u5065\u5eb7\u548c\u8fdb\u5ea6\u6570\u636e',
@@ -329,6 +415,7 @@ export default {
       userNote: '',
       loading: false,
       currentLocation: null,
+      autoLocationTried: false,
       plan: createEmptyPlan()
     };
   },
@@ -337,7 +424,7 @@ export default {
   },
   onShow() {
     this.userId = uni.getStorageSync('username') || this.userId;
-    this.fetchPlan(this.userNote.trim());
+    this.refreshPlanOnShow();
   },
   computed: {
     preferenceEvidence() {
@@ -393,9 +480,113 @@ export default {
         return `${COPY.locationReady}: ${this.currentLocation.latitude.toFixed(4)}, ${this.currentLocation.longitude.toFixed(4)}`;
       }
       return COPY.locationEmpty;
+    },
+    weatherTitle() {
+      const weather = this.plan.weather || {};
+      if (weather.status === 'config_missing') {
+        return COPY.weatherConfigTitle;
+      }
+      if (this.weatherNeedsLocation) {
+        return COPY.weatherLocationTitle;
+      }
+      if (this.weatherCanRetry) {
+        return COPY.weatherUnavailableTitle;
+      }
+      const city = weather.city || '';
+      const text = weather.weather || '';
+      if (city && text) {
+        return `${city} \u00b7 ${text}`;
+      }
+      return text || city || COPY.weatherFallback;
+    },
+    windLabel() {
+      const weather = this.plan.weather || {};
+      const direction = weather.windDirection || '';
+      const power = weather.windPower || '';
+      if (direction && power) {
+        return `${direction}\u98ce ${power}\u7ea7`;
+      }
+      return direction || (power ? `${power}\u7ea7` : '');
+    },
+    weatherReady() {
+      const weather = this.plan.weather || {};
+      return weather.status === 'ready';
+    },
+    weatherNeedsLocation() {
+      const weather = this.plan.weather || {};
+      return weather.status === 'location_required';
+    },
+    weatherCanRetry() {
+      const weather = this.plan.weather || {};
+      return weather.status === 'request_failed' || weather.status === 'no_result';
+    },
+    weatherStatusLabel() {
+      const weather = this.plan.weather || {};
+      if (weather.status === 'config_missing') {
+        return COPY.weatherConfigTitle;
+      }
+      if (this.weatherNeedsLocation) {
+        return COPY.weatherLocationTitle;
+      }
+      if (this.weatherCanRetry) {
+        return COPY.weatherUnavailableTitle;
+      }
+      return weather.suitability || COPY.weatherFallback;
+    },
+    weatherReason() {
+      const weather = this.plan.weather || {};
+      if (this.weatherNeedsLocation) {
+        return weather.recommendation || COPY.weatherLocationReason;
+      }
+      return weather.recommendation || COPY.weatherLocationReason;
+    },
+    scheduleTitle() {
+      const schedule = this.plan.schedule || {};
+      if (schedule.currentCourseName) {
+        return schedule.currentCourseName;
+      }
+      if (schedule.nextCourseName) {
+        return `${schedule.nextCourseName} \u00b7 ${schedule.minutesToNextCourse || 0}\u5206\u949f`;
+      }
+      return schedule.stateLabel || COPY.scheduleFallback;
+    },
+    scheduleStatusLabel() {
+      const schedule = this.plan.schedule || {};
+      if (schedule.status === 'login_required') {
+        return COPY.scheduleLoginRequired;
+      }
+      return schedule.stateLabel || COPY.scheduleFallback;
+    },
+    scheduleReason() {
+      const schedule = this.plan.schedule || {};
+      return schedule.recommendation || COPY.scheduleSubtitle;
+    },
+    scheduleManageLabel() {
+      const schedule = this.plan.schedule || {};
+      if (schedule.status === 'ready' && schedule.state === 'no_course' && Number(schedule.todayCourseCount || 0) === 0) {
+        return COPY.scheduleAddAction;
+      }
+      return COPY.scheduleManageAction;
+    },
+    hasScheduleFreeMinutes() {
+      const schedule = this.plan.schedule || {};
+      return Number.isFinite(Number(schedule.freeMinutes));
     }
   },
   methods: {
+    async refreshPlanOnShow() {
+      if (!this.userId) {
+        return;
+      }
+      const note = this.userNote.trim();
+      if (this.currentLocation || this.autoLocationTried) {
+        this.fetchPlan(note);
+        return;
+      }
+      this.autoLocationTried = true;
+      const location = await this.captureLocation(false, false);
+      this.fetchPlan(note, location);
+    },
     async fetchPlan(note, location = this.currentLocation) {
       if (!this.userId) {
         uni.showToast({ title: COPY.loginHint, icon: 'none' });
@@ -411,7 +602,11 @@ export default {
             location && typeof location.latitude === 'number' ? location.latitude : null,
             location && typeof location.longitude === 'number' ? location.longitude : null
           )
-          : await getAgentBrief(this.userId);
+          : await getAgentBrief(
+            this.userId,
+            location && typeof location.latitude === 'number' ? location.latitude : null,
+            location && typeof location.longitude === 'number' ? location.longitude : null
+          );
         this.plan = this.normalizePlan(result);
       } catch (error) {
         uni.showToast({ title: COPY.requestError, icon: 'none' });
@@ -436,6 +631,8 @@ export default {
       nextPlan.actions = Array.isArray(result.actions) ? result.actions : [];
       nextPlan.evidence = Array.isArray(result.evidence) ? result.evidence : [];
       nextPlan.sportPlan = result.sportPlan && typeof result.sportPlan === 'object' ? result.sportPlan : null;
+      nextPlan.weather = result.weather && typeof result.weather === 'object' ? result.weather : null;
+      nextPlan.schedule = result.schedule && typeof result.schedule === 'object' ? result.schedule : null;
       return nextPlan;
     },
     appendQuickNote(note) {
@@ -551,22 +748,26 @@ export default {
       const taskCode = action && action.taskCode ? action.taskCode : '';
       return taskCode === 'MAINTAIN_WALK' || taskCode === 'MAINTAIN_INDOOR' || !taskCode;
     },
-    shouldRequestLocation(note) {
-      if (!note) {
-        return false;
-      }
-      return /\u8dd1\u6b65|\u591c\u8dd1|\u6563\u6b65|\u7bee\u7403|\u7fbd\u6bdb\u7403|\u8db3\u7403|\u6e38\u6cf3|\u7f51\u7403|\u4e52\u4e53\u7403|\u5065\u8eab|\u9a91\u884c|\u9a91\u8f66/.test(note);
-    },
     ensureLocationForNote(note) {
-      if (!this.shouldRequestLocation(note)) {
-        return Promise.resolve(this.currentLocation);
-      }
       if (this.currentLocation && typeof this.currentLocation.latitude === 'number' && typeof this.currentLocation.longitude === 'number') {
         return Promise.resolve(this.currentLocation);
       }
-      return this.captureLocation(false);
+      return this.captureLocation(false, true);
     },
-    captureLocation(showSuccess = true) {
+    async captureLocationAndRefresh() {
+      const location = await this.captureLocation(true, true);
+      if (location) {
+        uni.showToast({ title: COPY.locationRefreshing, icon: 'none' });
+        this.fetchPlan(this.userNote.trim(), location);
+      }
+    },
+    captureLocation(showSuccess = true, showFailure = true) {
+      if (typeof showSuccess !== 'boolean') {
+        showSuccess = true;
+      }
+      if (typeof showFailure !== 'boolean') {
+        showFailure = true;
+      }
       return new Promise((resolve) => {
         uni.getLocation({
           type: 'gcj02',
@@ -585,16 +786,22 @@ export default {
             this.currentLocation = null;
             const message = err && err.errMsg ? String(err.errMsg) : '';
             if (message.indexOf('auth deny') !== -1 || message.indexOf('authorize') !== -1 || message.indexOf('auth denied') !== -1) {
-              this.promptLocationPermission(resolve);
+              if (!showFailure) {
+                resolve(null);
+                return;
+              }
+              this.promptLocationPermission(resolve, showFailure);
               return;
             }
-            uni.showToast({ title: COPY.locationHint, icon: 'none' });
+            if (showFailure) {
+              uni.showToast({ title: COPY.locationHint, icon: 'none' });
+            }
             resolve(null);
           }
         });
       });
     },
-    promptLocationPermission(resolve) {
+    promptLocationPermission(resolve, showFailure = true) {
       uni.showModal({
         title: COPY.locationDeniedTitle,
         content: COPY.locationDeniedContent,
@@ -609,14 +816,18 @@ export default {
             success: (settingRes) => {
               const authSetting = settingRes && settingRes.authSetting ? settingRes.authSetting : {};
               if (authSetting['scope.userLocation']) {
-                this.captureLocation(false).then(resolve);
+                this.captureLocation(false, showFailure).then(resolve);
                 return;
               }
-              uni.showToast({ title: COPY.locationHint, icon: 'none' });
+              if (showFailure) {
+                uni.showToast({ title: COPY.locationHint, icon: 'none' });
+              }
               resolve(null);
             },
             fail: () => {
-              uni.showToast({ title: COPY.locationHint, icon: 'none' });
+              if (showFailure) {
+                uni.showToast({ title: COPY.locationHint, icon: 'none' });
+              }
               resolve(null);
             }
           });
@@ -647,6 +858,9 @@ export default {
           uni.showToast({ title: COPY.openLocationError, icon: 'none' });
         }
       });
+    },
+    openSchedulePage() {
+      uni.navigateTo({ url: '/pages/schedule/schedule' });
     }
   }
 };
@@ -680,6 +894,8 @@ export default {
 .hero-card,
 .progress-card,
 .composer-card,
+.schedule-card,
+.weather-card,
 .venue-card,
 .actions-card,
 .evidence-card {
@@ -706,6 +922,151 @@ export default {
 
 .venue-card {
   background: linear-gradient(145deg, rgba(243, 250, 244, 0.96), rgba(227, 242, 230, 0.92));
+}
+
+.weather-card {
+  background: linear-gradient(145deg, rgba(255, 252, 243, 0.96), rgba(235, 246, 238, 0.94));
+}
+
+.weather-card.weather-pending {
+  background: linear-gradient(145deg, rgba(255, 250, 239, 0.96), rgba(246, 238, 224, 0.94));
+}
+
+.schedule-card {
+  background: linear-gradient(145deg, rgba(245, 250, 255, 0.96), rgba(230, 243, 236, 0.94));
+}
+
+.schedule-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+
+.schedule-copy {
+  flex: 1;
+}
+
+.schedule-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(46, 125, 50, 0.12);
+  color: #2f7d4c;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.schedule-title {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #214d33;
+  line-height: 1.35;
+}
+
+.schedule-reason {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #607263;
+}
+
+.schedule-count {
+  min-width: 118rpx;
+  min-height: 102rpx;
+  padding: 16rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.schedule-count-value {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #2f7d4c;
+}
+
+.schedule-count-label {
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: #6f8778;
+}
+
+.schedule-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.weather-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+
+.weather-copy {
+  flex: 1;
+}
+
+.weather-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(213, 139, 40, 0.12);
+  color: #a0641e;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.weather-title {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #214d33;
+  line-height: 1.35;
+}
+
+.weather-reason {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #607263;
+}
+
+.weather-temp {
+  min-width: 118rpx;
+  min-height: 102rpx;
+  padding: 16rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weather-temp-value {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #2f7d4c;
+}
+
+.weather-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
 }
 
 .venue-header {

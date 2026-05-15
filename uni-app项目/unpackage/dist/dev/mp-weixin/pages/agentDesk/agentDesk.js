@@ -207,6 +207,22 @@ var COPY = {
   evidenceTitle: "\u51B3\u7B56\u4F9D\u636E",
   evidenceSubtitle: "\u8BA9\u4F60\u770B\u5230 Agent \u5F53\u524D\u8BFB\u53D6\u4E86\u54EA\u4E9B\u4FE1\u606F",
   progressTitle: "\u6267\u884C\u8FDB\u5EA6",
+  scheduleTitle: "\u8BFE\u8868\u8282\u594F",
+  scheduleSubtitle: "Agent \u4F1A\u6839\u636E\u8BFE\u95F4\u548C\u7A7A\u95F2\u65F6\u95F4\u8C03\u6574\u4EFB\u52A1",
+  scheduleFallback: "\u6821\u56ED\u65F6\u95F4",
+  scheduleCountLabel: "\u4ECA\u65E5\u8BFE\u7A0B",
+  scheduleManageAction: "\u7BA1\u7406\u8BFE\u8868",
+  scheduleAddAction: "\u8865\u5145\u8BFE\u8868",
+  scheduleLoginRequired: "\u767B\u5F55\u540E\u8BFB\u53D6",
+  weatherTitle: "\u5929\u6C14\u8054\u52A8",
+  weatherSubtitle: "Agent \u4F1A\u6839\u636E\u5929\u6C14\u8C03\u6574\u6237\u5916\u548C\u5BA4\u5185\u4EFB\u52A1",
+  weatherFallback: "\u73AF\u5883\u5224\u65AD",
+  weatherLocateAction: "\u83B7\u53D6\u4F4D\u7F6E\u5E76\u91CD\u6392",
+  weatherRetryAction: "\u91CD\u65B0\u8BFB\u53D6\u5929\u6C14",
+  weatherLocationTitle: "\u5F85\u83B7\u53D6\u4F4D\u7F6E",
+  weatherConfigTitle: "\u5929\u6C14\u672A\u914D\u7F6E",
+  weatherUnavailableTitle: "\u5929\u6C14\u6682\u4E0D\u53EF\u7528",
+  weatherLocationReason: "\u6388\u6743\u4F4D\u7F6E\u540E\uFF0CAgent \u4F1A\u91CD\u65B0\u8BFB\u53D6\u5F53\u5730\u5929\u6C14\u5E76\u8C03\u6574\u6237\u5916\u8FD0\u52A8\u4F18\u5148\u7EA7\u3002",
   venueTitle: "\u9644\u8FD1\u8FD0\u52A8\u573A\u5730",
   venueSubtitle: "\u5982\u679C\u4F60\u60F3\u53BB\u8FD0\u52A8\uFF0CAgent \u4F1A\u5E2E\u4F60\u627E\u9644\u8FD1\u5408\u9002\u7684\u573A\u5730",
   venueFallback: "\u8FD0\u52A8\u8BA1\u5212",
@@ -227,6 +243,7 @@ var COPY = {
   locationHint: "\u672A\u83B7\u53D6\u5230\u4F4D\u7F6E\uFF0C\u573A\u5730\u63A8\u8350\u53EF\u80FD\u4E0D\u51C6",
   locationReady: "\u5DF2\u83B7\u53D6\u4F4D\u7F6E",
   locationEmpty: "\u672A\u83B7\u53D6\u4F4D\u7F6E\uFF0C\u573A\u5730\u63A8\u8350\u4F1A\u53D7\u5F71\u54CD",
+  locationRefreshing: "\u5DF2\u83B7\u53D6\u4F4D\u7F6E\uFF0C\u6B63\u5728\u7ED3\u5408\u5929\u6C14\u91CD\u6392",
   locationDeniedTitle: "\u9700\u8981\u4F4D\u7F6E\u6388\u6743",
   locationDeniedContent: "\u8BF7\u5728\u8BBE\u7F6E\u4E2D\u5141\u8BB8\u4F4D\u7F6E\u6743\u9650\uFF0CAgent \u624D\u80FD\u4E3A\u4F60\u641C\u7D22\u9644\u8FD1\u573A\u5730",
   openSettingConfirm: "\u53BB\u8BBE\u7F6E",
@@ -240,6 +257,8 @@ function createEmptyPlan() {
     sessionStatus: 'idle',
     currentActionId: '',
     sportPlan: null,
+    weather: null,
+    schedule: null,
     summary: {
       title: "\u4ECA\u65E5\u884C\u52A8\u5DE5\u4F5C\u53F0",
       reason: "\u6B63\u5728\u8BFB\u53D6\u4F60\u7684\u4EFB\u52A1\u3001\u5065\u5EB7\u548C\u8FDB\u5EA6\u6570\u636E",
@@ -262,6 +281,7 @@ var _default = {
       userNote: '',
       loading: false,
       currentLocation: null,
+      autoLocationTried: false,
       plan: createEmptyPlan()
     };
   },
@@ -270,7 +290,7 @@ var _default = {
   },
   onShow: function onShow() {
     this.userId = uni.getStorageSync('username') || this.userId;
-    this.fetchPlan(this.userNote.trim());
+    this.refreshPlanOnShow();
   },
   computed: {
     preferenceEvidence: function preferenceEvidence() {
@@ -332,69 +352,196 @@ var _default = {
         return "".concat(COPY.locationReady, ": ").concat(this.currentLocation.latitude.toFixed(4), ", ").concat(this.currentLocation.longitude.toFixed(4));
       }
       return COPY.locationEmpty;
+    },
+    weatherTitle: function weatherTitle() {
+      var weather = this.plan.weather || {};
+      if (weather.status === 'config_missing') {
+        return COPY.weatherConfigTitle;
+      }
+      if (this.weatherNeedsLocation) {
+        return COPY.weatherLocationTitle;
+      }
+      if (this.weatherCanRetry) {
+        return COPY.weatherUnavailableTitle;
+      }
+      var city = weather.city || '';
+      var text = weather.weather || '';
+      if (city && text) {
+        return "".concat(city, " \xB7 ").concat(text);
+      }
+      return text || city || COPY.weatherFallback;
+    },
+    windLabel: function windLabel() {
+      var weather = this.plan.weather || {};
+      var direction = weather.windDirection || '';
+      var power = weather.windPower || '';
+      if (direction && power) {
+        return "".concat(direction, "\u98CE ").concat(power, "\u7EA7");
+      }
+      return direction || (power ? "".concat(power, "\u7EA7") : '');
+    },
+    weatherReady: function weatherReady() {
+      var weather = this.plan.weather || {};
+      return weather.status === 'ready';
+    },
+    weatherNeedsLocation: function weatherNeedsLocation() {
+      var weather = this.plan.weather || {};
+      return weather.status === 'location_required';
+    },
+    weatherCanRetry: function weatherCanRetry() {
+      var weather = this.plan.weather || {};
+      return weather.status === 'request_failed' || weather.status === 'no_result';
+    },
+    weatherStatusLabel: function weatherStatusLabel() {
+      var weather = this.plan.weather || {};
+      if (weather.status === 'config_missing') {
+        return COPY.weatherConfigTitle;
+      }
+      if (this.weatherNeedsLocation) {
+        return COPY.weatherLocationTitle;
+      }
+      if (this.weatherCanRetry) {
+        return COPY.weatherUnavailableTitle;
+      }
+      return weather.suitability || COPY.weatherFallback;
+    },
+    weatherReason: function weatherReason() {
+      var weather = this.plan.weather || {};
+      if (this.weatherNeedsLocation) {
+        return weather.recommendation || COPY.weatherLocationReason;
+      }
+      return weather.recommendation || COPY.weatherLocationReason;
+    },
+    scheduleTitle: function scheduleTitle() {
+      var schedule = this.plan.schedule || {};
+      if (schedule.currentCourseName) {
+        return schedule.currentCourseName;
+      }
+      if (schedule.nextCourseName) {
+        return "".concat(schedule.nextCourseName, " \xB7 ").concat(schedule.minutesToNextCourse || 0, "\u5206\u949F");
+      }
+      return schedule.stateLabel || COPY.scheduleFallback;
+    },
+    scheduleStatusLabel: function scheduleStatusLabel() {
+      var schedule = this.plan.schedule || {};
+      if (schedule.status === 'login_required') {
+        return COPY.scheduleLoginRequired;
+      }
+      return schedule.stateLabel || COPY.scheduleFallback;
+    },
+    scheduleReason: function scheduleReason() {
+      var schedule = this.plan.schedule || {};
+      return schedule.recommendation || COPY.scheduleSubtitle;
+    },
+    scheduleManageLabel: function scheduleManageLabel() {
+      var schedule = this.plan.schedule || {};
+      if (schedule.status === 'ready' && schedule.state === 'no_course' && Number(schedule.todayCourseCount || 0) === 0) {
+        return COPY.scheduleAddAction;
+      }
+      return COPY.scheduleManageAction;
+    },
+    hasScheduleFreeMinutes: function hasScheduleFreeMinutes() {
+      var schedule = this.plan.schedule || {};
+      return Number.isFinite(Number(schedule.freeMinutes));
     }
   },
   methods: {
-    fetchPlan: function fetchPlan(note) {
-      var _arguments = arguments,
-        _this = this;
+    refreshPlanOnShow: function refreshPlanOnShow() {
+      var _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var location, requestNote, result;
+        var note, location;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                location = _arguments.length > 1 && _arguments[1] !== undefined ? _arguments[1] : _this.currentLocation;
                 if (_this.userId) {
-                  _context.next = 4;
+                  _context.next = 2;
+                  break;
+                }
+                return _context.abrupt("return");
+              case 2:
+                note = _this.userNote.trim();
+                if (!(_this.currentLocation || _this.autoLocationTried)) {
+                  _context.next = 6;
+                  break;
+                }
+                _this.fetchPlan(note);
+                return _context.abrupt("return");
+              case 6:
+                _this.autoLocationTried = true;
+                _context.next = 9;
+                return _this.captureLocation(false, false);
+              case 9:
+                location = _context.sent;
+                _this.fetchPlan(note, location);
+              case 11:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee);
+      }))();
+    },
+    fetchPlan: function fetchPlan(note) {
+      var _arguments = arguments,
+        _this2 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+        var location, requestNote, result;
+        return _regenerator.default.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                location = _arguments.length > 1 && _arguments[1] !== undefined ? _arguments[1] : _this2.currentLocation;
+                if (_this2.userId) {
+                  _context2.next = 4;
                   break;
                 }
                 uni.showToast({
                   title: COPY.loginHint,
                   icon: 'none'
                 });
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
               case 4:
-                _this.loading = true;
-                _context.prev = 5;
-                requestNote = typeof note === 'string' ? note : _this.userNote;
+                _this2.loading = true;
+                _context2.prev = 5;
+                requestNote = typeof note === 'string' ? note : _this2.userNote;
                 if (!requestNote) {
-                  _context.next = 13;
+                  _context2.next = 13;
                   break;
                 }
-                _context.next = 10;
-                return (0, _request.getAgentPlan)(_this.userId, requestNote, location && typeof location.latitude === 'number' ? location.latitude : null, location && typeof location.longitude === 'number' ? location.longitude : null);
+                _context2.next = 10;
+                return (0, _request.getAgentPlan)(_this2.userId, requestNote, location && typeof location.latitude === 'number' ? location.latitude : null, location && typeof location.longitude === 'number' ? location.longitude : null);
               case 10:
-                _context.t0 = _context.sent;
-                _context.next = 16;
+                _context2.t0 = _context2.sent;
+                _context2.next = 16;
                 break;
               case 13:
-                _context.next = 15;
-                return (0, _request.getAgentBrief)(_this.userId);
+                _context2.next = 15;
+                return (0, _request.getAgentBrief)(_this2.userId, location && typeof location.latitude === 'number' ? location.latitude : null, location && typeof location.longitude === 'number' ? location.longitude : null);
               case 15:
-                _context.t0 = _context.sent;
+                _context2.t0 = _context2.sent;
               case 16:
-                result = _context.t0;
-                _this.plan = _this.normalizePlan(result);
-                _context.next = 23;
+                result = _context2.t0;
+                _this2.plan = _this2.normalizePlan(result);
+                _context2.next = 23;
                 break;
               case 20:
-                _context.prev = 20;
-                _context.t1 = _context["catch"](5);
+                _context2.prev = 20;
+                _context2.t1 = _context2["catch"](5);
                 uni.showToast({
                   title: COPY.requestError,
                   icon: 'none'
                 });
               case 23:
-                _context.prev = 23;
-                _this.loading = false;
-                return _context.finish(23);
+                _context2.prev = 23;
+                _this2.loading = false;
+                return _context2.finish(23);
               case 26:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, null, [[5, 20, 23, 26]]);
+        }, _callee2, null, [[5, 20, 23, 26]]);
       }))();
     },
     normalizePlan: function normalizePlan(result) {
@@ -411,6 +558,8 @@ var _default = {
       nextPlan.actions = Array.isArray(result.actions) ? result.actions : [];
       nextPlan.evidence = Array.isArray(result.evidence) ? result.evidence : [];
       nextPlan.sportPlan = result.sportPlan && (0, _typeof2.default)(result.sportPlan) === 'object' ? result.sportPlan : null;
+      nextPlan.weather = result.weather && (0, _typeof2.default)(result.weather) === 'object' ? result.weather : null;
+      nextPlan.schedule = result.schedule && (0, _typeof2.default)(result.schedule) === 'object' ? result.schedule : null;
       return nextPlan;
     },
     appendQuickNote: function appendQuickNote(note) {
@@ -425,25 +574,25 @@ var _default = {
       this.userNote = "".concat(current, "\uFF0C").concat(note);
     },
     submitNotePlan: function submitNotePlan() {
-      var _this2 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
         var note, location;
-        return _regenerator.default.wrap(function _callee2$(_context2) {
+        return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                note = _this2.userNote.trim();
-                _context2.next = 3;
-                return _this2.ensureLocationForNote(note);
+                note = _this3.userNote.trim();
+                _context3.next = 3;
+                return _this3.ensureLocationForNote(note);
               case 3:
-                location = _context2.sent;
-                _this2.fetchPlan(note, location);
+                location = _context3.sent;
+                _this3.fetchPlan(note, location);
               case 5:
               case "end":
-                return _context2.stop();
+                return _context3.stop();
             }
           }
-        }, _callee2);
+        }, _callee3);
       }))();
     },
     openAction: function openAction(action) {
@@ -461,60 +610,9 @@ var _default = {
       });
     },
     startAction: function startAction(action) {
-      var _this3 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var result;
-        return _regenerator.default.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                if (!(!action || !action.id || !_this3.plan.sessionId)) {
-                  _context3.next = 2;
-                  break;
-                }
-                return _context3.abrupt("return");
-              case 2:
-                _this3.loading = true;
-                _context3.prev = 3;
-                _context3.next = 6;
-                return (0, _request.startAgentAction)(_this3.userId, _this3.plan.sessionId, action.id, '', _this3.currentLocation && typeof _this3.currentLocation.latitude === 'number' ? _this3.currentLocation.latitude : null, _this3.currentLocation && typeof _this3.currentLocation.longitude === 'number' ? _this3.currentLocation.longitude : null);
-              case 6:
-                result = _context3.sent;
-                _this3.plan = _this3.normalizePlan(result);
-                uni.showToast({
-                  title: COPY.startSuccess,
-                  icon: 'success'
-                });
-                if (action.actionPath) {
-                  setTimeout(function () {
-                    _this3.openAction(action);
-                  }, 160);
-                }
-                _context3.next = 15;
-                break;
-              case 12:
-                _context3.prev = 12;
-                _context3.t0 = _context3["catch"](3);
-                uni.showToast({
-                  title: COPY.requestError,
-                  icon: 'none'
-                });
-              case 15:
-                _context3.prev = 15;
-                _this3.loading = false;
-                return _context3.finish(15);
-              case 18:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, null, [[3, 12, 15, 18]]);
-      }))();
-    },
-    completeAction: function completeAction(action) {
       var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-        var result, nextAction, toastTitle;
+        var result;
         return _regenerator.default.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -528,22 +626,18 @@ var _default = {
                 _this4.loading = true;
                 _context4.prev = 3;
                 _context4.next = 6;
-                return (0, _request.completeAgentAction)(_this4.userId, _this4.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u786E\u8BA4\u5DF2\u5B8C\u6210\u8BE5\u6B65", _this4.currentLocation && typeof _this4.currentLocation.latitude === 'number' ? _this4.currentLocation.latitude : null, _this4.currentLocation && typeof _this4.currentLocation.longitude === 'number' ? _this4.currentLocation.longitude : null);
+                return (0, _request.startAgentAction)(_this4.userId, _this4.plan.sessionId, action.id, '', _this4.currentLocation && typeof _this4.currentLocation.latitude === 'number' ? _this4.currentLocation.latitude : null, _this4.currentLocation && typeof _this4.currentLocation.longitude === 'number' ? _this4.currentLocation.longitude : null);
               case 6:
                 result = _context4.sent;
                 _this4.plan = _this4.normalizePlan(result);
-                nextAction = _this4.findActionById(_this4.plan.actions, action.id);
-                if (nextAction && nextAction.status === 'completed') {
-                  toastTitle = _this4.isClaimAction(nextAction) ? COPY.finishClaimed : COPY.finishSuccess;
-                  uni.showToast({
-                    title: toastTitle,
-                    icon: 'success'
-                  });
-                } else {
-                  uni.showToast({
-                    title: COPY.finishRejected,
-                    icon: 'none'
-                  });
+                uni.showToast({
+                  title: COPY.startSuccess,
+                  icon: 'success'
+                });
+                if (action.actionPath) {
+                  setTimeout(function () {
+                    _this4.openAction(action);
+                  }, 160);
                 }
                 _context4.next = 15;
                 break;
@@ -566,10 +660,10 @@ var _default = {
         }, _callee4, null, [[3, 12, 15, 18]]);
       }))();
     },
-    skipAction: function skipAction(action) {
+    completeAction: function completeAction(action) {
       var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
-        var result;
+        var result, nextAction, toastTitle;
         return _regenerator.default.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -583,33 +677,88 @@ var _default = {
                 _this5.loading = true;
                 _context5.prev = 3;
                 _context5.next = 6;
-                return (0, _request.skipAgentAction)(_this5.userId, _this5.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u9009\u62E9\u8DF3\u8FC7\u8BE5\u6B65", _this5.currentLocation && typeof _this5.currentLocation.latitude === 'number' ? _this5.currentLocation.latitude : null, _this5.currentLocation && typeof _this5.currentLocation.longitude === 'number' ? _this5.currentLocation.longitude : null);
+                return (0, _request.completeAgentAction)(_this5.userId, _this5.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u786E\u8BA4\u5DF2\u5B8C\u6210\u8BE5\u6B65", _this5.currentLocation && typeof _this5.currentLocation.latitude === 'number' ? _this5.currentLocation.latitude : null, _this5.currentLocation && typeof _this5.currentLocation.longitude === 'number' ? _this5.currentLocation.longitude : null);
               case 6:
                 result = _context5.sent;
                 _this5.plan = _this5.normalizePlan(result);
-                uni.showToast({
-                  title: COPY.skipSuccess,
-                  icon: 'success'
-                });
-                _context5.next = 14;
+                nextAction = _this5.findActionById(_this5.plan.actions, action.id);
+                if (nextAction && nextAction.status === 'completed') {
+                  toastTitle = _this5.isClaimAction(nextAction) ? COPY.finishClaimed : COPY.finishSuccess;
+                  uni.showToast({
+                    title: toastTitle,
+                    icon: 'success'
+                  });
+                } else {
+                  uni.showToast({
+                    title: COPY.finishRejected,
+                    icon: 'none'
+                  });
+                }
+                _context5.next = 15;
                 break;
-              case 11:
-                _context5.prev = 11;
+              case 12:
+                _context5.prev = 12;
                 _context5.t0 = _context5["catch"](3);
                 uni.showToast({
                   title: COPY.requestError,
                   icon: 'none'
                 });
-              case 14:
-                _context5.prev = 14;
+              case 15:
+                _context5.prev = 15;
                 _this5.loading = false;
-                return _context5.finish(14);
-              case 17:
+                return _context5.finish(15);
+              case 18:
               case "end":
                 return _context5.stop();
             }
           }
-        }, _callee5, null, [[3, 11, 14, 17]]);
+        }, _callee5, null, [[3, 12, 15, 18]]);
+      }))();
+    },
+    skipAction: function skipAction(action) {
+      var _this6 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
+        var result;
+        return _regenerator.default.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                if (!(!action || !action.id || !_this6.plan.sessionId)) {
+                  _context6.next = 2;
+                  break;
+                }
+                return _context6.abrupt("return");
+              case 2:
+                _this6.loading = true;
+                _context6.prev = 3;
+                _context6.next = 6;
+                return (0, _request.skipAgentAction)(_this6.userId, _this6.plan.sessionId, action.id, "\u7528\u6237\u5728\u524D\u7AEF\u9009\u62E9\u8DF3\u8FC7\u8BE5\u6B65", _this6.currentLocation && typeof _this6.currentLocation.latitude === 'number' ? _this6.currentLocation.latitude : null, _this6.currentLocation && typeof _this6.currentLocation.longitude === 'number' ? _this6.currentLocation.longitude : null);
+              case 6:
+                result = _context6.sent;
+                _this6.plan = _this6.normalizePlan(result);
+                uni.showToast({
+                  title: COPY.skipSuccess,
+                  icon: 'success'
+                });
+                _context6.next = 14;
+                break;
+              case 11:
+                _context6.prev = 11;
+                _context6.t0 = _context6["catch"](3);
+                uni.showToast({
+                  title: COPY.requestError,
+                  icon: 'none'
+                });
+              case 14:
+                _context6.prev = 14;
+                _this6.loading = false;
+                return _context6.finish(14);
+              case 17:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, null, [[3, 11, 14, 17]]);
       }))();
     },
     findActionById: function findActionById(actions, actionId) {
@@ -624,29 +773,54 @@ var _default = {
       var taskCode = action && action.taskCode ? action.taskCode : '';
       return taskCode === 'MAINTAIN_WALK' || taskCode === 'MAINTAIN_INDOOR' || !taskCode;
     },
-    shouldRequestLocation: function shouldRequestLocation(note) {
-      if (!note) {
-        return false;
-      }
-      return /\u8dd1\u6b65|\u591c\u8dd1|\u6563\u6b65|\u7bee\u7403|\u7fbd\u6bdb\u7403|\u8db3\u7403|\u6e38\u6cf3|\u7f51\u7403|\u4e52\u4e53\u7403|\u5065\u8eab|\u9a91\u884c|\u9a91\u8f66/.test(note);
-    },
     ensureLocationForNote: function ensureLocationForNote(note) {
-      if (!this.shouldRequestLocation(note)) {
-        return Promise.resolve(this.currentLocation);
-      }
       if (this.currentLocation && typeof this.currentLocation.latitude === 'number' && typeof this.currentLocation.longitude === 'number') {
         return Promise.resolve(this.currentLocation);
       }
-      return this.captureLocation(false);
+      return this.captureLocation(false, true);
+    },
+    captureLocationAndRefresh: function captureLocationAndRefresh() {
+      var _this7 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee7() {
+        var location;
+        return _regenerator.default.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _context7.next = 2;
+                return _this7.captureLocation(true, true);
+              case 2:
+                location = _context7.sent;
+                if (location) {
+                  uni.showToast({
+                    title: COPY.locationRefreshing,
+                    icon: 'none'
+                  });
+                  _this7.fetchPlan(_this7.userNote.trim(), location);
+                }
+              case 4:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7);
+      }))();
     },
     captureLocation: function captureLocation() {
-      var _this6 = this;
+      var _this8 = this;
       var showSuccess = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+      var showFailure = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      if (typeof showSuccess !== 'boolean') {
+        showSuccess = true;
+      }
+      if (typeof showFailure !== 'boolean') {
+        showFailure = true;
+      }
       return new Promise(function (resolve) {
         uni.getLocation({
           type: 'gcj02',
           success: function success(res) {
-            _this6.currentLocation = {
+            _this8.currentLocation = {
               latitude: Number(res.latitude),
               longitude: Number(res.longitude)
             };
@@ -656,27 +830,34 @@ var _default = {
                 icon: 'success'
               });
             }
-            resolve(_this6.currentLocation);
+            resolve(_this8.currentLocation);
           },
           fail: function fail(err) {
             console.error('getLocation failed', err);
-            _this6.currentLocation = null;
+            _this8.currentLocation = null;
             var message = err && err.errMsg ? String(err.errMsg) : '';
             if (message.indexOf('auth deny') !== -1 || message.indexOf('authorize') !== -1 || message.indexOf('auth denied') !== -1) {
-              _this6.promptLocationPermission(resolve);
+              if (!showFailure) {
+                resolve(null);
+                return;
+              }
+              _this8.promptLocationPermission(resolve, showFailure);
               return;
             }
-            uni.showToast({
-              title: COPY.locationHint,
-              icon: 'none'
-            });
+            if (showFailure) {
+              uni.showToast({
+                title: COPY.locationHint,
+                icon: 'none'
+              });
+            }
             resolve(null);
           }
         });
       });
     },
     promptLocationPermission: function promptLocationPermission(resolve) {
-      var _this7 = this;
+      var _this9 = this;
+      var showFailure = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       uni.showModal({
         title: COPY.locationDeniedTitle,
         content: COPY.locationDeniedContent,
@@ -691,20 +872,24 @@ var _default = {
             success: function success(settingRes) {
               var authSetting = settingRes && settingRes.authSetting ? settingRes.authSetting : {};
               if (authSetting['scope.userLocation']) {
-                _this7.captureLocation(false).then(resolve);
+                _this9.captureLocation(false, showFailure).then(resolve);
                 return;
               }
-              uni.showToast({
-                title: COPY.locationHint,
-                icon: 'none'
-              });
+              if (showFailure) {
+                uni.showToast({
+                  title: COPY.locationHint,
+                  icon: 'none'
+                });
+              }
               resolve(null);
             },
             fail: function fail() {
-              uni.showToast({
-                title: COPY.locationHint,
-                icon: 'none'
-              });
+              if (showFailure) {
+                uni.showToast({
+                  title: COPY.locationHint,
+                  icon: 'none'
+                });
+              }
               resolve(null);
             }
           });
@@ -732,6 +917,11 @@ var _default = {
             icon: 'none'
           });
         }
+      });
+    },
+    openSchedulePage: function openSchedulePage() {
+      uni.navigateTo({
+        url: '/pages/schedule/schedule'
       });
     }
   }

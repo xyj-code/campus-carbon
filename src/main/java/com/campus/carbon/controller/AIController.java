@@ -39,8 +39,10 @@ public class AIController {
     }
 
     @GetMapping("/agent-brief")
-    public AgentBriefVO getAgentBrief(@RequestParam String userId) {
-        return aiService.getAgentBrief(userId, "", null, null);
+    public AgentBriefVO getAgentBrief(@RequestParam String userId,
+                                      @RequestParam(required = false) Double latitude,
+                                      @RequestParam(required = false) Double longitude) {
+        return aiService.getAgentBrief(userId, "", latitude, longitude);
     }
 
     @PostMapping("/agent-plan")

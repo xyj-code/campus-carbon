@@ -9,6 +9,8 @@ public class AgentBriefVO {
     private String currentActionId;
     private AgentSummaryVO summary;
     private AgentSportPlanVO sportPlan;
+    private AgentWeatherVO weather;
+    private AgentScheduleVO schedule;
     private List<AgentActionVO> actions = new ArrayList<>();
     private List<String> evidence = new ArrayList<>();
 
@@ -50,6 +52,22 @@ public class AgentBriefVO {
 
     public void setSportPlan(AgentSportPlanVO sportPlan) {
         this.sportPlan = sportPlan;
+    }
+
+    public AgentWeatherVO getWeather() {
+        return weather;
+    }
+
+    public void setWeather(AgentWeatherVO weather) {
+        this.weather = weather;
+    }
+
+    public AgentScheduleVO getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(AgentScheduleVO schedule) {
+        this.schedule = schedule;
     }
 
     public List<AgentActionVO> getActions() {
