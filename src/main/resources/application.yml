@@ -20,6 +20,7 @@ carbon:
   ai:
     api-key: sk-68a7a42f39454217bbddf1514c5fd7c9
     endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+    model: qwen3.6-plus
   amap:
     web-key: 41066f3954c98cee2f42a7e99802913a
     js-key: 57b63eeef82bbb16acab4979ee439350

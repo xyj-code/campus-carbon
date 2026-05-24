@@ -57,7 +57,6 @@ import java.util.Date;
 @Service
 public class AiServiceImpl implements AiService {
 
-    private static final String MODEL_NAME = "qwen-turbo";
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private static final ZoneId CHINA_ZONE = ZoneId.of("Asia/Shanghai");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
@@ -104,6 +103,9 @@ public class AiServiceImpl implements AiService {
 
     @Value("${carbon.ai.endpoint}")
     private String endpoint;
+
+    @Value("${carbon.ai.model:qwen3.6-plus}")
+    private String modelName;
 
     @Autowired
     private TaskService taskService;
@@ -1103,7 +1105,7 @@ public class AiServiceImpl implements AiService {
 
     private String requestSuggestion(ArrayNode messages, String unavailableMessage) throws IOException {
         ObjectNode body = mapper.createObjectNode();
-        body.put("model", MODEL_NAME);
+        body.put("model", safeText(modelName).isEmpty() ? "qwen3.6-plus" : safeText(modelName));
         body.put("temperature", 0.3);
         body.put("top_p", 0.8);
         body.set("messages", messages);
