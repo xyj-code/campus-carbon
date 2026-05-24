@@ -4,6 +4,7 @@ import com.campus.carbon.mapper.StepCountMapper;
 import com.campus.carbon.model.StepCount;
 import com.campus.carbon.service.PointsService;
 import com.campus.carbon.service.StepCountService;
+import com.campus.carbon.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,9 @@ public class StepCountServiceImpl implements StepCountService {
 
     @Autowired
     private PointsService pointsService;
+
+    @Autowired
+    private TaskService taskService;
 
     @Override
     public StepCount getStepCountByStudentIdAndDate(String studentId, Date date) {
@@ -44,6 +48,7 @@ public class StepCountServiceImpl implements StepCountService {
         if (delta > 0) {
             pointsService.awardStepPoints(stepCount.getStudentId(), delta);
         }
+        taskService.syncUserTasks(stepCount.getStudentId());
         return result;
     }
 }

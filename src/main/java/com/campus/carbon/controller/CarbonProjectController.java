@@ -41,9 +41,11 @@ public class CarbonProjectController {
         double totalCarbon = ((Number) profile.getOrDefault("totalCarbon", 0.0)).doubleValue();
         for (Project p : projectMapper.selectAll()) {
             if (p.getRequiredCarbon() == null) continue;
-            if (totalCarbon >= p.getRequiredCarbon()
-                    && userProjectMapper.countByUsernameAndProjectId(username, p.getId()) == 0) {
+            int unlockedCount = userProjectMapper.countByUsernameAndProjectId(username, p.getId());
+            if (totalCarbon >= p.getRequiredCarbon() && unlockedCount == 0) {
                 userProjectMapper.insertByUsername(username, p.getId(), buildCode(p));
+            } else if (totalCarbon < p.getRequiredCarbon() && unlockedCount > 0) {
+                userProjectMapper.deleteByUsernameAndProjectId(username, p.getId());
             }
         }
         return Result.success(userProjectMapper.selectByUsername(username));
@@ -71,6 +73,11 @@ public class CarbonProjectController {
         cert.setUnlockTime(up.getUnlockTime() != null ? up.getUnlockTime().toString() : "");
         cert.setCertificateUrl(String.valueOf(carbon));
         return Result.success(cert);
+    }
+
+    @GetMapping("/all")
+    public Result<List<Project>> getAllProjects() {
+        return Result.success(projectMapper.selectAll());
     }
 
     private String buildCode(Project p) {

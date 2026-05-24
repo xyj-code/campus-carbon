@@ -84,8 +84,8 @@
             <text>{{ r.type === 'income' ? '↑' : '↓' }}</text>
           </view>
           <view class="record-info">
-            <text class="record-title">{{ r.title }}</text>
-            <text class="record-remark">{{ r.remark }}</text>
+            <text class="record-title">{{ r.displayTitle }}</text>
+            <text class="record-remark">{{ r.displayRemark }}</text>
             <text class="record-time">{{ formatTime(r.createTime) }}</text>
           </view>
           <text class="record-amount" :class="r.type">
@@ -218,7 +218,7 @@ export default {
       this.loading = true;
       try {
         const res = await getPointsRecords(this.username, this.activeFilter, this.currentPage, this.pageSize);
-        const newList = res.list || [];
+        const newList = (res.list || []).map(item => this.normalizeRecord(item));
         if (reset) {
           this.records = newList;
         } else {
@@ -231,6 +231,36 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    normalizeRecord(record) {
+      const next = { ...record };
+      next.displayTitle = this.mapTitle(record.title);
+      next.displayRemark = this.mapRemark(record.title, record.remark);
+      return next;
+    },
+    mapTitle(title) {
+      if (title === 'STEP_CARBON') return '步数减碳奖励';
+      if (title === 'SPORT_CARBON') return '运动减碳奖励';
+      if (title === 'BENEFIT_REDEEM') return '绿色权益兑换';
+      if (title === 'TASK_REWARD') return '活动任务奖励';
+      return title || '积分记录';
+    },
+    mapRemark(title, remark) {
+      if (title === 'TASK_REWARD') {
+        if ((remark || '').indexOf('DAILY_') !== -1) return '完成每日任务，系统已自动发放积分';
+        if ((remark || '').indexOf('WEEKLY_') !== -1) return '完成每周挑战，系统已自动发放积分';
+        return '完成活动任务后自动结算的积分奖励';
+      }
+      if (title === 'BENEFIT_REDEEM') {
+        return '已使用积分兑换绿色权益';
+      }
+      if (title === 'STEP_CARBON') {
+        return '步数达到减碳标准后自动累计积分';
+      }
+      if (title === 'SPORT_CARBON') {
+        return '运动记录换算减碳后自动累计积分';
+      }
+      return remark || '';
     },
     switchFilter(val) {
       if (this.activeFilter === val) return;

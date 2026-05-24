@@ -102,38 +102,14 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.productList.length
-  var l0 =
-    g0 > 0
-      ? _vm.__map(_vm.productList, function (p, idx) {
-          var $orig = _vm.__get_orig(p)
-          var m0 = _vm.getGoodsIcon(p.name)
-          return {
-            $orig: $orig,
-            m0: m0,
-          }
-        })
-      : null
-  var g1 = _vm.exchangeRecords.length
-  var l1 =
-    g1 > 0
-      ? _vm.__map(_vm.exchangeRecords, function (r, i) {
-          var $orig = _vm.__get_orig(r)
-          var m1 = _vm.getExchangeIcon(r.productName)
-          return {
-            $orig: $orig,
-            m1: m1,
-          }
-        })
-      : null
+  var g0 = !_vm.loadingCatalog ? _vm.filteredBenefits.length : null
+  var g1 = !_vm.loadingRecords ? _vm.records.length : null
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
-        l0: l0,
         g1: g1,
-        l1: l1,
       },
     }
   )
@@ -178,12 +154,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 41));
-var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ 18));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 43));
+var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
+var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ 18));
 var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 160));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 200));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -195,14 +174,149 @@ var _default = {
     return {
       username: '',
       userPoints: 0,
-      productList: [],
-      productPage: 1,
-      productTotalPages: 1,
-      loadingProducts: false,
-      exchangeRecords: [],
-      confirmProduct: null,
-      particleStyles: []
+      benefits: [],
+      records: [],
+      activeCategory: 'ALL',
+      activeBenefit: null,
+      redeeming: false,
+      loadingCatalog: false,
+      loadingRecords: false,
+      particleStyles: [],
+      sparkleIcon: "\u2728",
+      arrowIcon: "\u2192",
+      closeIcon: 'x',
+      defaultBenefitIcon: "\u2728",
+      texts: {
+        pageTitle: "\u7EFF\u8272\u6743\u76CA\u4E2D\u5FC3",
+        pageSubtitle: "\u79EF\u5206\u53EF\u5728\u9910\u996E\u3001\u5B66\u4E60\u3001\u8363\u8A89\u573A\u666F\u4E2D\u771F\u5B9E\u5151\u73B0",
+        catalogTitle: "\u53EF\u5151\u6362\u6743\u76CA",
+        catalogSubtitle: "\u53EA\u4FDD\u7559\u5BF9\u6821\u56ED\u573A\u666F\u6709\u771F\u5B9E\u610F\u4E49\u7684\u6743\u76CA",
+        recordTitle: "\u6211\u7684\u6838\u9500\u8BB0\u5F55",
+        recordSubtitle: "\u5151\u6362\u540E\u53EF\u6309\u6307\u5F15\u5B8C\u6210\u6838\u9500\u6216\u67E5\u770B\u751F\u6210\u7ED3\u679C",
+        sponsorLabel: "\u63D0\u4F9B\u65B9\uFF1A",
+        deliveryLabel: "\u53D1\u653E\u65B9\u5F0F\uFF1A",
+        redeemHintTitle: "\u9886\u53D6\u6307\u5F15",
+        pointUnit: "\u79EF\u5206",
+        soldOut: "\u5DF2\u5151\u5B8C",
+        loading: "\u52A0\u8F7D\u4E2D...",
+        emptyBenefits: "\u5F53\u524D\u573A\u666F\u6682\u65E0\u53EF\u7528\u6743\u76CA",
+        emptyBenefitsHint: "\u53EF\u4EE5\u5207\u6362\u5230\u5176\u4ED6\u573A\u666F\u67E5\u770B",
+        emptyRecords: "\u8FD8\u6CA1\u6709\u6743\u76CA\u8BB0\u5F55",
+        emptyRecordsHint: "\u5B8C\u6210\u4E00\u6B21\u5151\u6362\u540E\uFF0C\u8FD9\u91CC\u4F1A\u663E\u793A\u76F8\u5E94\u6838\u9500\u4FE1\u606F",
+        close: "\u5173\u95ED",
+        detailAction: "\u67E5\u770B\u8BE6\u60C5",
+        redeeming: "\u63D0\u4EA4\u4E2D...",
+        redeemNow: "\u7ACB\u5373\u5151\u6362",
+        soldOutAction: "\u5E93\u5B58\u4E0D\u8DB3",
+        lackPoints: "\u79EF\u5206\u4E0D\u8DB3",
+        confirmRedeemTitle: "\u786E\u8BA4\u5151\u6362",
+        confirmRedeemPrefix: "\u5C06\u4F7F\u7528 ",
+        confirmRedeemMiddle: ' ',
+        confirmRedeemSuffix: "\u5151\u6362",
+        redeemSuccessTitle: "\u5151\u6362\u6210\u529F",
+        redeemSuccessView: "\u53BB\u67E5\u770B",
+        redeemSuccessDone: "\u7A0D\u540E\u518D\u8BF4",
+        badgeSuccessHint: "\u5FBD\u7AE0\u5DF2\u751F\u6210\uFF0C\u53EF\u5728\u9996\u9875\u663E\u8457\u4F4D\u7F6E\u67E5\u770B",
+        redeemFailSoldOut: "\u5F53\u524D\u6743\u76CA\u5DF2\u5151\u5B8C",
+        redeemFailPoints: "\u79EF\u5206\u4E0D\u8DB3\uFF0C\u6682\u65F6\u65E0\u6CD5\u5151\u6362",
+        redeemFailMissing: "\u672A\u627E\u5230\u8BE5\u6743\u76CA",
+        redeemFailGeneric: "\u5151\u6362\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5",
+        networkError: "\u7F51\u7EDC\u5F02\u5E38",
+        loadError: "\u52A0\u8F7D\u5931\u8D25"
+      },
+      categoryOptions: [{
+        code: 'ALL',
+        label: "\u5168\u90E8"
+      }, {
+        code: 'DINING',
+        label: "\u9910\u996E"
+      }, {
+        code: 'STATIONERY',
+        label: "\u5B66\u4E60"
+      }, {
+        code: 'CERT',
+        label: "\u8363\u8A89"
+      }]
     };
+  },
+  computed: {
+    filteredBenefits: function filteredBenefits() {
+      var _this = this;
+      var source = this.activeCategory === 'ALL' ? this.benefits : this.benefits.filter(function (item) {
+        return item.category === _this.activeCategory;
+      });
+      return (0, _toConsumableArray2.default)(source).sort(function (a, b) {
+        if (a.available === b.available) {
+          return (a.point || 0) - (b.point || 0);
+        }
+        return a.available ? -1 : 1;
+      });
+    },
+    displayBenefits: function displayBenefits() {
+      var _this2 = this;
+      return this.filteredBenefits.map(function (item) {
+        return _objectSpread(_objectSpread({}, item), {}, {
+          imageSrc: _this2.resolveBenefitImage(item),
+          iconText: item.icon || _this2.defaultBenefitIcon,
+          stockLabel: item.available ? _this2.stockText(item.stock) : _this2.texts.soldOut,
+          accentStyle: _this2.categoryAccentStyle(item.category),
+          badgeStyle: _this2.categoryBadgeStyle(item.category),
+          arrowStyle: _this2.categoryArrowStyle(item.category),
+          canRedeemNow: _this2.canRedeem(item),
+          actionText: _this2.redeemButtonText(item)
+        });
+      });
+    },
+    displayRecords: function displayRecords() {
+      var _this3 = this;
+      return this.records.map(function (record) {
+        return _objectSpread(_objectSpread({}, record), {}, {
+          cardClass: _this3.cardClass(record.category),
+          iconText: record.icon || _this3.getCategoryIcon(record.category),
+          statusClass: _this3.statusClass(record.status),
+          timeText: _this3.formatTime(record.createTime)
+        });
+      });
+    },
+    activeBenefitCardClass: function activeBenefitCardClass() {
+      return this.activeBenefit ? this.cardClass(this.activeBenefit.category) : 'card-default';
+    },
+    activeBenefitImage: function activeBenefitImage() {
+      return this.activeBenefit ? this.resolveBenefitImage(this.activeBenefit) : '';
+    },
+    activeBenefitStockText: function activeBenefitStockText() {
+      if (!this.activeBenefit) {
+        return '';
+      }
+      return this.activeBenefit.available ? this.stockText(this.activeBenefit.stock) : this.texts.soldOut;
+    },
+    activeBenefitCanRedeem: function activeBenefitCanRedeem() {
+      return this.activeBenefit ? this.canRedeem(this.activeBenefit) : false;
+    },
+    activeBenefitActionText: function activeBenefitActionText() {
+      return this.activeBenefit ? this.redeemButtonText(this.activeBenefit) : this.texts.redeemNow;
+    },
+    sceneCards: function sceneCards() {
+      return [{
+        code: 'DINING',
+        label: "\u9910\u996E",
+        icon: this.getCategoryIcon('DINING'),
+        count: this.getCategoryCount('DINING'),
+        cardClass: 'scene-dining'
+      }, {
+        code: 'STATIONERY',
+        label: "\u5B66\u4E60",
+        icon: this.getCategoryIcon('STATIONERY'),
+        count: this.getCategoryCount('STATIONERY'),
+        cardClass: 'scene-library'
+      }, {
+        code: 'CERT',
+        label: "\u8363\u8A89",
+        icon: this.getCategoryIcon('CERT'),
+        count: this.getCategoryCount('CERT'),
+        cardClass: 'scene-cert'
+      }];
+    }
   },
   onLoad: function onLoad() {
     var username = uni.getStorageSync('username');
@@ -217,243 +331,443 @@ var _default = {
   },
   onShow: function onShow() {
     if (this.username) {
-      this.loadBalance();
-      this.loadProducts(true);
-      this.loadExchangeRecords();
+      this.loadAll();
     }
   },
   methods: {
     initParticleStyles: function initParticleStyles() {
       var styles = [];
-      for (var i = 0; i < 40; i++) {
+      for (var i = 0; i < 36; i++) {
         styles.push({
           left: Math.random() * 100 + '%',
-          animationDuration: 8 + Math.random() * 12 + 's',
-          animationDelay: Math.random() * 8 + 's',
-          width: 2 + Math.random() * 6 + 'rpx',
-          height: 2 + Math.random() * 6 + 'rpx',
-          opacity: 0.2 + Math.random() * 0.4
+          animationDuration: 8 + Math.random() * 8 + 's',
+          animationDelay: Math.random() * 6 + 's',
+          width: 6 + Math.random() * 10 + 'rpx',
+          height: 6 + Math.random() * 10 + 'rpx',
+          opacity: 0.18 + Math.random() * 0.28
         });
       }
       this.particleStyles = styles;
     },
-    getGoodsIcon: function getGoodsIcon(name) {
-      var icons = {
-        '环保水杯': '🥤',
-        '竹制牙刷': '🪥',
-        '帆布袋': '🛍️',
-        '可降解垃圾袋': '🗑️',
-        '环保餐具': '🥢',
-        '种子卡片': '🌱',
-        '植物盆栽': '🪴',
-        '环保笔记本': '📓'
-      };
-      return icons[name] || '🎁';
-    },
-    // 兑换记录专用图标方法
-    getExchangeIcon: function getExchangeIcon(name) {
-      var icons = {
-        '环保水杯': '🥤',
-        '竹制牙刷': '🪥',
-        '帆布袋': '🛍️',
-        '可降解垃圾袋': '🗑️',
-        '环保餐具': '🥢',
-        '种子卡片': '🌱',
-        '植物盆栽': '🪴',
-        '环保笔记本': '📓'
-      };
-      return icons[name] || '🎁';
-    },
-    loadBalance: function loadBalance() {
-      var _this = this;
+    loadAll: function loadAll() {
+      var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var res;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.prev = 0;
-                _context.next = 3;
-                return (0, _request.getProfile)(_this.username);
-              case 3:
-                res = _context.sent;
-                _this.userPoints = res.points || 0;
-                _context.next = 10;
-                break;
-              case 7:
-                _context.prev = 7;
-                _context.t0 = _context["catch"](0);
-                console.error('加载积分失败:', _context.t0);
-              case 10:
+                _context.next = 2;
+                return Promise.all([_this4.loadProfile(), _this4.loadBenefits(), _this4.loadRecords()]);
+              case 2:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 7]]);
+        }, _callee);
       }))();
     },
-    loadProducts: function loadProducts() {
-      var _arguments = arguments,
-        _this2 = this;
+    loadProfile: function loadProfile() {
+      var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
-        var reset, mockProducts;
+        var res;
         return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                reset = _arguments.length > 0 && _arguments[0] !== undefined ? _arguments[0] : false;
-                if (!_this2.loadingProducts) {
-                  _context2.next = 3;
-                  break;
-                }
-                return _context2.abrupt("return");
+                _context2.prev = 0;
+                _context2.next = 3;
+                return (0, _request.getProfile)(_this5.username);
               case 3:
-                if (reset) {
-                  _this2.productPage = 1;
-                  _this2.productList = [];
-                }
-                _this2.loadingProducts = true;
-                try {
-                  mockProducts = [{
-                    id: 1,
-                    name: '环保水杯',
-                    description: '304不锈钢保温杯，减少一次性纸杯使用',
-                    point: 500,
-                    stock: 50
-                  }, {
-                    id: 2,
-                    name: '竹制牙刷',
-                    description: '可降解竹制牙刷，环保又健康',
-                    point: 200,
-                    stock: 100
-                  }, {
-                    id: 3,
-                    name: '帆布袋',
-                    description: '可重复使用的环保帆布袋',
-                    point: 150,
-                    stock: 80
-                  }, {
-                    id: 4,
-                    name: '可降解垃圾袋',
-                    description: '可生物降解垃圾袋，环保无污染',
-                    point: 100,
-                    stock: 200
-                  }, {
-                    id: 5,
-                    name: '环保餐具',
-                    description: '便携式环保餐具套装',
-                    point: 300,
-                    stock: 60
-                  }, {
-                    id: 6,
-                    name: '种子卡片',
-                    description: '可种植的种子卡片，种出绿色希望',
-                    point: 80,
-                    stock: 150
-                  }, {
-                    id: 7,
-                    name: '植物盆栽',
-                    description: '迷你多肉植物盆栽',
-                    point: 400,
-                    stock: 40
-                  }, {
-                    id: 8,
-                    name: '环保笔记本',
-                    description: '再生纸制作，环保记录本',
-                    point: 250,
-                    stock: 70
-                  }];
-                  if (reset) {
-                    _this2.productList = mockProducts;
-                  } else {
-                    _this2.productList = [].concat((0, _toConsumableArray2.default)(_this2.productList), mockProducts);
-                  }
-                  _this2.productTotalPages = 1;
-                } catch (e) {
-                  uni.showToast({
-                    title: '商品加载失败',
-                    icon: 'none'
-                  });
-                } finally {
-                  _this2.loadingProducts = false;
-                }
-              case 6:
+                res = _context2.sent;
+                _this5.userPoints = res.points || 0;
+                _context2.next = 10;
+                break;
+              case 7:
+                _context2.prev = 7;
+                _context2.t0 = _context2["catch"](0);
+                console.error('profile load failed', _context2.t0);
+              case 10:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2);
+        }, _callee2, null, [[0, 7]]);
       }))();
     },
-    loadExchangeRecords: function loadExchangeRecords() {
-      var _this3 = this;
+    loadBenefits: function loadBenefits() {
+      var _this6 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var mockRecords;
+        var res;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                try {
-                  mockRecords = [{
-                    id: 1,
-                    productName: '环保水杯',
-                    point: 500,
-                    createTime: '2025-03-28 10:30:00'
-                  }, {
-                    id: 2,
-                    productName: '种子卡片',
-                    point: 80,
-                    createTime: '2025-03-27 15:20:00'
-                  }, {
-                    id: 3,
-                    productName: '帆布袋',
-                    point: 150,
-                    createTime: '2025-03-26 09:15:00'
-                  }, {
-                    id: 4,
-                    productName: '竹制牙刷',
-                    point: 200,
-                    createTime: '2025-03-25 14:45:00'
-                  }, {
-                    id: 5,
-                    productName: '环保餐具',
-                    point: 300,
-                    createTime: '2025-03-24 11:30:00'
-                  }, {
-                    id: 6,
-                    productName: '植物盆栽',
-                    point: 400,
-                    createTime: '2025-03-23 16:20:00'
-                  }];
-                  _this3.exchangeRecords = mockRecords;
-                } catch (e) {
-                  console.error('加载兑换记录失败:', e);
-                }
-              case 1:
+                _this6.loadingCatalog = true;
+                _context3.prev = 1;
+                _context3.next = 4;
+                return (0, _request.getProductList)(1, 12);
+              case 4:
+                res = _context3.sent;
+                _this6.benefits = res.list || [];
+                _context3.next = 12;
+                break;
+              case 8:
+                _context3.prev = 8;
+                _context3.t0 = _context3["catch"](1);
+                console.error('benefit load failed', _context3.t0);
+                uni.showToast({
+                  title: _this6.texts.loadError,
+                  icon: 'none'
+                });
+              case 12:
+                _context3.prev = 12;
+                _this6.loadingCatalog = false;
+                return _context3.finish(12);
+              case 15:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3);
+        }, _callee3, null, [[1, 8, 12, 15]]);
       }))();
     },
-    loadMoreProducts: function loadMoreProducts() {
-      if (this.productPage < this.productTotalPages) {
-        this.productPage++;
-        this.loadProducts(false);
+    loadRecords: function loadRecords() {
+      var _this7 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
+        return _regenerator.default.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                _this7.loadingRecords = true;
+                _context4.prev = 1;
+                _context4.next = 4;
+                return (0, _request.getExchangeRecords)(_this7.username);
+              case 4:
+                _this7.records = _context4.sent;
+                _context4.next = 11;
+                break;
+              case 7:
+                _context4.prev = 7;
+                _context4.t0 = _context4["catch"](1);
+                console.error('record load failed', _context4.t0);
+                _this7.records = [];
+              case 11:
+                _context4.prev = 11;
+                _this7.loadingRecords = false;
+                return _context4.finish(11);
+              case 14:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, null, [[1, 7, 11, 14]]);
+      }))();
+    },
+    getCategoryCount: function getCategoryCount(category) {
+      return this.benefits.filter(function (item) {
+        return item.category === category && item.available;
+      }).length;
+    },
+    resolveBenefitImage: function resolveBenefitImage(item) {
+      if (!item) {
+        return '';
       }
+      if (item.image) {
+        return item.image;
+      }
+      var name = item.name || '';
+      if (name.indexOf("\u5957\u9910\u5238") !== -1) {
+        return '/static/mall/dining-meal-coupon.png';
+      }
+      if (name.indexOf("\u996E\u54C1") !== -1) {
+        return '/static/mall/dining-drink-coupon.png';
+      }
+      if (name.indexOf("\u5706\u73E0\u7B14") !== -1) {
+        return '/static/mall/stationery-pen.png';
+      }
+      if (name.indexOf("\u94C5\u7B14") !== -1) {
+        return '/static/mall/stationery-pencil.png';
+      }
+      if (name.indexOf("\u7EFF\u8272\u5148\u950B") !== -1) {
+        return '/static/mall/cert-green-pioneer.png';
+      }
+      if (name.indexOf("\u4F4E\u78B3\u4E4B\u661F") !== -1) {
+        return '/static/mall/cert-low-carbon-star.png';
+      }
+      return '';
     },
-    goToProductDetail: function goToProductDetail(product) {
-      uni.showToast({
-        title: "\u67E5\u770B ".concat(product.name, " \u8BE6\u60C5"),
-        icon: 'none'
+    getCategoryIcon: function getCategoryIcon(category) {
+      if (category === 'DINING') {
+        return "\uD83C\uDF5D";
+      }
+      if (category === 'STATIONERY') {
+        return "\uD83D\uDCDD";
+      }
+      if (category === 'CERT') {
+        return "\uD83C\uDFC5";
+      }
+      return this.defaultBenefitIcon;
+    },
+    categoryAccentStyle: function categoryAccentStyle(category) {
+      if (category === 'DINING') {
+        return 'background: linear-gradient(90deg, #6bc88f, #4dad71);';
+      }
+      if (category === 'STATIONERY') {
+        return 'background: linear-gradient(90deg, #73c5d4, #4fa8bb);';
+      }
+      if (category === 'CERT') {
+        return 'background: linear-gradient(90deg, #ffbe63, #f39c3b);';
+      }
+      return 'background: linear-gradient(90deg, #b8d9c2, #9cc7aa);';
+    },
+    categoryBadgeStyle: function categoryBadgeStyle(category) {
+      if (category === 'DINING') {
+        return 'background: rgba(107, 200, 143, 0.14); color: #2c8551;';
+      }
+      if (category === 'STATIONERY') {
+        return 'background: rgba(115, 197, 212, 0.16); color: #2d7f8d;';
+      }
+      if (category === 'CERT') {
+        return 'background: rgba(255, 190, 99, 0.18); color: #b96e16;';
+      }
+      return 'background: rgba(156, 199, 170, 0.18); color: #4f7c5f;';
+    },
+    categoryArrowStyle: function categoryArrowStyle(category) {
+      if (category === 'DINING') {
+        return 'color: #43a464;';
+      }
+      if (category === 'STATIONERY') {
+        return 'color: #3f95a7;';
+      }
+      if (category === 'CERT') {
+        return 'color: #df8d2f;';
+      }
+      return 'color: #6b9b78;';
+    },
+    cardClass: function cardClass(category) {
+      if (category === 'DINING') {
+        return 'card-dining';
+      }
+      if (category === 'STATIONERY') {
+        return 'card-library';
+      }
+      if (category === 'CERT') {
+        return 'card-cert';
+      }
+      return 'card-default';
+    },
+    statusClass: function statusClass(status) {
+      return status && status.indexOf("\u5DF2") === 0 ? 'status-ready' : 'status-pending';
+    },
+    stockText: function stockText(stock) {
+      return "\u5E93\u5B58 " + (stock || 0);
+    },
+    selectCategory: function selectCategory(code) {
+      this.activeCategory = code;
+    },
+    openBenefit: function openBenefit(item) {
+      this.activeBenefit = item;
+    },
+    closeDetail: function closeDetail() {
+      this.activeBenefit = null;
+      this.redeeming = false;
+    },
+    canRedeem: function canRedeem(item) {
+      return !!item && !!item.available && this.userPoints >= (item.point || 0);
+    },
+    redeemButtonText: function redeemButtonText(item) {
+      if (!item.available) {
+        return this.texts.soldOutAction;
+      }
+      if (this.userPoints < (item.point || 0)) {
+        return this.texts.lackPoints;
+      }
+      return this.texts.redeemNow;
+    },
+    confirmRedeem: function confirmRedeem(item) {
+      var _this8 = this;
+      return new Promise(function (resolve) {
+        uni.showModal({
+          title: _this8.texts.confirmRedeemTitle,
+          content: _this8.texts.confirmRedeemPrefix + item.point + _this8.texts.confirmRedeemMiddle + _this8.texts.pointUnit + _this8.texts.confirmRedeemSuffix + item.name,
+          success: function success(res) {
+            return resolve(!!res.confirm);
+          },
+          fail: function fail() {
+            return resolve(false);
+          }
+        });
       });
     },
-    viewRecordDetail: function viewRecordDetail(record) {
-      uni.showToast({
-        title: "\u5DF2\u5151\u6362 ".concat(record.productName),
-        icon: 'success'
+    resolveRedeemError: function resolveRedeemError(code) {
+      if (code === 'RIGHT_SOLD_OUT') {
+        return this.texts.redeemFailSoldOut;
+      }
+      if (code === 'POINTS_NOT_ENOUGH') {
+        return this.texts.redeemFailPoints;
+      }
+      if (code === 'RIGHT_NOT_FOUND') {
+        return this.texts.redeemFailMissing;
+      }
+      return this.texts.redeemFailGeneric;
+    },
+    performRedeem: function performRedeem(item, shouldCloseDetail) {
+      var _this9 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
+        var confirmed, res;
+        return _regenerator.default.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                if (!(!item || _this9.redeeming)) {
+                  _context5.next = 2;
+                  break;
+                }
+                return _context5.abrupt("return");
+              case 2:
+                if (item.available) {
+                  _context5.next = 5;
+                  break;
+                }
+                uni.showToast({
+                  title: _this9.texts.soldOutAction,
+                  icon: 'none'
+                });
+                return _context5.abrupt("return");
+              case 5:
+                if (!(_this9.userPoints < (item.point || 0))) {
+                  _context5.next = 8;
+                  break;
+                }
+                uni.showToast({
+                  title: _this9.texts.lackPoints,
+                  icon: 'none'
+                });
+                return _context5.abrupt("return");
+              case 8:
+                _context5.next = 10;
+                return _this9.confirmRedeem(item);
+              case 10:
+                confirmed = _context5.sent;
+                if (confirmed) {
+                  _context5.next = 13;
+                  break;
+                }
+                return _context5.abrupt("return");
+              case 13:
+                _this9.activeBenefit = item;
+                _this9.redeeming = true;
+                _context5.prev = 15;
+                _context5.next = 18;
+                return (0, _request.exchangeProduct)(_this9.username, item.id);
+              case 18:
+                res = _context5.sent;
+                if (!(res.code === 200)) {
+                  _context5.next = 26;
+                  break;
+                }
+                _context5.next = 22;
+                return Promise.all([_this9.loadProfile(), _this9.loadBenefits(), _this9.loadRecords()]);
+              case 22:
+                _context5.next = 24;
+                return _this9.showRedeemSuccess(res, item);
+              case 24:
+                if (shouldCloseDetail) {
+                  _this9.closeDetail();
+                }
+                return _context5.abrupt("return");
+              case 26:
+                uni.showToast({
+                  title: _this9.resolveRedeemError(res.message),
+                  icon: 'none'
+                });
+                _context5.next = 33;
+                break;
+              case 29:
+                _context5.prev = 29;
+                _context5.t0 = _context5["catch"](15);
+                console.error('redeem failed', _context5.t0);
+                uni.showToast({
+                  title: _this9.texts.networkError,
+                  icon: 'none'
+                });
+              case 33:
+                _context5.prev = 33;
+                _this9.redeeming = false;
+                return _context5.finish(33);
+              case 36:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, null, [[15, 29, 33, 36]]);
+      }))();
+    },
+    showRedeemSuccess: function showRedeemSuccess(res, item) {
+      var _this10 = this;
+      var isGreenCertificate = res.productCode === 'CERT_GREEN_PIONEER';
+      var isBadge = res.productCode === 'CERT_LOW_CARBON_STAR';
+      var content = isBadge ? this.texts.badgeSuccessHint : res.claimMessage || item.exchangeHint;
+      return new Promise(function (resolve) {
+        uni.showModal({
+          title: _this10.texts.redeemSuccessTitle,
+          content: content,
+          showCancel: isGreenCertificate,
+          confirmText: isGreenCertificate ? _this10.texts.redeemSuccessView : _this10.texts.close,
+          cancelText: _this10.texts.redeemSuccessDone,
+          success: function success(modalRes) {
+            if (isGreenCertificate && modalRes.confirm) {
+              uni.navigateTo({
+                url: '/pages/certificate/certificate?mode=benefit&productCode=CERT_GREEN_PIONEER'
+              });
+            }
+            resolve();
+          },
+          fail: function fail() {
+            return resolve();
+          }
+        });
       });
+    },
+    redeemActiveBenefit: function redeemActiveBenefit() {
+      var _this11 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
+        return _regenerator.default.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.next = 2;
+                return _this11.performRedeem(_this11.activeBenefit, true);
+              case 2:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6);
+      }))();
+    },
+    handleCardRedeem: function handleCardRedeem(item) {
+      var _this12 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee7() {
+        return _regenerator.default.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _context7.next = 2;
+                return _this12.performRedeem(item, false);
+              case 2:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7);
+      }))();
+    },
+    formatTime: function formatTime(value) {
+      if (!value) {
+        return '';
+      }
+      return String(value).replace('T', ' ').slice(0, 16);
     }
   }
 };

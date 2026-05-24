@@ -157,7 +157,7 @@ var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/r
 var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
 var BottomNav = function BottomNav() {
   __webpack_require__.e(/*! require.ensure | components/bottom-nav */ "components/bottom-nav").then((function () {
-    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 160));
+    return resolve(__webpack_require__(/*! ../../components/bottom-nav.vue */ 200));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -169,6 +169,7 @@ var _default = {
     return {
       username: '',
       profileData: {},
+      exchangeRecords: [],
       weekBars: [],
       editName: '',
       notifyOn: true,
@@ -198,6 +199,11 @@ var _default = {
     },
     kmCount: function kmCount() {
       return Math.round((this.profileData.totalCarbon || 0) / 0.21);
+    },
+    greenCertificateRecord: function greenCertificateRecord() {
+      return (this.exchangeRecords || []).find(function (item) {
+        return item.productCode === 'CERT_GREEN_PIONEER';
+      }) || null;
     }
   },
   onLoad: function onLoad() {
@@ -215,6 +221,7 @@ var _default = {
     if (this.username) {
       this.loadProfile();
       this.loadWeekBars();
+      this.loadExchangeRecords();
     }
   },
   methods: {
@@ -322,6 +329,32 @@ var _default = {
         }, _callee2, null, [[0, 13]]);
       }))();
     },
+    loadExchangeRecords: function loadExchangeRecords() {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+                _context3.next = 3;
+                return (0, _request.getExchangeRecords)(_this3.username);
+              case 3:
+                _this3.exchangeRecords = _context3.sent;
+                _context3.next = 9;
+                break;
+              case 6:
+                _context3.prev = 6;
+                _context3.t0 = _context3["catch"](0);
+                _this3.exchangeRecords = [];
+              case 9:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[0, 6]]);
+      }))();
+    },
     // 跳转到碳保护区
     goCarbonReserve: function goCarbonReserve() {
       uni.navigateTo({
@@ -338,6 +371,18 @@ var _default = {
     goCarbonLedger: function goCarbonLedger() {
       uni.navigateTo({
         url: '/pages/carbonLedger/carbonLedger'
+      });
+    },
+    goBenefitCertificate: function goBenefitCertificate() {
+      if (!this.greenCertificateRecord) {
+        uni.showToast({
+          title: '请先兑换绿色先锋证书',
+          icon: 'none'
+        });
+        return;
+      }
+      uni.navigateTo({
+        url: '/pages/certificate/certificate?mode=benefit&productCode=CERT_GREEN_PIONEER'
       });
     },
     // 跳转到设置页面

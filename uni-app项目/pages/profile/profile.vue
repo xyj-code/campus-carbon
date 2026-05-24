@@ -103,6 +103,23 @@
         </view>
       </view>
 
+      <view class="rights-card floating-card" @click="goBenefitCertificate">
+        <view class="rights-glow"></view>
+        <view class="rights-left">
+          <view class="rights-icon-wrap">
+            <text class="rights-icon">📜</text>
+          </view>
+          <view class="rights-copy">
+            <text class="rights-title">{{ greenCertificateRecord ? '绿色先锋证书' : '权益证书' }}</text>
+            <text class="rights-desc">{{ greenCertificateRecord ? '已生成电子证书，点击查看展示页' : '兑换绿色先锋证书后，可在这里查看' }}</text>
+          </view>
+        </view>
+        <view class="rights-right">
+          <text class="rights-status">{{ greenCertificateRecord ? '已解锁' : '未生成' }}</text>
+          <text class="rights-arrow">→</text>
+        </view>
+      </view>
+
       <!-- 关于我们 - 改为页面跳转 -->
       <view class="about-card floating-card" @click="goAbout">
         <view class="about-glow"></view>
@@ -138,7 +155,7 @@
 
 <script>
 import BottomNav from '../../components/bottom-nav.vue';
-import { getProfile, getStepCountList } from '../../utils/request.js';
+import { getProfile, getStepCountList, getExchangeRecords } from '../../utils/request.js';
 
 export default {
   name: 'ProfilePage',
@@ -147,6 +164,7 @@ export default {
     return {
       username: '',
       profileData: {},
+      exchangeRecords: [],
       weekBars: [],
       editName: '',
       notifyOn: true,
@@ -176,6 +194,9 @@ export default {
     },
     kmCount() {
       return Math.round((this.profileData.totalCarbon || 0) / 0.21);
+    },
+    greenCertificateRecord() {
+      return (this.exchangeRecords || []).find(item => item.productCode === 'CERT_GREEN_PIONEER') || null;
     }
   },
   onLoad() {
@@ -191,6 +212,7 @@ export default {
     if (this.username) {
       this.loadProfile();
       this.loadWeekBars();
+      this.loadExchangeRecords();
     }
   },
   methods: {
@@ -258,6 +280,13 @@ export default {
         this.weekBars = [];
       }
     },
+    async loadExchangeRecords() {
+      try {
+        this.exchangeRecords = await getExchangeRecords(this.username);
+      } catch (e) {
+        this.exchangeRecords = [];
+      }
+    },
     // 跳转到碳保护区
     goCarbonReserve() {
       uni.navigateTo({ url: '/pages/carbon保护区/carbon保护区' });
@@ -269,6 +298,13 @@ export default {
     // 跳转到碳账本页面
     goCarbonLedger() {
       uni.navigateTo({ url: '/pages/carbonLedger/carbonLedger' });
+    },
+    goBenefitCertificate() {
+      if (!this.greenCertificateRecord) {
+        uni.showToast({ title: '请先兑换绿色先锋证书', icon: 'none' });
+        return;
+      }
+      uni.navigateTo({ url: '/pages/certificate/certificate?mode=benefit&productCode=CERT_GREEN_PIONEER' });
     },
     // 跳转到设置页面
     goSettings() {
@@ -693,6 +729,95 @@ export default {
 .feature-card:active .card-arrow {
   transform: translateX(8rpx);
   color: #FFFFFF;
+}
+
+.rights-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 26rpx 28rpx;
+  border-radius: 34rpx;
+  background: linear-gradient(135deg, rgba(244, 253, 247, 0.96), rgba(221, 244, 228, 0.88));
+  box-shadow: 0 14rpx 28rpx rgba(62, 122, 78, 0.12);
+}
+
+.rights-glow {
+  position: absolute;
+  top: -30rpx;
+  right: -30rpx;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(121, 205, 149, 0.28), transparent 72%);
+}
+
+.rights-left {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  flex: 1;
+}
+
+.rights-icon-wrap {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #63bd81, #3f9a63);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 20rpx rgba(63, 154, 99, 0.22);
+}
+
+.rights-icon {
+  font-size: 40rpx;
+}
+
+.rights-copy {
+  flex: 1;
+}
+
+.rights-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #214d32;
+}
+
+.rights-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: #628171;
+}
+
+.rights-right {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+}
+
+.rights-status {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(64, 154, 99, 0.12);
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #3b8f5d;
+}
+
+.rights-arrow {
+  font-size: 34rpx;
+  color: #3b8f5d;
 }
 
 /* ===== 关于我们卡片 ===== */

@@ -8,12 +8,17 @@ import java.util.List;
 @Mapper
 public interface ExchangeRecordMapper {
 
-    @Select("SELECT id, username, product_id AS productId, product_name AS productName, point, " +
-            "create_time AS createTime FROM exchange_record " +
-            "WHERE username = #{username} ORDER BY create_time DESC LIMIT 30")
+    @Select("SELECT id, username, product_id AS productId, product_code AS productCode, " +
+            "category_code AS categoryCode, point, status, create_time AS createTime " +
+            "FROM exchange_record WHERE username = #{username} ORDER BY create_time DESC LIMIT 30")
     List<ExchangeRecord> selectByUsername(String username);
 
-    @Insert("INSERT INTO exchange_record(username, product_id, product_name, point) " +
-            "VALUES(#{username}, #{productId}, #{productName}, #{point})")
+    @Select("SELECT id, username, product_id AS productId, product_code AS productCode, " +
+            "category_code AS categoryCode, point, status, create_time AS createTime " +
+            "FROM exchange_record WHERE username = #{username} ORDER BY create_time DESC")
+    List<ExchangeRecord> selectAllByUsername(String username);
+
+    @Insert("INSERT INTO exchange_record(username, product_id, product_code, category_code, point, status) " +
+            "VALUES(#{username}, #{productId}, #{productCode}, #{categoryCode}, #{point}, #{status})")
     int insert(ExchangeRecord record);
 }

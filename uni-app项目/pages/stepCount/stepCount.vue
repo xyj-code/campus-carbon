@@ -485,7 +485,7 @@ export default {
         const duration = Math.round(steps / 100);
 
         const res = await uni.request({
-          url: 'http://localhost:8080/api/step/save',
+          url: 'http://172.20.10.3:8080/api/step/save',
           method: 'POST',
           data: {
             studentId: this.stuNo,

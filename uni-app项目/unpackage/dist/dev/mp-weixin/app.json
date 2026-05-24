@@ -6,6 +6,9 @@
     "pages/profile/profile",
     "pages/pointsDetail/pointsDetail",
     "pages/aiSuggest/aiSuggest",
+    "pages/agentDesk/agentDesk",
+    "pages/agentRoute/agentRoute",
+    "pages/schedule/schedule",
     "pages/stepCount/stepCount",
     "pages/sportRecord/sportRecord",
     "pages/rank/rank",
@@ -14,7 +17,9 @@
     "pages/certificate/certificate",
     "pages/carbonLedger/carbonLedger",
     "pages/settings/settings",
-    "pages/about/about"
+    "pages/about/about",
+    "pages/healthData/healthData",
+    "pages/activityHub/activityHub"
   ],
   "subPackages": [],
   "window": {
@@ -43,6 +48,15 @@
         "text": "我的"
       }
     ]
+  },
+  "requiredPrivateInfos": [
+    "getLocation",
+    "chooseLocation"
+  ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于搜索附近运动场地和规划路线"
+    }
   },
   "usingComponents": {}
 }

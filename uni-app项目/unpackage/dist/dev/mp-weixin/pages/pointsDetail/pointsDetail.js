@@ -171,142 +171,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 41));
+var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
 var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ 18));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 43));
 var _request = __webpack_require__(/*! ../../utils/request.js */ 44);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 var _default = {
   name: 'PointsDetailPage',
   data: function data() {
@@ -439,7 +309,9 @@ var _default = {
                 return (0, _request.getPointsRecords)(_this2.username, _this2.activeFilter, _this2.currentPage, _this2.pageSize);
               case 8:
                 res = _context2.sent;
-                newList = res.list || [];
+                newList = (res.list || []).map(function (item) {
+                  return _this2.normalizeRecord(item);
+                });
                 if (reset) {
                   _this2.records = newList;
                 } else {
@@ -467,6 +339,36 @@ var _default = {
           }
         }, _callee2, null, [[5, 14, 18, 21]]);
       }))();
+    },
+    normalizeRecord: function normalizeRecord(record) {
+      var next = _objectSpread({}, record);
+      next.displayTitle = this.mapTitle(record.title);
+      next.displayRemark = this.mapRemark(record.title, record.remark);
+      return next;
+    },
+    mapTitle: function mapTitle(title) {
+      if (title === 'STEP_CARBON') return '步数减碳奖励';
+      if (title === 'SPORT_CARBON') return '运动减碳奖励';
+      if (title === 'BENEFIT_REDEEM') return '绿色权益兑换';
+      if (title === 'TASK_REWARD') return '活动任务奖励';
+      return title || '积分记录';
+    },
+    mapRemark: function mapRemark(title, remark) {
+      if (title === 'TASK_REWARD') {
+        if ((remark || '').indexOf('DAILY_') !== -1) return '完成每日任务，系统已自动发放积分';
+        if ((remark || '').indexOf('WEEKLY_') !== -1) return '完成每周挑战，系统已自动发放积分';
+        return '完成活动任务后自动结算的积分奖励';
+      }
+      if (title === 'BENEFIT_REDEEM') {
+        return '已使用积分兑换绿色权益';
+      }
+      if (title === 'STEP_CARBON') {
+        return '步数达到减碳标准后自动累计积分';
+      }
+      if (title === 'SPORT_CARBON') {
+        return '运动记录换算减碳后自动累计积分';
+      }
+      return remark || '';
     },
     switchFilter: function switchFilter(val) {
       if (this.activeFilter === val) return;

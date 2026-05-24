@@ -58,6 +58,36 @@
       }
     },
     {
+      "path": "pages/agentDesk/agentDesk",
+      "style": {
+        "navigationBarTitleText": "\u667a\u80fd\u884c\u52a8\u89c4\u5212",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
+      "path": "pages/agentRoute/agentRoute",
+      "style": {
+        "navigationBarTitleText": "\u8def\u7ebf\u89c4\u5212",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
+      "path": "pages/schedule/schedule",
+      "style": {
+        "navigationBarTitleText": "\u6211\u7684\u8bfe\u8868",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
       "path": "pages/stepCount/stepCount",
       "style": {
         "navigationBarTitleText": "步数统计",
@@ -136,6 +166,26 @@
       "style": {
         "navigationBarTitleText": "关于我们",
         "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/healthData/healthData",
+      "style": {
+        "navigationBarTitleText": "健康统计",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
+      }
+    },
+    {
+      "path": "pages/activityHub/activityHub",
+      "style": {
+        "navigationBarTitleText": "主题活动",
+        "navigationBarBackgroundColor": "#2e7d32",
+        "navigationBarTextStyle": "white",
+        "animationType": "slide-in-right",
+        "animationDuration": 220
       }
     }
   ],

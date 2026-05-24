@@ -1,6 +1,6 @@
-(global["webpackJsonp"] = global["webpackJsonp"] || []).push([["common/vendor"],[
-/* 0 */,
-/* 1 */
+(global["webpackJsonp"] = global["webpackJsonp"] || []).push([["common/vendor"],{
+
+/***/ 1:
 /*!*********************************************************!*\
   !*** ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js ***!
   \*********************************************************/
@@ -52,7 +52,253 @@ var _default = target[key];
 exports.default = _default;
 
 /***/ }),
-/* 2 */
+
+/***/ 10:
+/*!****************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/nonIterableRest.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+module.exports = _nonIterableRest, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 11:
+/*!***************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/defineProperty.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var toPropertyKey = __webpack_require__(/*! ./toPropertyKey.js */ 12);
+function _defineProperty(obj, key, value) {
+  key = toPropertyKey(key);
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+  return obj;
+}
+module.exports = _defineProperty, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 12:
+/*!**************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/toPropertyKey.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
+var toPrimitive = __webpack_require__(/*! ./toPrimitive.js */ 14);
+function toPropertyKey(t) {
+  var i = toPrimitive(t, "string");
+  return "symbol" == _typeof(i) ? i : i + "";
+}
+module.exports = toPropertyKey, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 13:
+/*!*******************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/typeof.js ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _typeof(o) {
+  "@babel/helpers - typeof";
+
+  return (module.exports = _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+    return typeof o;
+  } : function (o) {
+    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _typeof(o);
+}
+module.exports = _typeof, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 14:
+/*!************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/toPrimitive.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
+function toPrimitive(t, r) {
+  if ("object" != _typeof(t) || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r || "default");
+    if ("object" != _typeof(i)) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r ? String : Number)(t);
+}
+module.exports = toPrimitive, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 141:
+/*!*******************************************************************!*\
+  !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/carbonProject.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.checkAndUnlock = checkAndUnlock;
+exports.getCertificate = getCertificate;
+exports.getProjectDetail = getProjectDetail;
+exports.getProjectsList = getProjectsList;
+exports.getUserProjectList = getUserProjectList;
+exports.getUserTotalCarbon = getUserTotalCarbon;
+var _request = __webpack_require__(/*! ./request.js */ 44);
+// 生态认养项目相关接口
+
+// 用户累计减碳量 + 个人资料
+function getUserTotalCarbon(username) {
+  return (0, _request.request)("/project/carbon-total?username=".concat(username));
+}
+
+// 用户已解锁项目列表
+function getUserProjectList(username) {
+  return (0, _request.request)("/project/my-projects?username=".concat(username));
+}
+
+// 检查并自动解锁达标项目（POST，query param）
+function checkAndUnlock(username) {
+  return (0, _request.request)("/project/check-unlock?username=".concat(username), {
+    method: 'POST'
+  });
+}
+
+// 项目详情
+function getProjectDetail(id) {
+  return (0, _request.request)("/project/detail/".concat(id));
+}
+
+// 获取电子认养证书
+function getCertificate(username, userProjectId) {
+  return (0, _request.request)("/project/certificate?username=".concat(username, "&userProjectId=").concat(userProjectId));
+}
+
+// 获取所有项目列表
+function getProjectsList() {
+  return (0, _request.request)("/project/all");
+}
+
+/***/ }),
+
+/***/ 15:
+/*!**********************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/construct.js ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var setPrototypeOf = __webpack_require__(/*! ./setPrototypeOf.js */ 16);
+var isNativeReflectConstruct = __webpack_require__(/*! ./isNativeReflectConstruct.js */ 17);
+function _construct(t, e, r) {
+  if (isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
+  var o = [null];
+  o.push.apply(o, e);
+  var p = new (t.bind.apply(t, o))();
+  return r && setPrototypeOf(p, r.prototype), p;
+}
+module.exports = _construct, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 16:
+/*!***************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/setPrototypeOf.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _setPrototypeOf(o, p) {
+  module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports;
+  return _setPrototypeOf(o, p);
+}
+module.exports = _setPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 17:
+/*!*************************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/isNativeReflectConstruct.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _isNativeReflectConstruct() {
+  try {
+    var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+  } catch (t) {}
+  return (module.exports = _isNativeReflectConstruct = function _isNativeReflectConstruct() {
+    return !!t;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports)();
+}
+module.exports = _isNativeReflectConstruct, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 18:
+/*!******************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/toConsumableArray.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithoutHoles = __webpack_require__(/*! ./arrayWithoutHoles.js */ 19);
+var iterableToArray = __webpack_require__(/*! ./iterableToArray.js */ 20);
+var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
+var nonIterableSpread = __webpack_require__(/*! ./nonIterableSpread.js */ 21);
+function _toConsumableArray(arr) {
+  return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
+}
+module.exports = _toConsumableArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 19:
+/*!******************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/arrayWithoutHoles.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) return arrayLikeToArray(arr);
+}
+module.exports = _arrayWithoutHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 2:
 /*!************************************************************!*\
   !*** ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js ***!
   \************************************************************/
@@ -2542,336 +2788,8 @@ exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js */ 1)["default"], __webpack_require__(/*! ./../../../webpack/buildin/global.js */ 3)))
 
 /***/ }),
-/* 3 */
-/*!***********************************!*\
-  !*** (webpack)/buildin/global.js ***!
-  \***********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
 
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || new Function("return this")();
-} catch (e) {
-	// This works if the window reference is available
-	if (typeof window === "object") g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 4 */
-/*!**********************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/interopRequireDefault.js ***!
-  \**********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {
-    "default": obj
-  };
-}
-module.exports = _interopRequireDefault, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 5 */
-/*!**************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/slicedToArray.js ***!
-  \**************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithHoles = __webpack_require__(/*! ./arrayWithHoles.js */ 6);
-var iterableToArrayLimit = __webpack_require__(/*! ./iterableToArrayLimit.js */ 7);
-var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
-var nonIterableRest = __webpack_require__(/*! ./nonIterableRest.js */ 10);
-function _slicedToArray(arr, i) {
-  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
-}
-module.exports = _slicedToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 6 */
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayWithHoles.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _arrayWithHoles(arr) {
-  if (Array.isArray(arr)) return arr;
-}
-module.exports = _arrayWithHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 7 */
-/*!*********************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js ***!
-  \*********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _iterableToArrayLimit(r, l) {
-  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-  if (null != t) {
-    var e,
-      n,
-      i,
-      u,
-      a = [],
-      f = !0,
-      o = !1;
-    try {
-      if (i = (t = t.call(r)).next, 0 === l) {
-        if (Object(t) !== t) return;
-        f = !1;
-      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0) {
-        ;
-      }
-    } catch (r) {
-      o = !0, n = r;
-    } finally {
-      try {
-        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
-      } finally {
-        if (o) throw n;
-      }
-    }
-    return a;
-  }
-}
-module.exports = _iterableToArrayLimit, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 8 */
-/*!***************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js ***!
-  \***************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
-function _unsupportedIterableToArray(o, minLen) {
-  if (!o) return;
-  if (typeof o === "string") return arrayLikeToArray(o, minLen);
-  var n = Object.prototype.toString.call(o).slice(8, -1);
-  if (n === "Object" && o.constructor) n = o.constructor.name;
-  if (n === "Map" || n === "Set") return Array.from(o);
-  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
-}
-module.exports = _unsupportedIterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 9 */
-/*!*****************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayLikeToArray.js ***!
-  \*****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _arrayLikeToArray(arr, len) {
-  if (len == null || len > arr.length) len = arr.length;
-  for (var i = 0, arr2 = new Array(len); i < len; i++) {
-    arr2[i] = arr[i];
-  }
-  return arr2;
-}
-module.exports = _arrayLikeToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 10 */
-/*!****************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/nonIterableRest.js ***!
-  \****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-module.exports = _nonIterableRest, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 11 */
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/defineProperty.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var toPropertyKey = __webpack_require__(/*! ./toPropertyKey.js */ 12);
-function _defineProperty(obj, key, value) {
-  key = toPropertyKey(key);
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-  return obj;
-}
-module.exports = _defineProperty, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 12 */
-/*!**************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toPropertyKey.js ***!
-  \**************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
-var toPrimitive = __webpack_require__(/*! ./toPrimitive.js */ 14);
-function toPropertyKey(t) {
-  var i = toPrimitive(t, "string");
-  return "symbol" == _typeof(i) ? i : i + "";
-}
-module.exports = toPropertyKey, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 13 */
-/*!*******************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/typeof.js ***!
-  \*******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _typeof(o) {
-  "@babel/helpers - typeof";
-
-  return (module.exports = _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-    return typeof o;
-  } : function (o) {
-    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _typeof(o);
-}
-module.exports = _typeof, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 14 */
-/*!************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toPrimitive.js ***!
-  \************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
-function toPrimitive(t, r) {
-  if ("object" != _typeof(t) || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r || "default");
-    if ("object" != _typeof(i)) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return ("string" === r ? String : Number)(t);
-}
-module.exports = toPrimitive, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 15 */
-/*!**********************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/construct.js ***!
-  \**********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var setPrototypeOf = __webpack_require__(/*! ./setPrototypeOf.js */ 16);
-var isNativeReflectConstruct = __webpack_require__(/*! ./isNativeReflectConstruct.js */ 17);
-function _construct(t, e, r) {
-  if (isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
-  var o = [null];
-  o.push.apply(o, e);
-  var p = new (t.bind.apply(t, o))();
-  return r && setPrototypeOf(p, r.prototype), p;
-}
-module.exports = _construct, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 16 */
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/setPrototypeOf.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _setPrototypeOf(o, p) {
-  module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
-    o.__proto__ = p;
-    return o;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports;
-  return _setPrototypeOf(o, p);
-}
-module.exports = _setPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 17 */
-/*!*************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/isNativeReflectConstruct.js ***!
-  \*************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _isNativeReflectConstruct() {
-  try {
-    var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-  } catch (t) {}
-  return (module.exports = _isNativeReflectConstruct = function _isNativeReflectConstruct() {
-    return !!t;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports)();
-}
-module.exports = _isNativeReflectConstruct, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 18 */
-/*!******************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toConsumableArray.js ***!
-  \******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithoutHoles = __webpack_require__(/*! ./arrayWithoutHoles.js */ 19);
-var iterableToArray = __webpack_require__(/*! ./iterableToArray.js */ 20);
-var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
-var nonIterableSpread = __webpack_require__(/*! ./nonIterableSpread.js */ 21);
-function _toConsumableArray(arr) {
-  return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
-}
-module.exports = _toConsumableArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 19 */
-/*!******************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayWithoutHoles.js ***!
-  \******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
-function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) return arrayLikeToArray(arr);
-}
-module.exports = _arrayWithoutHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 20 */
+/***/ 20:
 /*!****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/iterableToArray.js ***!
   \****************************************************************/
@@ -2884,7 +2802,8 @@ function _iterableToArray(iter) {
 module.exports = _iterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 21 */
+
+/***/ 21:
 /*!******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/nonIterableSpread.js ***!
   \******************************************************************/
@@ -2897,7 +2816,8 @@ function _nonIterableSpread() {
 module.exports = _nonIterableSpread, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 22 */
+
+/***/ 22:
 /*!*************************************************************!*\
   !*** ./node_modules/@dcloudio/uni-i18n/dist/uni-i18n.es.js ***!
   \*************************************************************/
@@ -3433,7 +3353,8 @@ function resolveLocaleChain(locale) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"], __webpack_require__(/*! ./../../../webpack/buildin/global.js */ 3)))
 
 /***/ }),
-/* 23 */
+
+/***/ 23:
 /*!***************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/classCallCheck.js ***!
   \***************************************************************/
@@ -3448,7 +3369,8 @@ function _classCallCheck(instance, Constructor) {
 module.exports = _classCallCheck, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 24 */
+
+/***/ 24:
 /*!************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/createClass.js ***!
   \************************************************************/
@@ -3476,7 +3398,8 @@ function _createClass(Constructor, protoProps, staticProps) {
 module.exports = _createClass, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 25 */
+
+/***/ 25:
 /*!******************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/mp-vue/dist/mp.runtime.esm.js ***!
   \******************************************************************************************/
@@ -9772,7 +9695,8 @@ internalMixin(Vue);
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../../webpack/buildin/global.js */ 3), __webpack_require__(/*! ./../../../../../buffer/index.js */ 26).Buffer))
 
 /***/ }),
-/* 26 */
+
+/***/ 26:
 /*!**************************************!*\
   !*** ./node_modules/buffer/index.js ***!
   \**************************************/
@@ -11573,7 +11497,8 @@ function isnan (val) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ 3)))
 
 /***/ }),
-/* 27 */
+
+/***/ 27:
 /*!*****************************************!*\
   !*** ./node_modules/base64-js/index.js ***!
   \*****************************************/
@@ -11734,7 +11659,8 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 28 */
+
+/***/ 28:
 /*!***************************************!*\
   !*** ./node_modules/ieee754/index.js ***!
   \***************************************/
@@ -11829,7 +11755,8 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 29 */
+
+/***/ 29:
 /*!***************************************!*\
   !*** ./node_modules/isarray/index.js ***!
   \***************************************/
@@ -11844,7 +11771,39 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 30 */
+
+/***/ 3:
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || new Function("return this")();
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
+/***/ 30:
 /*!*******************************************************!*\
   !*** C:/Users/xyj/Desktop/green/uni-app项目/pages.json ***!
   \*******************************************************/
@@ -11854,10 +11813,8 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 31 */,
-/* 32 */,
-/* 33 */,
-/* 34 */
+
+/***/ 34:
 /*!**********************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/runtime/componentNormalizer.js ***!
   \**********************************************************************************************************/
@@ -11988,13 +11945,24 @@ function normalizeComponent (
 
 
 /***/ }),
-/* 35 */,
-/* 36 */,
-/* 37 */,
-/* 38 */,
-/* 39 */,
-/* 40 */,
-/* 41 */
+
+/***/ 4:
+/*!**********************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/interopRequireDefault.js ***!
+  \**********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {
+    "default": obj
+  };
+}
+module.exports = _interopRequireDefault, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 41:
 /*!************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/@babel/runtime/regenerator/index.js ***!
   \************************************************************************************************/
@@ -12007,7 +11975,8 @@ var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime 
 module.exports = runtime;
 
 /***/ }),
-/* 42 */
+
+/***/ 42:
 /*!*******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/regeneratorRuntime.js ***!
   \*******************************************************************/
@@ -12328,7 +12297,8 @@ function _regeneratorRuntime() {
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 43 */
+
+/***/ 43:
 /*!*****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/asyncToGenerator.js ***!
   \*****************************************************************/
@@ -12368,7 +12338,8 @@ function _asyncToGenerator(fn) {
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 44 */
+
+/***/ 44:
 /*!*************************************************************!*\
   !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/request.js ***!
   \*************************************************************/
@@ -12381,9 +12352,8 @@ module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exp
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.saveStepCount = exports.saveSportRecord = exports.request = exports.login = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.exchangeProduct = void 0;
-// 接口请求工具类
-var baseUrl = 'http://localhost:8080/api';
+exports.startAgentAction = exports.skipAgentAction = exports.saveStepCount = exports.saveSportRecord = exports.saveSchedule = exports.saveHealthData = exports.request = exports.login = exports.getTaskBoard = exports.getStepCountList = exports.getStepCount = exports.getSportRecord = exports.getScheduleList = exports.getScheduleContext = exports.getRankData = exports.getProfile = exports.getProductList = exports.getPointsRecords = exports.getHealthSuggestion = exports.getHealthDataList = exports.getExchangeRecords = exports.getCarbonSuggestion = exports.getAgentPlan = exports.getAgentBrief = exports.getActivityHub = exports.exchangeProduct = exports.deleteSchedule = exports.deleteHealthData = exports.completeAgentAction = void 0;
+var baseUrl = 'http://172.20.10.3:8080/api';
 var request = function request(url) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   return new Promise(function (resolve, reject) {
@@ -12395,7 +12365,12 @@ var request = function request(url) {
         'Content-Type': 'application/json'
       },
       success: function success(res) {
-        resolve(res.data);
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res.data);
+        } else {
+          var _res$data;
+          reject(new Error(((_res$data = res.data) === null || _res$data === void 0 ? void 0 : _res$data.message) || 'REQUEST_FAILED'));
+        }
       },
       fail: function fail(err) {
         reject(err);
@@ -12403,8 +12378,6 @@ var request = function request(url) {
     });
   });
 };
-
-// 用户登录
 exports.request = request;
 var login = function login(username, password) {
   return request('/user/login', {
@@ -12415,8 +12388,6 @@ var login = function login(username, password) {
     }
   });
 };
-
-// AI减排建议接口
 exports.login = login;
 var getCarbonSuggestion = function getCarbonSuggestion(carbonFootprint) {
   return request('/ai/carbon-suggest', {
@@ -12426,9 +12397,108 @@ var getCarbonSuggestion = function getCarbonSuggestion(carbonFootprint) {
     }
   });
 };
-
-// 步数统计接口
 exports.getCarbonSuggestion = getCarbonSuggestion;
+var getHealthSuggestion = function getHealthSuggestion(userId) {
+  return request("/ai/health-suggest?userId=".concat(userId));
+};
+exports.getHealthSuggestion = getHealthSuggestion;
+var getScheduleList = function getScheduleList(username) {
+  return request("/schedule/list?username=".concat(encodeURIComponent(username)));
+};
+exports.getScheduleList = getScheduleList;
+var getScheduleContext = function getScheduleContext(username) {
+  return request("/schedule/context?username=".concat(encodeURIComponent(username)));
+};
+exports.getScheduleContext = getScheduleContext;
+var saveSchedule = function saveSchedule(data) {
+  return request('/schedule/save', {
+    method: 'POST',
+    data: data
+  });
+};
+exports.saveSchedule = saveSchedule;
+var deleteSchedule = function deleteSchedule(id, username) {
+  return request("/schedule/".concat(id, "?username=").concat(encodeURIComponent(username)), {
+    method: 'DELETE'
+  });
+};
+exports.deleteSchedule = deleteSchedule;
+var getAgentBrief = function getAgentBrief(userId) {
+  var latitude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+  var longitude = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+  var query = "/ai/agent-brief?userId=".concat(encodeURIComponent(userId));
+  if (latitude !== null && longitude !== null) {
+    query += "&latitude=".concat(latitude, "&longitude=").concat(longitude);
+  }
+  return request(query);
+};
+exports.getAgentBrief = getAgentBrief;
+var getAgentPlan = function getAgentPlan(userId) {
+  var userNote = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  var latitude = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+  var longitude = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+  return request('/ai/agent-plan', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      userNote: userNote,
+      latitude: latitude,
+      longitude: longitude
+    }
+  });
+};
+exports.getAgentPlan = getAgentPlan;
+var startAgentAction = function startAgentAction(userId, sessionId, actionId) {
+  var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  var latitude = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  var longitude = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+  return request('/ai/agent-action/start', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      sessionId: sessionId,
+      actionId: actionId,
+      resultNote: resultNote,
+      latitude: latitude,
+      longitude: longitude
+    }
+  });
+};
+exports.startAgentAction = startAgentAction;
+var completeAgentAction = function completeAgentAction(userId, sessionId, actionId) {
+  var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  var latitude = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  var longitude = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+  return request('/ai/agent-action/complete', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      sessionId: sessionId,
+      actionId: actionId,
+      resultNote: resultNote,
+      latitude: latitude,
+      longitude: longitude
+    }
+  });
+};
+exports.completeAgentAction = completeAgentAction;
+var skipAgentAction = function skipAgentAction(userId, sessionId, actionId) {
+  var resultNote = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  var latitude = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  var longitude = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+  return request('/ai/agent-action/skip', {
+    method: 'POST',
+    data: {
+      userId: userId,
+      sessionId: sessionId,
+      actionId: actionId,
+      resultNote: resultNote,
+      latitude: latitude,
+      longitude: longitude
+    }
+  });
+};
+exports.skipAgentAction = skipAgentAction;
 var getStepCount = function getStepCount(studentId, date) {
   return request("/step/count?studentId=".concat(studentId, "&date=").concat(date));
 };
@@ -12443,8 +12513,6 @@ var saveStepCount = function saveStepCount(data) {
     data: data
   });
 };
-
-// 运动记录接口
 exports.saveStepCount = saveStepCount;
 var getSportRecord = function getSportRecord(studentId) {
   return request("/sport/record?studentId=".concat(studentId));
@@ -12456,14 +12524,10 @@ var saveSportRecord = function saveSportRecord(data) {
     data: data
   });
 };
-
-// 减碳排名接口
 exports.saveSportRecord = saveSportRecord;
 var getRankData = function getRankData(studentId, timeRange) {
   return request("/rank/data?studentId=".concat(studentId, "&timeRange=").concat(timeRange));
 };
-
-// 积分 & 个人资料
 exports.getRankData = getRankData;
 var getProfile = function getProfile(username) {
   return request("/points/profile?username=".concat(username));
@@ -12475,9 +12539,17 @@ var getPointsRecords = function getPointsRecords(username) {
   var size = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 10;
   return request("/points/records?username=".concat(username, "&type=").concat(type, "&page=").concat(page, "&size=").concat(size));
 };
-
-// 积分商城
 exports.getPointsRecords = getPointsRecords;
+var getTaskBoard = function getTaskBoard(username) {
+  return request("/task/board?username=".concat(username));
+};
+exports.getTaskBoard = getTaskBoard;
+var getActivityHub = function getActivityHub(username) {
+  var activityCode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  var query = activityCode ? "/activity/hub?username=".concat(username, "&activityCode=").concat(encodeURIComponent(activityCode)) : "/activity/hub?username=".concat(username);
+  return request(query);
+};
+exports.getActivityHub = getActivityHub;
 var getProductList = function getProductList() {
   var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
   var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 12;
@@ -12498,129 +12570,136 @@ var getExchangeRecords = function getExchangeRecords(username) {
   return request("/product/exchange/records?username=".concat(username));
 };
 exports.getExchangeRecords = getExchangeRecords;
+var getHealthDataList = function getHealthDataList(userId) {
+  return request("/health/list?userId=".concat(userId));
+};
+exports.getHealthDataList = getHealthDataList;
+var saveHealthData = function saveHealthData(data) {
+  return request('/health/save', {
+    method: 'POST',
+    data: data
+  });
+};
+exports.saveHealthData = saveHealthData;
+var deleteHealthData = function deleteHealthData(id) {
+  return request("/health/".concat(id), {
+    method: 'DELETE'
+  });
+};
+exports.deleteHealthData = deleteHealthData;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
-/* 45 */,
-/* 46 */,
-/* 47 */,
-/* 48 */,
-/* 49 */,
-/* 50 */,
-/* 51 */,
-/* 52 */,
-/* 53 */,
-/* 54 */,
-/* 55 */,
-/* 56 */,
-/* 57 */,
-/* 58 */,
-/* 59 */,
-/* 60 */,
-/* 61 */,
-/* 62 */,
-/* 63 */,
-/* 64 */,
-/* 65 */,
-/* 66 */,
-/* 67 */,
-/* 68 */,
-/* 69 */,
-/* 70 */,
-/* 71 */,
-/* 72 */,
-/* 73 */,
-/* 74 */,
-/* 75 */,
-/* 76 */,
-/* 77 */,
-/* 78 */,
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */,
-/* 83 */,
-/* 84 */,
-/* 85 */,
-/* 86 */,
-/* 87 */,
-/* 88 */,
-/* 89 */,
-/* 90 */,
-/* 91 */,
-/* 92 */,
-/* 93 */,
-/* 94 */,
-/* 95 */,
-/* 96 */,
-/* 97 */,
-/* 98 */,
-/* 99 */,
-/* 100 */,
-/* 101 */,
-/* 102 */,
-/* 103 */,
-/* 104 */,
-/* 105 */,
-/* 106 */,
-/* 107 */,
-/* 108 */,
-/* 109 */,
-/* 110 */,
-/* 111 */,
-/* 112 */,
-/* 113 */,
-/* 114 */,
-/* 115 */,
-/* 116 */,
-/* 117 */
-/*!*******************************************************************!*\
-  !*** C:/Users/xyj/Desktop/green/uni-app项目/utils/carbonProject.js ***!
-  \*******************************************************************/
+
+/***/ 5:
+/*!**************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/slicedToArray.js ***!
+  \**************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.checkAndUnlock = checkAndUnlock;
-exports.getCertificate = getCertificate;
-exports.getProjectDetail = getProjectDetail;
-exports.getUserProjectList = getUserProjectList;
-exports.getUserTotalCarbon = getUserTotalCarbon;
-var _request = __webpack_require__(/*! ./request.js */ 44);
-// 生态认养项目相关接口
-
-// 用户累计减碳量 + 个人资料
-function getUserTotalCarbon(username) {
-  return (0, _request.request)("/project/carbon-total?username=".concat(username));
+var arrayWithHoles = __webpack_require__(/*! ./arrayWithHoles.js */ 6);
+var iterableToArrayLimit = __webpack_require__(/*! ./iterableToArrayLimit.js */ 7);
+var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
+var nonIterableRest = __webpack_require__(/*! ./nonIterableRest.js */ 10);
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
 }
+module.exports = _slicedToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
-// 用户已解锁项目列表
-function getUserProjectList(username) {
-  return (0, _request.request)("/project/my-projects?username=".concat(username));
-}
+/***/ }),
 
-// 检查并自动解锁达标项目（POST，query param）
-function checkAndUnlock(username) {
-  return (0, _request.request)("/project/check-unlock?username=".concat(username), {
-    method: 'POST'
-  });
-}
+/***/ 6:
+/*!***************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/arrayWithHoles.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-// 项目详情
-function getProjectDetail(id) {
-  return (0, _request.request)("/project/detail/".concat(id));
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
 }
+module.exports = _arrayWithHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
-// 获取电子认养证书
-function getCertificate(username, userProjectId) {
-  return (0, _request.request)("/project/certificate?username=".concat(username, "&userProjectId=").concat(userProjectId));
+/***/ }),
+
+/***/ 7:
+/*!*********************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _iterableToArrayLimit(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = !0,
+      o = !1;
+    try {
+      if (i = (t = t.call(r)).next, 0 === l) {
+        if (Object(t) !== t) return;
+        f = !1;
+      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0) {
+        ;
+      }
+    } catch (r) {
+      o = !0, n = r;
+    } finally {
+      try {
+        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
+    }
+    return a;
+  }
 }
+module.exports = _iterableToArrayLimit, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 8:
+/*!***************************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js ***!
+  \***************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
+}
+module.exports = _unsupportedIterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 9:
+/*!*****************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/arrayLikeToArray.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _arrayLikeToArray(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+  for (var i = 0, arr2 = new Array(len); i < len; i++) {
+    arr2[i] = arr[i];
+  }
+  return arr2;
+}
+module.exports = _arrayLikeToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ })
-]]);
+
+}]);
 //# sourceMappingURL=../../.sourcemap/mp-weixin/common/vendor.js.map

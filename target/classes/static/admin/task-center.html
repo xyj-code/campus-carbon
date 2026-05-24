@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>任务运营后台</title>
+  <style>
+    :root {
+      --bg-a: #e9f7ee;
+      --bg-b: #d4ecdc;
+      --card: rgba(255, 255, 255, 0.82);
+      --line: rgba(33, 77, 50, 0.08);
+      --text: #214d32;
+      --muted: #678876;
+      --green: #3f9a63;
+      --green-dark: #2f7a4a;
+      --orange: #f0a33d;
+      --blue: #4fa8bb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 18%, rgba(108, 198, 143, 0.28), transparent 22%),
+        radial-gradient(circle at 82% 26%, rgba(255, 196, 118, 0.18), transparent 18%),
+        linear-gradient(180deg, var(--bg-a), var(--bg-b));
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 28px 30px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, #2f7a4a, #1f5d37);
+      color: #fff;
+      box-shadow: 0 18px 42px rgba(31, 93, 55, 0.18);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      max-width: 640px;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.7;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 160px;
+      padding: 0 18px;
+      height: 54px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .summary-card,
+    .panel,
+    .template-card {
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: 0 14px 28px rgba(57, 110, 73, 0.08);
+    }
+
+    .summary-card {
+      padding: 22px 20px;
+      border-radius: 24px;
+    }
+
+    .summary-label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .summary-value {
+      margin-top: 10px;
+      font-size: 30px;
+      font-weight: 700;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .section-divider {
+      margin: 26px 0 0;
+      padding: 18px 4px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .panel {
+      border-radius: 28px;
+      padding: 22px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .edit-hint {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(88, 184, 124, 0.12);
+      color: var(--green-dark);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .panel-sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 0 14px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text);
+    }
+
+    .theme-color-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .theme-color-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-color-input {
+      width: 64px !important;
+      min-width: 64px;
+      height: 44px !important;
+      padding: 4px !important;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .theme-color-value {
+      flex: 1;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 0 14px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+    }
+
+    .theme-palette {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 4px 10px rgba(33, 77, 50, 0.12);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .theme-swatch.active {
+      outline: 2px solid rgba(33, 77, 50, 0.4);
+      transform: scale(1.08);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 14px;
+      height: 44px;
+      padding: 0 18px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #58b87c, #3c9663);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(60, 150, 99, 0.18);
+    }
+
+    .ghost-btn {
+      background: rgba(46, 125, 80, 0.08);
+      color: var(--green-dark);
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .template-card {
+      border-radius: 24px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .template-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .template-period {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 82px;
+      height: 32px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(63, 154, 99, 0.12);
+      color: var(--green);
+    }
+
+    .template-period.weekly {
+      background: rgba(79, 168, 187, 0.14);
+      color: var(--blue);
+    }
+
+    .template-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 68px;
+      height: 30px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(95, 190, 127, 0.14);
+      color: var(--green);
+    }
+
+    .template-status.offline {
+      background: rgba(145, 158, 151, 0.16);
+      color: #6c7f75;
+    }
+
+    .template-name {
+      margin: 14px 0 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .template-desc {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 48px;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric-item {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(245, 251, 247, 0.88);
+    }
+
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric-value {
+      display: block;
+      margin-top: 8px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 18px;
+      gap: 12px;
+    }
+
+    .meta-copy {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .small-btn {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .warn-btn {
+      background: rgba(240, 163, 61, 0.12);
+      color: #c8841f;
+    }
+
+    .danger-btn {
+      background: rgba(228, 96, 96, 0.12);
+      color: #b95050;
+    }
+
+    .empty-box {
+      margin-top: 16px;
+      padding: 40px 18px;
+      border-radius: 20px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.54);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .tip {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(79, 168, 187, 0.12);
+      color: #437c88;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 1100px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .template-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hero {
+        flex-direction: column;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div>
+        <h1>任务运营后台</h1>
+        <p>用于发布和调整主题活动任务、上下架任务模板，并查看当前周期的参与人数与完成率。</p>
+      </div>
+      <div class="hero-badge">Campus Carbon Admin</div>
+    </section>
+
+    <section class="summary-grid" id="summaryGrid"></section>
+
+    <section class="workspace">
+      <aside class="panel" id="configPanel">
+        <h2>任务配置</h2>
+        <div class="panel-sub">可直接修改现有任务的目标值、奖励积分、排序和状态。</div>
+        <div class="edit-hint" id="editHint"></div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="id">任务 ID</label>
+            <input id="id" placeholder="留空表示新增" />
+          </div>
+          <div class="field">
+            <label for="taskCode">任务编码</label>
+            <input id="taskCode" placeholder="例如 DAILY_STEP_6000" />
+          </div>
+          <div class="field">
+            <label for="periodType">周期</label>
+            <select id="periodType">
+              <option value="DAILY">每日任务</option>
+              <option value="WEEKLY">每周挑战</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="metricType">指标类型</label>
+            <select id="metricType">
+              <option value="STEP_TOTAL">累计步数</option>
+              <option value="SPORT_DISTANCE_TOTAL">累计运动距离</option>
+              <option value="ACTIVE_DAY_COUNT">低碳打卡次数</option>
+              <option value="SPORT_RECORD_COUNT">运动记录次数</option>
+              <option value="BENEFIT_REDEEM_COUNT">权益兑换次数</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="targetValue">目标值</label>
+            <input id="targetValue" type="number" step="0.01" />
+          </div>
+          <div class="field">
+            <label for="rewardPoints">奖励积分</label>
+            <input id="rewardPoints" type="number" />
+          </div>
+          <div class="field">
+            <label for="sortOrder">排序</label>
+            <input id="sortOrder" type="number" />
+          </div>
+          <div class="field">
+            <label for="status">状态</label>
+            <select id="status">
+              <option value="1">上架中</option>
+              <option value="0">已下架</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="primary-btn" id="saveBtn">保存配置</button>
+          <button class="ghost-btn" id="resetBtn">清空表单</button>
+        </div>
+        <div class="tip">建议直接点右侧卡片上的“编辑”填充表单后再保存。</div>
+      </aside>
+
+      <main class="panel">
+        <div class="toolbar">
+          <div>
+            <h2>任务模板列表</h2>
+            <div class="panel-sub">展示当前模板及其本周期参与人数、完成人数和完成率。</div>
+          </div>
+          <button class="ghost-btn" id="reloadBtn">刷新数据</button>
+        </div>
+        <div class="template-grid" id="templateGrid"></div>
+        <div class="empty-box" id="emptyBox" style="display:none;">当前还没有任务模板数据，请先执行 task_template.sql。</div>
+      </main>
+    </section>
+
+    <div class="section-divider">主题活动用于承接小程序里的专题入口、活动 banner、任务说明和奖励文案。</div>
+
+    <section class="workspace">
+      <aside class="panel" id="activityConfigPanel">
+        <h2>主题活动配置</h2>
+        <div class="panel-sub">用于发布活动专题 banner、说明文案、主题色和时间范围。</div>
+        <div class="edit-hint" id="activityEditHint"></div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="activityId">活动 ID</label>
+            <input id="activityId" placeholder="留空表示新增" />
+          </div>
+          <div class="field">
+            <label for="activityCode">活动编码</label>
+            <input id="activityCode" placeholder="例如 EARTH_DAY_2026" />
+          </div>
+          <div class="field">
+            <label for="activityTitle">活动标题</label>
+            <input id="activityTitle" placeholder="例如 地球日低碳挑战周" />
+          </div>
+          <div class="field">
+            <label for="activitySubtitle">活动副标题</label>
+            <input id="activitySubtitle" placeholder="一句话概括活动主题" />
+          </div>
+          <div class="field">
+            <label for="activityBannerTitle">Banner 标题</label>
+            <input id="activityBannerTitle" placeholder="活动专题页头图标题" />
+          </div>
+          <div class="field">
+            <label for="activityBannerSubtitle">Banner 副标题</label>
+            <input id="activityBannerSubtitle" placeholder="活动专题页头图副标题" />
+          </div>
+          <div class="field">
+            <label for="activityRewardText">奖励说明</label>
+            <input id="activityRewardText" placeholder="例如 任务奖励 + 权益 + 徽章" />
+          </div>
+          <div class="field">
+            <label for="activityTargetText">活动焦点</label>
+            <input id="activityTargetText" placeholder="例如 聚焦步数、运动与权益兑换" />
+          </div>
+          <div class="field">
+            <label for="activityTaskCodes">Task Codes</label>
+            <input id="activityTaskCodes" placeholder="Optional: DAILY_STEP_6000,WEEKLY_STEP_50000" />
+          </div>
+          <div class="field">
+            <label for="activityThemeColor">主题色</label>
+            <div class="theme-color-stack">
+              <div class="theme-color-row">
+                <input id="activityThemeColor" class="theme-color-input" type="color" value="#3f9a63" />
+                <div class="theme-color-value" id="activityThemeColorValue">#3f9a63</div>
+              </div>
+              <div class="theme-palette" id="activityThemePalette">
+                <button type="button" class="theme-swatch" data-color="#3f9a63" style="background:#3f9a63;"></button>
+                <button type="button" class="theme-swatch" data-color="#58b87c" style="background:#58b87c;"></button>
+                <button type="button" class="theme-swatch" data-color="#4fa8bb" style="background:#4fa8bb;"></button>
+                <button type="button" class="theme-swatch" data-color="#f0a33d" style="background:#f0a33d;"></button>
+                <button type="button" class="theme-swatch" data-color="#ef7d57" style="background:#ef7d57;"></button>
+                <button type="button" class="theme-swatch" data-color="#7f8cf2" style="background:#7f8cf2;"></button>
+                <button type="button" class="theme-swatch" data-color="#9b6fd8" style="background:#9b6fd8;"></button>
+                <button type="button" class="theme-swatch" data-color="#2f7a4a" style="background:#2f7a4a;"></button>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="activityCoverEmoji">封面图标</label>
+            <input id="activityCoverEmoji" placeholder="🌍" />
+          </div>
+          <div class="field">
+            <label for="activitySortOrder">排序</label>
+            <input id="activitySortOrder" type="number" />
+          </div>
+          <div class="field">
+            <label for="activityStatus">状态</label>
+            <select id="activityStatus">
+              <option value="1">上架中</option>
+              <option value="0">已下架</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="activityFeatured">主推活动</label>
+            <select id="activityFeatured">
+              <option value="1">是</option>
+              <option value="0">否</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="activityStartTime">开始时间</label>
+            <input id="activityStartTime" placeholder="2026-04-01 00:00:00" />
+          </div>
+          <div class="field">
+            <label for="activityEndTime">结束时间</label>
+            <input id="activityEndTime" placeholder="2026-05-10 23:59:59" />
+          </div>
+          <div class="field">
+            <label for="activityDescription">活动说明</label>
+            <input id="activityDescription" placeholder="用于专题页介绍的长文案" />
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="primary-btn" id="activitySaveBtn">保存活动</button>
+          <button class="ghost-btn" id="activityResetBtn">清空表单</button>
+        </div>
+      </aside>
+
+      <main class="panel">
+        <div class="toolbar">
+          <div>
+            <h2>主题活动列表</h2>
+            <div class="panel-sub">用于管理小程序里的活动专题入口和主推活动内容。</div>
+          </div>
+          <button class="ghost-btn" id="activityReloadBtn">刷新活动</button>
+        </div>
+        <div class="summary-grid" id="activitySummaryGrid" style="margin-top:18px;"></div>
+        <div class="template-grid" id="activityGrid"></div>
+        <div class="empty-box" id="activityEmptyBox" style="display:none;">当前还没有活动数据，请先执行 activity_topic.sql。</div>
+      </main>
+    </section>
+  </div>
+
+  <script>
+    const summaryGrid = document.getElementById('summaryGrid');
+    const templateGrid = document.getElementById('templateGrid');
+    const emptyBox = document.getElementById('emptyBox');
+    const configPanel = document.getElementById('configPanel');
+    const editHint = document.getElementById('editHint');
+    const templateCache = {};
+    const activitySummaryGrid = document.getElementById('activitySummaryGrid');
+    const activityGrid = document.getElementById('activityGrid');
+    const activityEmptyBox = document.getElementById('activityEmptyBox');
+    const activityConfigPanel = document.getElementById('activityConfigPanel');
+    const activityEditHint = document.getElementById('activityEditHint');
+    const activityCache = {};
+
+    const fields = {
+      id: document.getElementById('id'),
+      taskCode: document.getElementById('taskCode'),
+      periodType: document.getElementById('periodType'),
+      metricType: document.getElementById('metricType'),
+      targetValue: document.getElementById('targetValue'),
+      rewardPoints: document.getElementById('rewardPoints'),
+      sortOrder: document.getElementById('sortOrder'),
+      status: document.getElementById('status')
+    };
+
+    const activityFields = {
+      id: document.getElementById('activityId'),
+      activityCode: document.getElementById('activityCode'),
+      title: document.getElementById('activityTitle'),
+      subtitle: document.getElementById('activitySubtitle'),
+      description: document.getElementById('activityDescription'),
+      bannerTitle: document.getElementById('activityBannerTitle'),
+      bannerSubtitle: document.getElementById('activityBannerSubtitle'),
+      rewardText: document.getElementById('activityRewardText'),
+      targetText: document.getElementById('activityTargetText'),
+      taskCodes: document.getElementById('activityTaskCodes'),
+      themeColor: document.getElementById('activityThemeColor'),
+      coverEmoji: document.getElementById('activityCoverEmoji'),
+      sortOrder: document.getElementById('activitySortOrder'),
+      status: document.getElementById('activityStatus'),
+      featured: document.getElementById('activityFeatured'),
+      startTime: document.getElementById('activityStartTime'),
+      endTime: document.getElementById('activityEndTime')
+    };
+
+    const activityThemeColorValue = document.getElementById('activityThemeColorValue');
+    const activityThemePalette = document.getElementById('activityThemePalette');
+
+    function normalizeThemeColor(value) {
+      const raw = (value || '').trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(raw)) {
+        return raw.toLowerCase();
+      }
+      return '#3f9a63';
+    }
+
+    function syncThemeColorPicker(value) {
+      const color = normalizeThemeColor(value || activityFields.themeColor.value);
+      activityFields.themeColor.value = color;
+      if (activityThemeColorValue) {
+        activityThemeColorValue.textContent = color;
+      }
+      if (activityThemePalette) {
+        Array.from(activityThemePalette.querySelectorAll('.theme-swatch')).forEach(button => {
+          button.classList.toggle('active', normalizeThemeColor(button.getAttribute('data-color')) === color);
+        });
+      }
+    }
+
+    async function request(url, options) {
+      const res = await fetch(url, Object.assign({
+        headers: { 'Content-Type': 'application/json' }
+      }, options || {}));
+      if (!res.ok) {
+        throw new Error('REQUEST_FAILED');
+      }
+      const data = await res.json();
+      if (Object.prototype.hasOwnProperty.call(data, 'code') && Number(data.code) !== 200) {
+        throw new Error(data.message || 'BUSINESS_FAILED');
+      }
+      return data;
+    }
+
+    function renderSummary(summary) {
+      const cards = [
+        ['任务总数', summary.totalTasks || 0],
+        ['启用任务', summary.activeTasks || 0],
+        ['每日任务', summary.dailyTasks || 0],
+        ['每周挑战', summary.weeklyTasks || 0]
+      ];
+      summaryGrid.innerHTML = cards.map(item => `
+        <div class="summary-card">
+          <span class="summary-label">${item[0]}</span>
+          <span class="summary-value">${item[1]}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderTemplates(list) {
+      if (!list || list.length === 0) {
+        templateGrid.innerHTML = '';
+        emptyBox.style.display = 'block';
+        return;
+      }
+
+      list.forEach(item => {
+        templateCache[item.id] = item;
+      });
+      emptyBox.style.display = 'none';
+      templateGrid.innerHTML = list.map(item => `
+        <article class="template-card">
+          <div class="template-top">
+            <div>
+              <span class="template-period ${item.periodType === 'WEEKLY' ? 'weekly' : ''}">${item.periodLabel}</span>
+            </div>
+            <span class="template-status ${item.status === 1 ? '' : 'offline'}">${item.status === 1 ? '上架中' : '已下架'}</span>
+          </div>
+          <div class="template-name">${item.taskName}</div>
+          <div class="template-desc">${item.taskDesc}</div>
+          <div class="metric-row">
+            <div class="metric-item">
+              <span class="metric-label">目标值</span>
+              <span class="metric-value">${item.targetValue}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">奖励积分</span>
+              <span class="metric-value">${item.rewardPoints}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">完成率</span>
+              <span class="metric-value">${item.completionRate}%</span>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-item">
+              <span class="metric-label">参与人数</span>
+              <span class="metric-value">${item.participants}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">完成人数</span>
+              <span class="metric-value">${item.completedUsers}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">当前周期</span>
+              <span class="metric-value" style="font-size:14px;">${item.currentPeriodKey}</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="meta-copy">指标：${item.metricLabel} · 排序：${item.sortOrder}</div>
+            <div class="card-actions">
+              <button class="ghost-btn small-btn js-edit-btn" data-id="${item.id}">编辑</button>
+              <button class="warn-btn small-btn js-toggle-btn" data-id="${item.id}">${item.status === 1 ? '下架' : '上架'}</button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function renderActivitySummary(summary) {
+      const cards = [
+        ['活动总数', summary.totalActivities || 0],
+        ['启用活动', summary.activeActivities || 0],
+        ['主推活动', summary.featuredActivities || 0]
+      ];
+      activitySummaryGrid.innerHTML = cards.map(item => `
+        <div class="summary-card">
+          <span class="summary-label">${item[0]}</span>
+          <span class="summary-value">${item[1]}</span>
+        </div>
+      `).join('');
+    }
+
+    function normalizeCoverKey(value) {
+      const raw = (value || '').trim();
+      if (!raw) {
+        return '';
+      }
+      const normalized = raw.toUpperCase();
+      if (raw === '🌍' || normalized === 'EARTH') {
+        return 'EARTH';
+      }
+      if (raw === '🚲' || normalized === 'BIKE') {
+        return 'BIKE';
+      }
+      if (raw === '🌿' || normalized === 'LEAF') {
+        return 'LEAF';
+      }
+      if (normalized === 'TREE') {
+        return 'TREE';
+      }
+      if (normalized === 'CLEAN') {
+        return 'CLEAN';
+      }
+      if (normalized === 'RECYCLE') {
+        return 'RECYCLE';
+      }
+      if (normalized === 'RUN') {
+        return 'RUN';
+      }
+      if (normalized === 'STAR') {
+        return 'STAR';
+      }
+      return normalized;
+    }
+
+    function resolveCoverDisplay(value) {
+      const key = normalizeCoverKey(value);
+      if (!key) {
+        return 'LEAF';
+      }
+      if (key === 'EARTH') {
+        return 'EARTH · 🌍';
+      }
+      if (key === 'BIKE') {
+        return 'BIKE · 🚲';
+      }
+      if (key === 'LEAF') {
+        return 'LEAF · 🌿';
+      }
+      if (key === 'TREE') {
+        return 'TREE';
+      }
+      if (key === 'CLEAN') {
+        return 'CLEAN';
+      }
+      if (key === 'RECYCLE') {
+        return 'RECYCLE';
+      }
+      if (key === 'RUN') {
+        return 'RUN';
+      }
+      if (key === 'STAR') {
+        return 'STAR';
+      }
+      return key;
+    }
+
+    function renderActivities(list) {
+      if (!list || list.length === 0) {
+        activityGrid.innerHTML = '';
+        activityEmptyBox.style.display = 'block';
+        return;
+      }
+
+      list.forEach(item => {
+        const coverKey = normalizeCoverKey(item.coverEmoji);
+        activityCache[item.id] = Object.assign({}, item, { coverEmoji: coverKey });
+        item.coverEmoji = resolveCoverDisplay(coverKey);
+      });
+      activityEmptyBox.style.display = 'none';
+      activityGrid.innerHTML = list.map(item => `
+        <article class="template-card">
+          <div class="template-top">
+            <div>
+              <span class="template-period ${item.featured === 1 ? '' : 'weekly'}">${item.featured === 1 ? '主推活动' : '普通活动'}</span>
+            </div>
+            <span class="template-status ${item.status === 1 ? '' : 'offline'}">${item.status === 1 ? '上架中' : '已下架'}</span>
+          </div>
+          <div class="template-name">${item.title}</div>
+          <div class="template-desc">${item.subtitle || ''}</div>
+          <div class="metric-row">
+            <div class="metric-item">
+              <span class="metric-label">编码</span>
+              <span class="metric-value" style="font-size:14px;">${item.activityCode}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">主题色</span>
+              <span class="metric-value" style="font-size:14px; display:flex; align-items:center; gap:8px;"><span style="width:14px; height:14px; border-radius:50%; background:${item.themeColor || '#3f9a63'}; display:inline-block;"></span>${item.themeColor || '-'}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">图标</span>
+              <span class="metric-value">${item.coverEmoji || '🌿'}</span>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-item">
+              <span class="metric-label">开始时间</span>
+              <span class="metric-value" style="font-size:14px;">${item.startTime || '-'}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">结束时间</span>
+              <span class="metric-value" style="font-size:14px;">${item.endTime || '-'}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">排序</span>
+              <span class="metric-value">${item.sortOrder || 0}</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="meta-copy">${item.rewardText || ''}</div>
+            <div class="card-actions">
+              <button class="ghost-btn small-btn js-activity-edit-btn" data-id="${item.id}">编辑</button>
+              <button class="warn-btn small-btn js-activity-toggle-btn" data-id="${item.id}">${item.status === 1 ? '下架' : '上架'}</button>
+              <button class="danger-btn small-btn js-activity-delete-btn" data-id="${item.id}">删除</button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function fillForm(item) {
+      fields.id.value = item.id || '';
+      fields.taskCode.value = item.taskCode || '';
+      fields.periodType.value = item.periodType || 'DAILY';
+      fields.metricType.value = item.metricType || 'STEP_TOTAL';
+      fields.targetValue.value = item.targetValue || '';
+      fields.rewardPoints.value = item.rewardPoints || '';
+      fields.sortOrder.value = item.sortOrder || '';
+      fields.status.value = item.status === 0 ? '0' : '1';
+      editHint.style.display = 'block';
+      editHint.textContent = '当前正在编辑：' + (item.taskName || item.taskCode || '任务模板') + '（ID: ' + (item.id || '') + '）';
+      configPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.setTimeout(function () {
+        fields.targetValue.focus();
+      }, 220);
+    }
+
+    function fillFormById(id) {
+      if (templateCache[id]) {
+        fillForm(templateCache[id]);
+      }
+    }
+
+    function resetForm() {
+      Object.keys(fields).forEach(key => {
+        fields[key].value = '';
+      });
+      fields.periodType.value = 'DAILY';
+      fields.metricType.value = 'STEP_TOTAL';
+      fields.status.value = '1';
+      editHint.style.display = 'none';
+      editHint.textContent = '';
+    }
+
+    function fillActivityForm(item) {
+      activityFields.id.value = item.id || '';
+      activityFields.activityCode.value = item.activityCode || '';
+      activityFields.title.value = item.title || '';
+      activityFields.subtitle.value = item.subtitle || '';
+      activityFields.description.value = item.description || '';
+      activityFields.bannerTitle.value = item.bannerTitle || '';
+      activityFields.bannerSubtitle.value = item.bannerSubtitle || '';
+      activityFields.rewardText.value = item.rewardText || '';
+      activityFields.targetText.value = item.targetText || '';
+      activityFields.taskCodes.value = item.taskCodes || '';
+      syncThemeColorPicker(item.themeColor || '#3f9a63');
+      activityFields.coverEmoji.value = item.coverEmoji || '';
+      activityFields.sortOrder.value = item.sortOrder || '';
+      activityFields.status.value = item.status === 0 ? '0' : '1';
+      activityFields.featured.value = item.featured === 1 ? '1' : '0';
+      activityFields.startTime.value = item.startTime || '';
+      activityFields.endTime.value = item.endTime || '';
+      activityEditHint.style.display = 'block';
+      activityEditHint.textContent = '当前正在编辑活动：' + (item.title || item.activityCode || '主题活动') + '（ID: ' + (item.id || '') + '）';
+      activityConfigPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function fillActivityFormById(id) {
+      if (activityCache[id]) {
+        fillActivityForm(activityCache[id]);
+      }
+    }
+
+    function resetActivityForm() {
+      Object.keys(activityFields).forEach(key => {
+        activityFields[key].value = '';
+      });
+      activityFields.status.value = '1';
+      activityFields.featured.value = '0';
+      syncThemeColorPicker('#3f9a63');
+      activityFields.coverEmoji.value = 'LEAF';
+      activityFields.coverEmoji.value = '🌿';
+      activityEditHint.style.display = 'none';
+      activityEditHint.textContent = '';
+      activityFields.coverEmoji.value = 'LEAF';
+    }
+
+    async function loadDashboard() {
+      try {
+        const data = await request('/api/admin/tasks/dashboard');
+        renderSummary(data.summary || {});
+        renderTemplates(data.templates || []);
+      } catch (err) {
+        alert('Dashboard load failed.');
+        return;
+        alert('后台数据加载失败，请确认后端已重启且任务表已创建。');
+      }
+    }
+
+    async function loadActivityDashboard() {
+      try {
+        const data = await request('/api/admin/activities/dashboard');
+        renderActivitySummary(data.summary || {});
+        renderActivities(data.activities || []);
+      } catch (err) {
+        alert('活动后台数据加载失败，请确认后端已重启且活动表已创建。');
+      }
+    }
+
+    async function saveTemplate() {
+      const payload = {
+        id: fields.id.value,
+        taskCode: fields.taskCode.value.trim(),
+        periodType: fields.periodType.value,
+        metricType: fields.metricType.value,
+        targetValue: fields.targetValue.value,
+        rewardPoints: fields.rewardPoints.value,
+        sortOrder: fields.sortOrder.value,
+        status: fields.status.value
+      };
+
+      if (!payload.taskCode) {
+        alert('请先填写任务编码。');
+        return;
+      }
+
+      try {
+        await request('/api/admin/tasks/save', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        alert('任务配置已保存。');
+        resetForm();
+        loadDashboard();
+      } catch (err) {
+        alert('保存失败，请检查任务编码是否重复。');
+      }
+    }
+
+    async function toggleTemplate(id) {
+      try {
+        await request(`/api/admin/tasks/${id}/toggle`, {
+          method: 'POST'
+        });
+        loadDashboard();
+      } catch (err) {
+        alert('状态切换失败。');
+      }
+    }
+
+    async function saveActivity() {
+      const payload = {
+        id: activityFields.id.value,
+        activityCode: activityFields.activityCode.value.trim(),
+        title: activityFields.title.value.trim(),
+        subtitle: activityFields.subtitle.value.trim(),
+        description: activityFields.description.value.trim(),
+        bannerTitle: activityFields.bannerTitle.value.trim(),
+        bannerSubtitle: activityFields.bannerSubtitle.value.trim(),
+        rewardText: activityFields.rewardText.value.trim(),
+        targetText: activityFields.targetText.value.trim(),
+        taskCodes: activityFields.taskCodes.value.trim(),
+        themeColor: normalizeThemeColor(activityFields.themeColor.value),
+        coverEmoji: normalizeCoverKey(activityFields.coverEmoji.value) || 'LEAF',
+        sortOrder: activityFields.sortOrder.value,
+        status: activityFields.status.value,
+        featured: activityFields.featured.value,
+        startTime: activityFields.startTime.value.trim(),
+        endTime: activityFields.endTime.value.trim()
+      };
+
+      if (!payload.title) {
+        alert('Please input activity title.');
+        return;
+        alert('请先填写活动编码和活动标题。');
+        return;
+      }
+
+      try {
+        await request('/api/admin/activities/save', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        alert('活动已保存。');
+        resetActivityForm();
+        loadActivityDashboard();
+      } catch (err) {
+        alert('Activity save failed: ' + (err.message || 'UNKNOWN_ERROR'));
+        return;
+        alert('活动保存失败，请检查活动编码是否重复。');
+      }
+    }
+
+    async function toggleActivity(id) {
+      try {
+        await request(`/api/admin/activities/${id}/toggle`, {
+          method: 'POST'
+        });
+        loadActivityDashboard();
+      } catch (err) {
+        alert('活动状态切换失败。');
+      }
+    }
+
+    async function deleteActivity(id) {
+      if (!window.confirm('确定删除这个活动吗？')) {
+        return;
+      }
+      try {
+        await request(`/api/admin/activities/${id}/delete`, {
+          method: 'POST'
+        });
+        loadActivityDashboard();
+      } catch (err) {
+        alert('活动删除失败。');
+      }
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', saveTemplate);
+    document.getElementById('reloadBtn').addEventListener('click', loadDashboard);
+    document.getElementById('resetBtn').addEventListener('click', resetForm);
+    document.getElementById('activitySaveBtn').addEventListener('click', saveActivity);
+    document.getElementById('activityReloadBtn').addEventListener('click', loadActivityDashboard);
+    document.getElementById('activityResetBtn').addEventListener('click', resetActivityForm);
+    activityFields.themeColor.addEventListener('input', function (event) {
+      syncThemeColorPicker(event.target.value);
+    });
+    if (activityThemePalette) {
+      activityThemePalette.addEventListener('click', function (event) {
+        const swatch = event.target.closest('.theme-swatch');
+        if (!swatch) {
+          return;
+        }
+        syncThemeColorPicker(swatch.getAttribute('data-color'));
+      });
+    }
+
+    templateGrid.addEventListener('click', function (event) {
+      const editButton = event.target.closest('.js-edit-btn');
+      if (editButton) {
+        const id = editButton.getAttribute('data-id');
+        fillFormById(id);
+        return;
+      }
+
+      const toggleButton = event.target.closest('.js-toggle-btn');
+      if (toggleButton) {
+        const id = toggleButton.getAttribute('data-id');
+        toggleTemplate(id);
+      }
+    });
+
+    activityGrid.addEventListener('click', function (event) {
+      const editButton = event.target.closest('.js-activity-edit-btn');
+      if (editButton) {
+        fillActivityFormById(editButton.getAttribute('data-id'));
+        return;
+      }
+
+      const toggleButton = event.target.closest('.js-activity-toggle-btn');
+      if (toggleButton) {
+        toggleActivity(toggleButton.getAttribute('data-id'));
+        return;
+      }
+
+      const deleteButton = event.target.closest('.js-activity-delete-btn');
+      if (deleteButton) {
+        deleteActivity(deleteButton.getAttribute('data-id'));
+      }
+    });
+
+    syncThemeColorPicker('#3f9a63');
+    loadDashboard();
+    loadActivityDashboard();
+  </script>
+</body>
+</html>

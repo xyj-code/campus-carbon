@@ -1,186 +1,212 @@
-# 低碳生活系统
+校园低碳生活管理系统启动说明
+================================
 
-## 项目简介
+一、项目简介
+--------------------------------
+本项目是一个面向高校学生的低碳生活管理平台，主要用于记录步数、运动、健康数据和低碳任务，并将用户行为换算为减碳量和积分。
 
-低碳生活系统是一个基于Spring Boot后端和uni-app前端的应用，旨在帮助用户记录日常活动（如步数、运动）并计算相应的碳减排量，同时提供排名功能，鼓励用户参与低碳生活。
+项目包含后端和前端两部分：
+1. 后端：Spring Boot + MyBatis + MySQL
+2. 前端：uni-app + Vue2，小程序端页面
 
-## 技术栈
+当前项目还加入了 Agent Planner 功能，可以根据用户步数、健康档案、任务进度、用户备注和当前位置，生成当天低碳行动计划，并支持开始、完成、跳过行动。
 
-### 后端
 
-- Spring Boot 2.x
-- MyBatis
-- MySQL
-- Java 8+
+二、运行环境
+--------------------------------
+1. JDK 8 或以上
+2. Maven 3.x
+3. MySQL 5.7 或 MySQL 8.x
+4. HBuilderX
+5. 微信开发者工具
 
-### 前端
 
-- uni-app
-- Vue 2.x
-- WeChat Mini Program
+三、数据库启动准备
+--------------------------------
+1. 打开 MySQL，新建数据库：
 
-## 环境要求
+CREATE DATABASE campus_carbon DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-- JDK 8+
-- MySQL 5.7+
-- Node.js 14+
-- HBuilderX（用于uni-app开发）
-- WeChat Developer Tools（用于小程序预览）
+2. 导入项目 sql 目录下的数据库脚本。
 
-## 数据库配置
+建议使用 Navicat、DataGrip 或 MySQL Workbench 导入，也可以使用命令行导入。
 
-1. 创建数据库：
-   ```sql
-   CREATE DATABASE campus_carbon DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-2. 执行数据库表结构：
-   ```sql
-   -- 用户表
-   CREATE TABLE `user` (
-     `id` INT NOT NULL AUTO_INCREMENT,
-     'username' VARCHAR(50) NOT NULL,
-     `name` VARCHAR(50) NOT NULL,
-     `password` VARCHAR(100) NOT NULL,
-     PRIMARY KEY (`id`),
-     UNIQUE KEY `uk_stu_no` (`stu_no`)
-   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+推荐导入顺序：
 
-   -- 步数记录表
-   CREATE TABLE `step_count` (
-     `id` BIGINT NOT NULL AUTO_INCREMENT,
-     `student_id` VARCHAR(20) NOT NULL,
-     `date` DATE NOT NULL,
-     `steps` INT NOT NULL,
-     `calories` DOUBLE DEFAULT NULL,
-     `duration` INT DEFAULT NULL,
-     PRIMARY KEY (`id`),
-     KEY `idx_student_date` (`student_id`, `date`)
-   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+1. user.sql
+2. step_count.sql
+3. sport_record.sql
+4. points_record.sql
+5. product.sql
+6. exchange_record.sql
+7. task_template.sql
+8. user_task.sql
+9. activity_topic.sql
+10. activity_topic_task_codes.sql
+11. activity_topic_mainline_refresh.sql
+12. project.sql
+13. user_project.sql
+14. user_tree.sql
+15. ai_suggest.sql
+16. agent_session.sql
+17. agent_action_log.sql
+18. agent_memory.sql
 
-   -- 运动记录表
-   CREATE TABLE `sport_record` (
-     `id` BIGINT NOT NULL AUTO_INCREMENT,
-     `student_id` VARCHAR(20) NOT NULL,
-     `sport_type` VARCHAR(50) NOT NULL,
-     `amount` DOUBLE NOT NULL,
-     `start_time` DATETIME NOT NULL,
-     `end_time` DATETIME NOT NULL,
-     PRIMARY KEY (`id`),
-     KEY `idx_student_start` (`student_id`, `start_time`)
-   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-   ```
-3. 插入测试数据：
-   ```sql
-   -- 插入测试用户
-   INSERT INTO `student` (`stu_no`, `name`, `password`) VALUES
-   ('111', '李杰', '123456'),
-   ('222', '张三', '123456'),
-   ('333', '李四', '123456');
+如果使用命令行，可以在项目根目录执行类似命令：
 
-   -- 插入测试步数数据
-   INSERT INTO `step_count` (`student_id`, `date`, `steps`, `calories`, `duration`) VALUES
-   ('111', '2026-03-21', 10000, 500, 60),
-   ('111', '2026-03-22', 8000, 400, 45),
-   ('222', '2026-03-21', 7000, 350, 40),
-   ('222', '2026-03-22', 9000, 450, 50),
-   ('333', '2026-03-21', 6000, 300, 35),
-   ('333', '2026-03-22', 8500, 425, 48);
+mysql -u root -p campus_carbon < sql/user.sql
 
-   -- 插入测试运动数据
-   INSERT INTO `sport_record` (`student_id`, `sport_type`, `amount`, `start_time`, `end_time`) VALUES
-   ('111', '跑步', 5.5, '2026-03-21 08:00:00', '2026-03-21 09:00:00'),
-   ('111', '骑行', 15.0, '2026-03-22 16:00:00', '2026-03-22 17:30:00'),
-   ('222', '跑步', 3.0, '2026-03-21 07:30:00', '2026-03-21 08:15:00'),
-   ('333', '骑行', 10.0, '2026-03-22 15:00:00', '2026-03-22 16:00:00');
-   ```
+其他 sql 文件按上面的顺序继续导入即可。
 
-## 后端配置和启动
 
-1. 配置数据库连接：
-   - 编辑 `src/main/resources/application.yml` 文件
-   - 修改数据库连接信息（用户名、密码）
-2. 启动后端服务：
-   ```bash
-   # 在项目根目录执行
-   mvn spring-boot:run
-   ```
-   或使用IDE启动 `CarbonApplication` 类
-3. 后端服务默认运行在 `http://localhost:8080`
+四、后端启动方式
+--------------------------------
+1. 打开后端配置文件：
 
-## 前端配置和启动
+src/main/resources/application.yml
 
-1. 配置API地址：
-   - 编辑 `uni-app项目/utils/request.js` 文件
-   - 修改 `baseURL` 为后端服务地址
-2. 启动前端开发服务器：
-   - 使用HBuilderX打开 `uni-app项目` 目录
-   - 点击工具栏的 "运行" -> "运行到小程序模拟器" -> "微信开发者工具"
-3. 预览小程序：
-   - 打开微信开发者工具
-   - 导入 `uni-app项目` 生成的 `unpackage/dist/dev/mp-weixin` 目录
-   - 点击 "编译" 按钮预览
+2. 检查数据库连接配置：
 
-## 主要功能
+spring.datasource.url=jdbc:mysql://localhost:3306/campus_carbon
+spring.datasource.username=root
+spring.datasource.password=123456
 
-1. **用户登录**：使用学号和密码登录
-2. **步数记录**：手动输入每日步数，计算减碳量和积分
-3. **运动记录**：记录运动类型、距离和时长
-4. **减碳排名**：基于减碳量的排名系统，支持今日、本周、本月时间范围
-5. **个人中心**：查看个人减碳数据和积分
+如果你本机 MySQL 用户名或密码不同，需要改成自己的配置。
 
-## 项目结构
+3. 检查 AI 和地图配置：
 
-### 后端
+carbon.ai.api-key
+carbon.ai.endpoint
+carbon.amap.web-key
+carbon.amap.js-key
+carbon.amap.js-security-code
 
-```
-src/
-├── main/
-│   ├── java/com/campus/carbon/
-│   │   ├── controller/     # 控制器
-│   │   ├── mapper/         # MyBatis映射器
-│   │   ├── model/          # 数据模型
-│   │   ├── service/        # 业务逻辑
-│   │   └── CarbonApplication.java  # 应用入口
-│   └── resources/
-│       └── application.yml  # 配置文件
-└── test/                   # 测试代码
-```
+如果只是本地演示普通功能，可以先不重点关注；如果要演示 AI 建议、Agent Planner 或附近运动场地推荐，需要确保这些 key 可用。
 
-### 前端
+4. 启动后端。
 
-```
-uni-app项目/
-├── pages/                 # 页面
-│   ├── index/             # 首页
-│   ├── login/             # 登录页
-│   ├── stepCount/         # 步数记录页
-│   ├── sportRecord/       # 运动记录页
-│   └── rank/              # 排名页
-├── utils/                 # 工具类
-│   └── request.js         # API请求工具
-├── pages.json             # 页面配置
-└── manifest.json          # 应用配置
-```
+方式一：使用命令行，在项目根目录执行：
 
-## 注意事项
+mvn spring-boot:run
 
-1. **数据库时区**：确保数据库连接配置中的 `serverTimezone` 设置为 `Asia/Shanghai`，避免日期不一致问题
-2. **端口占用**：如果8080端口被占用，可使用以下命令杀死占用进程：
-   ```bash
-   # Windows
-   netstat -ano | findstr :8080
-   taskkill /PID <进程ID> /F
-   ```
-3. **前端开发**：使用HBuilderX进行uni-app开发，确保已安装相关插件
-4. **小程序预览**：需要在微信开发者工具中配置小程序AppID，或使用测试号
-5. **数据同步**：前端页面每次显示时都会刷新日期和数据，确保数据与当前日期同步
+方式二：使用 IDEA 打开项目，运行：
 
-## 减碳计算规则
+src/main/java/com/campus/carbon/CarbonApplication.java
 
-- **步数减碳**：100步 = 0.005kg CO₂
-- **运动减碳**：1公里 = 0.1kg CO₂
-- **积分计算**：每0.1kg减碳得10分
+5. 后端启动成功后，默认访问地址为：
 
-## 联系方式
+http://localhost:8080
 
-如有问题，请联系项目维护人员。
+前端请求接口的基础地址为：
+
+http://localhost:8080/api
+
+
+五、前端启动方式
+--------------------------------
+1. 使用 HBuilderX 打开前端目录：
+
+uni-app项目
+
+2. 检查前端接口地址：
+
+uni-app项目/utils/request.js
+
+当前配置为：
+
+const baseUrl = 'http://localhost:8080/api';
+
+如果后端不是运行在 8080 端口，需要同步修改这里。
+
+3. 在 HBuilderX 中运行：
+
+运行 -> 运行到小程序模拟器 -> 微信开发者工具
+
+4. 如果微信开发者工具需要导入目录，一般导入：
+
+uni-app项目/unpackage/dist/dev/mp-weixin
+
+5. 后端和数据库都启动后，小程序端即可正常登录、注册和访问功能页面。
+
+
+六、主要功能说明
+--------------------------------
+1. 登录与注册
+用户可以通过账号密码登录，也可以在登录页进入注册流程。
+
+2. 首页数据汇总
+首页聚合展示用户积分、步数、排行榜、任务、活动和 AI 相关入口。
+
+3. 步数统计
+用户可以录入或查看每日步数，系统将步数写入 step_count 表，并按日期维护记录。
+
+4. 运动记录
+用户可以提交运动类型、距离和时间等信息，系统写入 sport_record 表。
+
+5. 减碳排行
+后端汇总步数和运动数据，统一换算为减碳量后生成用户排行榜。
+
+6. 健康数据
+支持录入身高、体重等身体指标，后端自动计算 BMI，并按日期维护健康档案。
+
+7. AI 建议
+系统可调用大模型接口，生成低碳生活建议和个性化健康建议。
+
+8. Agent Planner
+系统结合任务进度、健康数据、用户备注和当前位置，自动生成当天行动计划。
+行动支持开始、完成、跳过，并会记录到 agent_session、agent_action_log 和 agent_memory 表。
+
+9. 任务与活动中心
+任务系统以 task_template 和 user_task 为核心，用户完成行为后自动同步任务进度并发放积分。
+活动中心通过活动配置绑定任务主线，支持专题低碳活动展示。
+
+10. 积分商城
+用户可以使用积分兑换环保商品，系统会校验积分、扣减库存，并写入兑换记录。
+
+11. 个人中心与碳账本
+个人中心展示用户积分、成长值、减碳数据和个人历史记录。
+
+12. 低碳保护区与证书
+系统根据用户累计减碳量判断是否达到公益项目解锁门槛，并可生成电子证书页面。
+
+
+七、常见问题
+--------------------------------
+1. 后端启动失败，提示数据库连接失败
+检查 MySQL 是否启动、数据库 campus_carbon 是否存在，以及 application.yml 中的用户名和密码是否正确。
+
+2. 前端请求失败
+检查后端是否已经启动，并确认 uni-app项目/utils/request.js 中的 baseUrl 是否为 http://localhost:8080/api。
+
+3. 8080 端口被占用
+可以修改 src/main/resources/application.yml 中的 server.port，也可以关闭占用 8080 的程序。
+
+4. AI 或 Agent 功能返回异常
+检查 application.yml 中的大模型 api-key 和 endpoint 是否有效；如果涉及附近运动场地推荐，还需要检查高德地图 key 是否有效。
+
+5. 小程序无法访问本地接口
+微信开发者工具中可以临时关闭“校验合法域名”，或者确保本地调试配置允许访问 localhost。
+
+
+八、项目目录说明
+--------------------------------
+src/main/java/com/campus/carbon
+后端 Java 代码目录，包括 controller、service、mapper、model 等模块。
+
+src/main/resources/application.yml
+后端配置文件，包括端口、数据库、AI 和地图配置。
+
+src/main/resources/static/admin/task-center.html
+后台任务与活动配置相关页面。
+
+sql
+数据库建表脚本目录。
+
+uni-app项目
+前端小程序项目目录。
+
+uni-app项目/pages
+前端页面目录，包括登录、首页、步数、运动、排行、商城、Agent、个人中心等页面。
+
+uni-app项目/utils/request.js
+前端接口请求封装文件。

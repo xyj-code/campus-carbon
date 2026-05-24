@@ -43,6 +43,10 @@
   background-size: cover;
   background-position: center;
 }
+.benefit-bg.data-v-b06f7194 {
+  border-color: #3f9a63;
+  background: linear-gradient(180deg, #ffffff 0%, #f1fbf4 100%);
+}
 .certificate-content.data-v-b06f7194 {
   text-align: center;
   position: relative;
@@ -123,6 +127,9 @@
   opacity: 0.8;
   -webkit-transform: rotate(15deg);
           transform: rotate(15deg);
+}
+.benefit-seal.data-v-b06f7194 {
+  background: #2e7d32;
 }
 .seal-text.data-v-b06f7194 {
   font-size: 24rpx;
